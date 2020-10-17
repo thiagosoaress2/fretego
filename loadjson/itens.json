@@ -1,0 +1,15 @@
+[
+  {
+    "name":"Mesa 4 lugares",
+  "weigth" : 35,
+  "singlePerson" : false,
+  "volume" : 821600,
+  "image" : "images/baixados.png"
+  },
+  {"name" : "Mesa 6 lugares",
+  "weigth" : 39,
+  "singlePerson" : false,
+  "volume" : 1011200,
+  "image" : "images/baixados.png"
+  }
+]

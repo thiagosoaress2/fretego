@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "41119318651",
+    "firebase_url": "https://fretesgo-cb24d.firebaseio.com",
+    "project_id": "fretesgo-cb24d",
+    "storage_bucket": "fretesgo-cb24d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41119318651:android:d2c9761454356ebd52d8de",
+        "android_client_info": {
+          "package_name": "com.tss.fretego"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41119318651-gdl74fnkr7emcblsfnh41euohgc893t9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWZTOdRQpIgy8Qv7Wb5txSxoOOST7UQCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41119318651-gdl74fnkr7emcblsfnh41euohgc893t9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
