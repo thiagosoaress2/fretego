@@ -179,6 +179,19 @@ class WidgetsConstructor {
     );
   }
 
+  Widget makeButton(@required Color backgroundColor,@required Color borderColor, @required double width, @required double height, @required double borderWidth, @required double radius, @required String text, @required Color textColor, @required textSize){
+    return Container(
+      height: height,
+      width: width,
+      decoration: myBoxDecoration(backgroundColor, borderColor , borderWidth, radius),
+
+      child: RaisedButton(
+        child: makeText(text, textColor, textSize, 10.0, 10.0, "center"),
+      ),
+
+    );
+
+  }
 
 }
 

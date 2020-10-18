@@ -2,12 +2,19 @@ import 'package:fretego/classes/item_class.dart';
 
 class SelectedItensChart {
 
-  int quantity;
-  bool singlePerson;
-  ItemClass itens;
+  //int quantity;
+  //bool singlePerson;
+  ItemClass itemAdded;
 
-  SelectedItensChart(this.quantity, this.singlePerson, this.itens);
+  List<ItemClass> itemsSelectedCart =[];
+
+  SelectedItensChart(this.itemAdded);
+  //SelectedItensChart(this.quantity, this.singlePerson, this.itemAdded);
 
   SelectedItensChart.empty();
+
+  void addItemToChart (ItemClass itemClass){
+    itemsSelectedCart.add(itemClass);
+  }
 
 }
