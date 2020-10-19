@@ -10,8 +10,6 @@ import 'package:fretego/models/userModel.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:convert';
-import 'package:google_maps_webservice/places.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
 
 import 'home_page.dart';
@@ -50,9 +48,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   MoveClass moveClass = MoveClass();
 
-  //variaveis de busca de endereço
-  static const kGoogleApiKey = "AIzaSyBSw9K0ZKQU0CvFunN9p36qCC3ri3ixPJo";
-  GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
+  //String origemAddressVerified ="";
+  //String destinyAddressVerified="";
+
+  bool _searchCEP=false;
 
   @override
   void initState() {
@@ -405,6 +404,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                   showSelectTruckPage=false;
                   showAddressesPage=true;
+
+
                 } else {
                   _displaySnackBar(context, "Selecione o tipo de veículo para o frete antes.");
                 }
@@ -652,16 +653,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Widget selectAdressPage() {
 
-    //Future<bool> _permissionGranted;
-
-    /*
-    setState(() {
-      _permissionGranted = PermissionsService().checkFineLocationPermission();
-    });
-
-     */
-
-
     double heightPercent = MediaQuery
         .of(context)
         .size
@@ -674,26 +665,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
     TextEditingController _sourceAdress = TextEditingController();
     TextEditingController _destinyAdress = TextEditingController();
 
-    _sourceAdress.addListener(() async {
-      Prediction p = await PlacesAutocomplete.show(
-          context: context, apiKey: kGoogleApiKey);
-      displayPrediction(p);
-    });
-
     return Scaffold(
       key: _scaffoldKey,
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.blue,
-          child: Icon(Icons.navigate_next, size: 50.0,),
-          onPressed: () {
 
-            setState(() {
-
-              print("proxima página");
-
-            });
-
-          }),
       body: ListView(
         children: [
           Container(
@@ -703,8 +677,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                   return Column(
                     children: [
+                      //fake superior bar
                       topCustomBar(heightPercent, widthPercent, "Detalhar agendamento", 3),
                       SizedBox(height: 40.0,),
+                      //box with the address search engine
                       Container(
                         width: widthPercent*0.90,
                         decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 3.0, 2.0),
@@ -712,54 +688,172 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           padding: EdgeInsets.all(15.0),
                           child: Column(
                             children: [
+                              SizedBox(height: 10.0,),
+                              //text of centralized title
+                              WidgetsConstructor().makeText("Endereços", Colors.blue, 18.0, 5.0, 0.0, "center"),
                               SizedBox(height: 20.0,),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                child: TextField(controller: _sourceAdress,
-                                  //enabled: _permissionGranted==true ? true : false,
-                                  decoration: InputDecoration(
-                                    prefixIcon: Icon(Icons.home),
-                                      labelText: "Endereço de origem",
-                                      border: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      disabledBorder: InputBorder.none,
-                                      contentPadding:
-                                      EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-                                      hintText: "De onde?"),
+                              //Row with button search criteria select (address or CEP)
+                              Row(
+                                children: [
+                                  //search by address button
+                                  GestureDetector(
+                                    child: _searchCEP == false ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0)
+                                                      :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0),
+                                    onTap: (){
+                                      setState(() {
+                                        _searchCEP = false;
+                                      });
+                                    },
+                                  ),
+                                  //search by CEP button
+                                  GestureDetector(
+                                    child:_searchCEP == true ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0)
+                                        :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0),
+                                    onTap: (){
+                                      setState(() {
+                                        _searchCEP = true;
+                                      });
+                                    },
+                                  )
 
-                                ) ,
-                              ),//search adress origem
+                                ],
+                              ),
+                              SizedBox(height: 10.0,),
+                              _searchCEP == true ? WidgetsConstructor().makeSimpleText("Digíte o CEP somente com números", Colors.blue, 12.0) : Container(),
+                              SizedBox(height: 10.0,),
+                              //first searchbox of origem address
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Container(
+                                    height: heightPercent*0.08,
+                                    width: widthPercent*0.6,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                    child: TextField(controller: _sourceAdress,
+                                      //enabled: _permissionGranted==true ? true : false,
+                                      decoration: InputDecoration(
+                                          prefixIcon: Icon(Icons.home),
+                                          labelText: "Origem",
+                                          border: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding:
+                                          EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
+                                          hintText: "De onde?"),
+
+                                    ) ,
+                                  ),//search adress origem
+                                  GestureDetector(
+                                    onTap: (){
+                                      if(_sourceAdress.text.isNotEmpty){
+
+                                        //if the user meant to search by CEP
+                                        if(_searchCEP==true){
+                                          if(isNumeric(_sourceAdress.text)){
+                                            findAddress(_sourceAdress, "origem");
+                                          } else {
+                                            _displaySnackBar(context, "O CEP deve ter apenas números");
+                                          }
+                                        } else {
+                                          //if the user meant to search by adress name
+                                          if(_sourceAdress.text.contains("0") || _sourceAdress.text.contains("1") || _sourceAdress.text.contains("2") || _sourceAdress.text.contains("3") || _sourceAdress.text.contains("4") || _sourceAdress.text.contains("5") || _sourceAdress.text.contains("6") || _sourceAdress.text.contains("7") || _sourceAdress.text.contains("8") || _sourceAdress.text.contains("9") ){
+                                            findAddress(_sourceAdress, "origem");
+                                          } else {
+                                            _displaySnackBar(context, "Informe o número da residência");
+                                          }
+                                        }
+
+                                      }
+                                    },
+                                    child: Container(
+                                      child: Icon(Icons.search, color: Colors.white,),
+                                      decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
+                                      width: widthPercent*0.15,
+                                      height: heightPercent*0.08,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              //text informing user that address was found
+                              origemAddressVerified != "" ? WidgetsConstructor().makeText("Endereço localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
+                              //address found
+                              origemAddressVerified != "" ? WidgetsConstructor().makeText(origemAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
                               SizedBox(height: 20.0,),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                child: TextField(controller: _destinyAdress,
-                                  //enabled: _permissionGranted==true ? true : false,
-                                  decoration: InputDecoration(
-                                      prefixIcon: Icon(Icons.home),
-                                      labelText: "Endereço de destino",
-                                      border: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      disabledBorder: InputBorder.none,
-                                      contentPadding:
-                                      EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-                                      hintText: "Para onde?"),
+                              //second searchbox of destiny address
+                              origemAddressVerified != "" ? Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Container(
+                                    height: heightPercent*0.08,
+                                    width: widthPercent*0.6,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                    child: TextField(controller: _destinyAdress,
+                                      //enabled: _permissionGranted==true ? true : false,
+                                      decoration: InputDecoration(
+                                          prefixIcon: Icon(Icons.home),
+                                          labelText: "Destino",
+                                          border: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding:
+                                          EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
+                                          hintText: "Para onde?"),
 
-                                ) ,
-                              ),//search adress origem
-                              //_permissionGranted==false ? SizedBox(height: 20.0,) : Container(),
-                              //_permissionGranted==false ? WidgetsConstructor().makeText("Sem permissão não é possível buscar os endereços.", Colors.red, 15.0, 0.0, 0.0, "center") : Container(),
+                                    ) ,
+                                  ),//search adress origem
+                                  GestureDetector(
+                                    onTap: (){
+                                      if(_destinyAdress.text.isNotEmpty){
+
+                                        if(_searchCEP==true){
+
+                                          if(isNumeric(_destinyAdress.text)) {
+                                            findAddress(_destinyAdress, "destiny");
+                                          } else {
+                                            _displaySnackBar(context, "O CEP deve ter apenas números");
+                                          }
+
+                                        } else {
+
+                                          if(_destinyAdress.text.contains("0") || _destinyAdress.text.contains("1") || _destinyAdress.text.contains("2") || _destinyAdress.text.contains("3") || _destinyAdress.text.contains("4") || _destinyAdress.text.contains("5") || _destinyAdress.text.contains("6") || _destinyAdress.text.contains("7") || _destinyAdress.text.contains("8") || _destinyAdress.text.contains("9") ){
+                                            findAddress(_destinyAdress, "destiny");
+                                          } else {
+                                            _displaySnackBar(context, "Informe o número da residência do destino");
+                                          }
+
+                                        }
+
+
+                                      }
+                                    },
+                                    child: Container(
+                                      child: Icon(Icons.search, color: Colors.white,),
+                                      decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
+                                      width: widthPercent*0.15,
+                                      height: heightPercent*0.08,
+                                    ),
+                                  ),
+                                ],
+                              ): Container(),
+                              //text informing user that the address of destiny was found
+                              destinyAddressVerified != "" ? WidgetsConstructor().makeText("Destino localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
+                              //address found
+                              destinyAddressVerified != "" ? WidgetsConstructor().makeText(destinyAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
                               SizedBox(height: 20.0,),
                             ],
                           ),
                         )
                       ) ,
 
+
+                      SizedBox(height: 40.0,),
+                      //the next button
                       GestureDetector(
                         onTap: (){
                           setState(() {
@@ -788,7 +882,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     return Container(color: Colors.amber);
   }
-
 
 
   Widget popUpSelectItemQuantity(index, heightP, widhtP){
@@ -980,6 +1073,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                     //volta pra página 3 (select car)
                     showSelectTruckPage=true;
                     showAddressesPage=false;
+                    origemAddressVerified="";
                   } else if(option==4){
                     //volta para pagina 4 (selectAdress)
                     showAddressesPage=true;
@@ -1003,7 +1097,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
       ),
     );
   }
-
+  
   _displaySnackBar(BuildContext context, String msg) {
 
     final snackBar = SnackBar(
@@ -1018,20 +1112,53 @@ class _SelectItensPageState extends State<SelectItensPage> {
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
-  Future<Null> displayPrediction(Prediction p, ) async {
-    if (p != null) {
-      PlacesDetailsResponse detail =
-      await _places.getDetailsByPlaceId(p.placeId);
+  void findAddress(TextEditingController controller, String opcao) async {
 
-      var placeId = p.placeId;
-      double lat = detail.result.geometry.location.lat;
-      double lng = detail.result.geometry.location.lng;
+    String addressInformed = controller.text;
 
-      var address = await Geocoder.local.findAddressesFromQuery(p.description);
+    try{
 
-      print(lat);
-      print(lng);
+      var addresses = await Geocoder.local.findAddressesFromQuery(addressInformed);
+      var first = addresses.first;
+
+      if(addresses.length==1){
+        setState(() {
+          if(opcao=="origem") {
+            origemAddressVerified = first.addressLine + " - " + first.adminArea;
+          } else {
+            destinyAddressVerified = first.addressLine + " - " + first.adminArea;
+          }
+
+        });
+      } else {
+        setState(() {
+          if(opcao=="origem") {
+            origemAddressVerified = "";
+          } else {
+            destinyAddressVerified = "";
+          }
+        });
+
+        _displaySnackBar(context, "Especifique melhor o endereço. Estamos encontrando multiplos resultados");
+      }
+
+    } catch (e){
+
+      origemAddressVerified = "";
+      _displaySnackBar(context, "Formato de endereço inválido");
+
     }
+
+
   }
 
+  /// check if the string contains only numbers
+  bool isNumeric(String str) {
+
+    RegExp _numeric = RegExp(r'^-?[0-9]+$');
+
+    return _numeric.hasMatch(str);
+  }
 }
+
+

@@ -162,7 +162,7 @@ class WidgetsConstructor {
 
   BoxDecoration myBoxDecoration(Color backgroundColor, Color borderColor, double width, double radius) {
 
-    //use assim: no container adicione a linha decoration: WidgetsConstructor().myBoxDecoration(Theme.of(context).primaryColor, 1.0, 0.0),
+    //use assim: no container adicione a linha decoration: WidgetsConstructor().myBoxDecoration(Colors.yellow, Colors.blue, 1.0, 0.0),
 
     //obs: Use 0.0 para nao colocar borda redonda
 
