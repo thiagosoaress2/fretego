@@ -36,7 +36,8 @@ dependencies:
   flutter_masked_text: ^0.7.0
   mask_text_input_formatter: ^1.0.7
   path_provider: ^1.6.21
-  geolocator: ^6.0.0+4
+  flutter_google_places: ^0.2.6
+  geocoder: ^0.2.1
 
 
 dev_dependencies:
