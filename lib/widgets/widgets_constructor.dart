@@ -179,7 +179,7 @@ class WidgetsConstructor {
     );
   }
 
-  Widget makeButton(@required Color backgroundColor,@required Color borderColor, @required double width, @required double height, @required double borderWidth, @required double radius, @required String text, @required Color textColor, @required textSize){
+  Widget makeButton(@required Color backgroundColor, @required Color borderColor, @required double width, @required double height, @required double borderWidth, @required double radius, @required String text, @required Color textColor, @required textSize){
     return Container(
       height: height,
       width: width,
@@ -193,5 +193,19 @@ class WidgetsConstructor {
 
   }
 
+  //eexemplo de botao
+  /*
+
+                      new CupertinoButton (
+                        onPressed: ()=>{},
+                        color: Colors.orange,
+                        borderRadius: new BorderRadius.circular(30.0),
+                        child:
+                        new Text("Get Started",
+                          textAlign: TextAlign.center,
+                          style: new TextStyle(color: Colors.white),
+                        ),
+                      ),
+   */
 }
 

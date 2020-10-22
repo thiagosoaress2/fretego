@@ -3,13 +3,13 @@
     "name":"Mesa 4 lugares",
   "weigth" : 35.0,
   "singlePerson" : false,
-  "volume" : 8.21600,
+  "volume" : 0.82,
   "image" : "images/baixados.png"
   },
   {"name" : "Mesa 6 lugares",
   "weigth" : 39.0,
   "singlePerson" : false,
-  "volume" : 1.011200,
+  "volume" : 0.10,
   "image" : "images/baixados.png"
   }
 ]
