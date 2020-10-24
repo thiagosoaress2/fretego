@@ -8,4 +8,6 @@ class ItemClass {
 
   ItemClass(this.name, this.weight, this.singlePerson, this.volume, this.image);
 
+  ItemClass.empty();
+
 }

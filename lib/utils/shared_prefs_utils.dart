@@ -12,6 +12,7 @@ class SharedPrefsUtils {
     await prefs.setInt('ajudantes', moveClass.ajudantes);
     await prefs.setString('carro', moveClass.carro);
     await prefs.setDouble('preco', moveClass.preco);
+    await prefs.setString('ps', moveClass.ps);
     await prefs.setBool('escada', moveClass.escada);
     await prefs.setInt('lancesEscada', moveClass.lancesEscada);
     await prefs.setString('freteiroId', moveClass.freteiroId);
@@ -23,15 +24,17 @@ class SharedPrefsUtils {
 
   Future<MoveClass> loadMoveClassFromSharedPrefs() async {
 
-    MoveClass moveClass;
+    MoveClass moveClass = MoveClass.empty();
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String endereco = (prefs.getString('enderecoOrigem'));
+    String endereco = (prefs.getString('enderecoOrigem').toString());
     if(endereco!= null){ //se for diferente de null é pq tem coisa armazenada
-      moveClass.enderecoOrigem = endereco;
+      moveClass.enderecoOrigem = (prefs.getString('enderecoOrigem'));
       moveClass.enderecoDestino = (prefs.getString('enderecoDestino'));
       moveClass.ajudantes = (prefs.getInt('ajudantes'));
       moveClass.carro = (prefs.getString('carro'));
       moveClass.preco = (prefs.getDouble('preco'));
+      moveClass.ps = (prefs.getString('ps'));
       moveClass.escada = (prefs.getBool('escada'));
       moveClass.lancesEscada = (prefs.getInt('lancesEscada'));
       moveClass.freteiroId = (prefs.getString('freteiroId'));
@@ -44,8 +47,6 @@ class SharedPrefsUtils {
 
 
   }
-
-
 
   //Aqui estes métodos são somente para a primeira página, onde salva a lista de itens do usuário
   Future<void> saveListOfItemsInShared(List<ItemClass> itemsSelectedCart) async {
@@ -84,7 +85,7 @@ class SharedPrefsUtils {
 
     int cont=0;
     while(cont<size){
-      ItemClass itemClass;
+      ItemClass itemClass = ItemClass.empty();
       itemClass.name = prefs.getString('item_name'+cont.toString());
       itemClass.image = prefs.getString('item_image'+cont.toString());
       itemClass.singlePerson = prefs.getBool('item_single_person'+cont.toString());
@@ -98,4 +99,24 @@ class SharedPrefsUtils {
     return itemsSelectedCart;
 
   }
+
+  Future<void> saveDataFromCustomItemPage(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('ps', moveClass.ps);
+    await prefs.setBool('escada', moveClass.escada);
+    await prefs.setInt('lancesEscada', moveClass.lancesEscada);
+
+  }
+
+  Future<void> saveDataFromSelectTruckPage(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setInt('ajudantes', moveClass.ajudantes);
+    await prefs.setString('carro', moveClass.carro);
+
+  }
+
 }

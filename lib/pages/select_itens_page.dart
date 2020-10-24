@@ -35,6 +35,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   //fim das variaveis da busca
 
+  bool initialLoad=false;
+
   int selectedOfSameItens=0;
   var myData;
   int selectedIndex;
@@ -88,7 +90,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   bool showResume=false;
 
-  String carSelected="nao";
+  //String carSelected="nao";
 
   TruckerClass truckerClass = TruckerClass();
 
@@ -96,9 +98,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
   TimeOfDay selectedtime = TimeOfDay.now();
 
   @override
-  void initState() {
+  Future<void> initState(){
     super.initState();
-
 
 
     /* para testes
@@ -109,8 +110,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
      */
 
-
-
+    loadMoveClassFromShared();
 
     //listener da busca
     _searchController.addListener(() {
@@ -167,7 +167,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
         return ScopedModelDescendant<SelectedItemsChartModel>(
           builder: (BuildContext context, Widget child, SelectedItemsChartModel selectedItemsChartModel){
 
-            loadItemsFromShared(selectedItemsChartModel);
+            if(initialLoad==false){
+              initialLoad=true;
+              loadItemsFromShared(selectedItemsChartModel);
+            }
+
 
             return Scaffold(
                 key: _scaffoldKey,
@@ -178,6 +182,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                       if(selectedItemsChartModel.getItemsChartSize()!=0){
                         setState(() {
+
                           //update the moveClass for the firstTime
                           moveClass.itemsSelectedCart = selectedItemsChartModel.itemsSelectedCart;
                           //salva no shared para continuar de onde parou em outra sessão
@@ -344,16 +349,16 @@ class _SelectItensPageState extends State<SelectItensPage> {
     TextEditingController _psController = TextEditingController();
     TextEditingController _qntLancesEscadaController = TextEditingController();
 
-    bool _escadaCheckBoxvar=false;
 
     //verifica para lembrar a opção que o user deixou
-    if(moveClass.escada!=null){
-      _escadaCheckBoxvar=true;
-      if(moveClass.lancesEscada!=null){
+    if(moveClass.escada==true){
+      if(moveClass.lancesEscada.toString()!="null"){
         _qntLancesEscadaController.text = moveClass.lancesEscada.toString();
       }
-    } else {
-      _escadaCheckBoxvar=false;
+    }
+
+    if(moveClass.ps!=null){
+      _psController.text=moveClass.ps;
     }
 
     double heightPercent = MediaQuery
@@ -397,6 +402,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         showCustomItemPage=false;
                       showSelectTruckPage=true;
 
+                      //save em shared
+                      SharedPrefsUtils().saveDataFromCustomItemPage(moveClass);
+
                     }
 
                   });
@@ -429,15 +437,15 @@ class _SelectItensPageState extends State<SelectItensPage> {
                               WidgetsConstructor().makeText("Lances de escada", Colors.black, 16.0, 0.0, 0.0, "center"),
 
                               Checkbox(
-                                  value: _escadaCheckBoxvar,
+                                  value: moveClass.escada,
                                   onChanged: (bool value){
                                     setState(() {
                                       if(value==true){
                                         moveClass.escada=true;
                                       } else {
-                                        moveClass.escada=null;
+                                        moveClass.escada=false;
                                       }
-                                      _escadaCheckBoxvar = value;
+                                      //_escadaCheckBoxvar = value;
 
                                     });
                                   }
@@ -551,12 +559,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
                 if(carSelected!="nao"){
                   //ajusta a quantidade de ajudantes desta mudança
                   moveClass.ajudantes = helpersContracted;
-
                   moveClass.carro = carSelected;
+                  SharedPrefsUtils().saveDataFromSelectTruckPage(moveClass);
 
                   showSelectTruckPage=false;
                   showAddressesPage=true;
-
 
                 } else {
                   _displaySnackBar(context, "Selecione o tipo de veículo para o frete antes.");
@@ -855,7 +862,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
                               if(carSelected!="nao"){
                                 //ajusta a quantidade de ajudantes desta mudança
                                 moveClass.ajudantes=helpersContracted;
-
                                 moveClass.carro = carSelected;
 
                                 showSelectTruckPage=false;
