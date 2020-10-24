@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
 
 /*
@@ -186,6 +187,13 @@ class FirestoreServices {
 
     CollectionReference schedule = FirebaseFirestore.instance.collection('agendamentos_aguardando');
 
+    String escadaFinal = "nao";
+    int lancesEscadaFinal = 0;
+    if(moveClass.escada!=null){
+      escadaFinal = "sim";
+      lancesEscadaFinal = moveClass.lancesEscada;
+    }
+
     return schedule
         .add({
 
@@ -194,13 +202,14 @@ class FirestoreServices {
           'ps' : moveClass.ps,
           'carro' : moveClass.carro,
           'ajudantes' : moveClass.ajudantes,
-          'escada' : moveClass.escada,
-          'lances_escada' : moveClass.lancesEscada,
+          'escada' : escadaFinal,
+          'lances_escada' : lancesEscadaFinal,
           'id_freteiro' : moveClass.freteiroId,
           'valor' : moveClass.preco,
           'id_contratante' : moveClass.userId,
           'selectedDate' : moveClass.dateSelected,
           'selectedTime' : moveClass.timeSelected,
+            'nome_freteiro' : moveClass.nomeFreteiro,
     })
         .then((value) => onSuccess())
         .catchError((error) => onFailure());

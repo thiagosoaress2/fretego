@@ -12,6 +12,7 @@ import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/date_services.dart';
 import 'package:fretego/services/distance_latlong_calculation.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:convert';
@@ -52,6 +53,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
   bool showAddressesPage=false;
   bool showChooseTruckerPage=false;
   bool showDatePage=false;
+  bool showFinalPage=false;
+  bool showListOfItemsEdit=false;
 
   bool showPopupFinal = false;
 
@@ -75,9 +78,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
   double custoAjudantes=0.0;
   double custoFrete=0.0;
 
-  double precoCadaAjudante=0.0;
-  double precoGasolina=0.0;
-  double precoBaseFreteiro=0.0;
+  double precoCadaAjudante=50.0;
+  double precoGasolina=5.30;
+  double precoBaseFreteiro=80.0;
 
   double finalGasCosts=0.00;
   double distance=0.0;
@@ -97,13 +100,16 @@ class _SelectItensPageState extends State<SelectItensPage> {
     super.initState();
 
 
-    /* -habilitar para testes
+
+    /* para testes
     setState(() {
       showSelectItemPage=false;
-      showDatePage=true;
+      showFinalPage=true;
     });
 
      */
+
+
 
 
     //listener da busca
@@ -133,6 +139,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
       : showAddressesPage==true ?  selectAdressPage()
       : showChooseTruckerPage==true ? chooseTruckerPage()
       : showDatePage==true ? datePage()
+      : showFinalPage==true ? finalPage()
+      :showListOfItemsEdit==true ? editListOfItemsPage()
           : Container();
 
     /*
@@ -158,6 +166,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
       builder: (BuildContext context, Widget child, UserModel userModel) {
         return ScopedModelDescendant<SelectedItemsChartModel>(
           builder: (BuildContext context, Widget child, SelectedItemsChartModel selectedItemsChartModel){
+
+            loadItemsFromShared(selectedItemsChartModel);
+
             return Scaffold(
                 key: _scaffoldKey,
                 floatingActionButton: FloatingActionButton(
@@ -169,6 +180,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         setState(() {
                           //update the moveClass for the firstTime
                           moveClass.itemsSelectedCart = selectedItemsChartModel.itemsSelectedCart;
+                          //salva no shared para continuar de onde parou em outra sessão
+                          SharedPrefsUtils().saveListOfItemsInShared(moveClass.itemsSelectedCart);
                           //exibe a proxima página
                           showSelectItemPage=false;
                           showCustomItemPage=true;
@@ -381,7 +394,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                       } else {
                         moveClass.ps = _psController.text;
                       }
-                      showCustomItemPage=false;
+                        showCustomItemPage=false;
                       showSelectTruckPage=true;
 
                     }
@@ -1539,6 +1552,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                                         print(documents[index].id);
                                                         moveClass.freteiroId = documents[index].id;
                                                         moveClass.userId = UserModel().Uid;
+                                                        moveClass.nomeFreteiro = documents[index]['name'];
                                                         showPopupFinal=true;
                                                         //scheduleAmove();
 
@@ -1766,7 +1780,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           SizedBox(height: 35.0,),
 
                           WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
-                          WidgetsConstructor().makeText(selectedtime.hour.toString()+":"+selectedtime.minute.toString(), Colors.blue, 20.0, 10.0, 30.0, "center"),
+                          WidgetsConstructor().makeText(selectedtime.format(context), Colors.blue, 20.0, 10.0, 30.0, "center"),
 
                           SizedBox(height: 35.0,),
 
@@ -1777,11 +1791,16 @@ class _SelectItensPageState extends State<SelectItensPage> {
                               setState(() {
 
                                 moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
-                                moveClass.timeSelected = selectedtime.hour.toString()+":"+selectedtime.minute.toString();
+                                moveClass.timeSelected = selectedtime.format(context);
 
                                 _displaySnackBar(context, "Contactando o freteiro...");
 
+                                SharedPrefsUtils().saveMoveClassToShared(moveClass);
                                 scheduleAmove();
+
+                                waitAmoment(3);
+                                showDatePage=false;
+                                showFinalPage=true;
                                 //agora salvar no bd (o metodo ja existe).
                                 //precisa adicionar os campos do horario e data no salvamento.
 
@@ -1809,10 +1828,74 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
+  Widget finalPage(){
+
+    double heightPercent = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double widthPercent = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      body: Container(
+        width: widthPercent,
+        height: heightPercent,
+        color: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(15.0),
+          child: Column(
+            children: [
+
+              SizedBox(height: 50.0,),
+              WidgetsConstructor().makeText("Pronto. Agora aguarde a confirmação de "+moveClass.nomeFreteiro.toString(), Colors.blue, 17.0, 20.0, 20.0, "center"),
+              WidgetsConstructor().makeText("Resumo", Colors.black, 15.0, 0.0, 20.0, "center"),
+              WidgetsConstructor().makeText("Endereço de origem: "+moveClass.enderecoOrigem.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Endereço de destino: "+moveClass.enderecoDestino.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Data: "+moveClass.dateSelected.toString()+" às "+moveClass.timeSelected.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Freteiro: "+moveClass.nomeFreteiro.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Veículo: "+TruckClass().formatCodeToHumanName(moveClass.carro), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Nº ajudantes: "+moveClass.ajudantes.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+              WidgetsConstructor().makeText("Preço: R\$"+moveClass.preco.toStringAsFixed(2), Colors.black, 15.0, 0.0, 10.0, "no"),
+
+              SizedBox(height: 40.0,),
+              WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.75, 50.0, 2.0, 4.0, "Fechar", Colors.white, 16.0),
+
+
+            ],
+          ),
+        )
+      ),
+    );
+
+  }
+
+  Widget editListOfItemsPage(){
+    return Container(color: Colors.yellow, height: 150.0, width: 150.0,);
+  }
 
 
 
 
+  Future<void> loadMoveClassFromShared() async {
+    setState(() async {
+      moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs();
+    });
+
+  }
+
+  Future<void> loadItemsFromShared( SelectedItemsChartModel selectedItemsChartModel) async {
+
+    bool shouldRead = await SharedPrefsUtils().thereIsItemsSavedInShared(); //verifica se tem algum item savo
+    if(shouldRead==true){
+
+      List<ItemClass> list = await SharedPrefsUtils().loadListOfItemsInShared(); //carrega os dados salvos
+      selectedItemsChartModel.updateItemsSelectedCartList(list);  //adiciona na model para compartilhar com a app
+    }
+  }
 
   Widget popUpSelectItemQuantity(index, heightP, widhtP){
     return ScopedModelDescendant<SelectedItemsChartModel>(
@@ -1897,6 +1980,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         selectedOfSameItens=0;
                         showPopUpQuant=false;
 
+                        //salva no shared para continuar de onde parou em outra sessão
+                        SharedPrefsUtils().saveListOfItemsInShared(moveClass.itemsSelectedCart);
+
                         isLoading = false;
                       });
                     },
@@ -1936,8 +2022,19 @@ class _SelectItensPageState extends State<SelectItensPage> {
                 selectedItemsChartModel.getItemsChartSize() == 0
                     ? WidgetsConstructor().makeSimpleText(
                     "Nenhum item selecionado", Colors.redAccent, 15.0)
-                    : WidgetsConstructor().makeSimpleText(
-                    "Itens: ", Colors.blue, 15.0),
+                    : GestureDetector(
+                  onTap: (){
+
+                    setState(() {
+                      showListOfItemsEdit=true;
+                      showSelectItemPage=false;
+                      showCustomItemPage=false; //fecha as duas pq uso o mesmo widget. O user pode querer editar a lista na página 2
+                    });
+
+                  },
+                  child: WidgetsConstructor().makeSimpleText(
+                      "Itens: ", Colors.blue, 15.0),
+                ),
                 selectedItemsChartModel.getItemsChartSize() == 0
                     ? Container()
                     : WidgetsConstructor().makeSimpleText(

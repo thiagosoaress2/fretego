@@ -50,7 +50,7 @@ class HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
 
-                          newAuthService.AuthStatus == true ? Text("Logado") : Text("Nao logado"),
+                          userModel.Uid != "" ? Text("Logado") : Text("Nao logado"),
                           Center(
                               child: InkWell(
                                 onTap: (){

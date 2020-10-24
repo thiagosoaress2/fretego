@@ -7,6 +7,11 @@ class SelectedItemsChartModel extends Model {
 
   List<ItemClass> itemsSelectedCart =[];
 
+  void updateItemsSelectedCartList(List<ItemClass> newList){
+    itemsSelectedCart = newList;
+    notifyListeners();
+  }
+
   void addItemToChart (ItemClass itemClass){
     itemsSelectedCart.add(itemClass);
   }
