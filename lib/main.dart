@@ -1,41 +1,110 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'models/userModel.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class MyApp extends StatefulWidget {
+
+  //new firebase auth
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+
+  bool _initialized = false;
+
+  bool _error = false;
+
+  void initializeFlutterFire() async {
+    try {
+      // Wait for Firebase to initialize and set `_initialized` state to true
+      await Firebase.initializeApp();
+      setState(() {
+        _initialized = true;
+      });
+    } catch(e) {
+      // Set `_error` state to true if Firebase initialization fails
+      setState(() {
+        _error = true;
+      });
+    }
+  }
+
+
+  @override
+  void initState() {
+    initializeFlutterFire();
+    super.initState();
+  }
 
   final FirebaseAuth mAuth = FirebaseAuth.instance;
-  UserModel userModel = UserModel();
-  SelectedItemsChartModel selectedItensChartModel = SelectedItemsChartModel();
 
   @override
   Widget build(BuildContext context) {
+    // Show error message if initialization failed
+    if(_error) {
+      return somethingGetWrong();
+    }
+
+    // Show a loader until FlutterFire is initialized
+    if (!_initialized) {
+      return Center(child: CircularProgressIndicator(),);
+    }
+
+    return myStartPage();
+  }
+  }
+
+
+  Widget myStartPage(){
+
+    UserModel userModel = UserModel();
+    SelectedItemsChartModel selectedItensChartModel = SelectedItemsChartModel();
+    NewAuthService newAuthService = NewAuthService();
+
+
     return ScopedModel<UserModel>(
       model: userModel,
       child: ScopedModel<SelectedItemsChartModel>(
         model: selectedItensChartModel,
-        child: MaterialApp(
-          title: 'Fretes Go',
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            visualDensity: VisualDensity.adaptivePlatformDensity,
+        child: ScopedModel<NewAuthService>(
+          model: newAuthService,
+          child: MaterialApp(
+            title: 'Fretes Go',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+            ),
+            //home: HomePage(),
+            home: HomePage(),
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+            ],
+            supportedLocales: [
+              const Locale('pt'),
+            ],
           ),
-          //home: HomePage(),
-          home: HomePage(),
         ),
       ),
     );
   }
 
-}
+  Widget somethingGetWrong() {
+    return Text("Algo errado com o fireFlutter");
+  }
+
+
 

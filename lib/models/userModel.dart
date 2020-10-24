@@ -31,6 +31,13 @@ class UserModel extends Model {
 
   get FullName=>_fullName;
 
+  void signOutFromClass(){
+    _uid="";
+    _fullName="";
+    _email="";
+    _userRole="";
+  }
+
 
   //esta função é para fazer o upload pro firestore em formato json
   Map<String, dynamic> toJson(){

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/firestore_services.dart';
 
+/*
 class AuthService {
+
 
   FirebaseAuth _auth;
   Map<String, dynamic> userData = Map();
@@ -83,3 +85,6 @@ class AuthService {
   }
 
 }
+
+
+ */

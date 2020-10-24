@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
 import 'package:geocoder/geocoder.dart';
 
@@ -20,6 +21,9 @@ class MoveClass {
   String freteiroId;
   String userId;
 
+  String dateSelected;
+  String timeSelected;
+
 
   static const double priceCarroca = 0.00;
   static const double pricePickupP = 20.0;
@@ -32,7 +36,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected});
 
   MoveClass.empty();
 

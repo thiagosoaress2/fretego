@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fretego/login/pages/sign_in_view.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 
+
 class LoginChooseView extends StatefulWidget {
   @override
   _LoginChooseViewState createState() => _LoginChooseViewState();
@@ -87,3 +88,4 @@ class _LoginChooseViewState extends State<LoginChooseView> {
   }
 
 }
+

@@ -6,14 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/truck_class.dart';
+import 'package:fretego/classes/trucker_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/services/date_services.dart';
 import 'package:fretego/services/distance_latlong_calculation.dart';
+import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:convert';
 import 'package:geocoder/geocoder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'home_page.dart';
 
@@ -46,7 +50,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
   bool showCustomItemPage=false;
   bool showSelectTruckPage=false;
   bool showAddressesPage=false;
-  bool showSchedulePage=false;
+  bool showChooseTruckerPage=false;
+  bool showDatePage=false;
 
   bool showPopupFinal = false;
 
@@ -82,20 +87,23 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   String carSelected="nao";
 
+  TruckerClass truckerClass = TruckerClass();
+
+  DateTime selectedDate = DateTime.now();
+  TimeOfDay selectedtime = TimeOfDay.now();
 
   @override
   void initState() {
     super.initState();
 
-    /*
-    somente para testes
-     */
+
+    /* -habilitar para testes
     setState(() {
       showSelectItemPage=false;
-      showSchedulePage=true;
-      carSelected="kombiA";
-      moveClass.carro="kombiA";
+      showDatePage=true;
     });
+
+     */
 
 
     //listener da busca
@@ -123,7 +131,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
       : showCustomItemPage==true ? customItemPage()
       : showSelectTruckPage==true ? selectTruckPage()
       : showAddressesPage==true ?  selectAdressPage()
-      : showSchedulePage==true ? schedulePage()
+      : showChooseTruckerPage==true ? chooseTruckerPage()
+      : showDatePage==true ? datePage()
           : Container();
 
     /*
@@ -316,6 +325,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   Widget customItemPage(){
+
+    loadDataFromDb();
 
     TextEditingController _psController = TextEditingController();
     TextEditingController _qntLancesEscadaController = TextEditingController();
@@ -870,7 +881,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
         .size
         .width;
 
-    loadDataFromDb();
+    //loadDataFromDb();
 
     return Scaffold(
       key: _scaffoldKey,
@@ -883,422 +894,417 @@ class _SelectItensPageState extends State<SelectItensPage> {
             child: ScopedModelDescendant<SelectedItemsChartModel>(
                 builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
 
-                  return Stack(
+                  return Column(
                     children: [
-                      Column(
-                        children: [
-                          //fake superior bar
-                          topCustomBar(heightPercent, widthPercent, "Detalhar agendamento", 3),
-                          SizedBox(height: 40.0,),
-                          //box with the address search engine
-                          Container(
-                              width: widthPercent*0.90,
-                              decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 3.0, 2.0),
-                              child: Padding(
-                                padding: EdgeInsets.all(15.0),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 10.0,),
-                                    //text of centralized title
-                                    WidgetsConstructor().makeText("Endereços", Colors.blue, 18.0, 5.0, 0.0, "center"),
-                                    SizedBox(height: 20.0,),
-                                    //Row with button search criteria select (address or CEP)
-                                    Row(
-                                      children: [
-                                        //search by address button
-                                        GestureDetector(
-                                          child: _searchCEP == false ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0)
-                                              :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0),
-                                          onTap: (){
-                                            setState(() {
-                                              _searchCEP = false;
-                                            });
-                                          },
-                                        ),
-                                        //search by CEP button
-                                        GestureDetector(
-                                          child:_searchCEP == true ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0)
-                                              :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0),
-                                          onTap: (){
-                                            setState(() {
-                                              _searchCEP = true;
-                                            });
-                                          },
-                                        )
-
-                                      ],
-                                    ),
-                                    SizedBox(height: 10.0,),
-                                    _searchCEP == true ? WidgetsConstructor().makeSimpleText("Digíte o CEP somente com números", Colors.blue, 12.0) : Container(),
-                                    SizedBox(height: 10.0,),
-                                    //first searchbox of origem address
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Container(
-                                          height: heightPercent*0.08,
-                                          width: widthPercent*0.6,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          child: TextField(controller: _sourceAdress,
-                                            //enabled: _permissionGranted==true ? true : false,
-                                            decoration: InputDecoration(
-                                                prefixIcon: Icon(Icons.home),
-                                                labelText: "Origem",
-                                                border: InputBorder.none,
-                                                focusedBorder: InputBorder.none,
-                                                enabledBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
-                                                hintText: "De onde?"),
-
-                                          ) ,
-                                        ),//search adress origem
-                                        GestureDetector(
-                                          onTap: (){
-
-                                            //remove the focus to close the keyboard
-                                            FocusScopeNode currentFocus = FocusScope.of(context);
-                                            if (!currentFocus.hasPrimaryFocus) {
-                                              currentFocus.unfocus();
-                                            }
-
-                                            if(_sourceAdress.text.isNotEmpty){
-
-                                              //if the user meant to search by CEP
-                                              if(_searchCEP==true && _sourceAdress.text.length==8){
-                                                if(isNumeric(_sourceAdress.text)){
-                                                  findAddress(_sourceAdress, "origem");
-                                                } else {
-                                                  _displaySnackBar(context, "O CEP deve conter apenas números e possuí 8 dígitos");
-                                                }
-                                              } else {
-                                                //if the user meant to search by adress name
-                                                if(_sourceAdress.text.contains("0") || _sourceAdress.text.contains("1") || _sourceAdress.text.contains("2") || _sourceAdress.text.contains("3") || _sourceAdress.text.contains("4") || _sourceAdress.text.contains("5") || _sourceAdress.text.contains("6") || _sourceAdress.text.contains("7") || _sourceAdress.text.contains("8") || _sourceAdress.text.contains("9") ){
-                                                  findAddress(_sourceAdress, "origem");
-                                                } else {
-                                                  _displaySnackBar(context, "Informe o número da residência");
-                                                }
-                                              }
-
-                                            }
-                                          },
-                                          child: Container(
-                                            child: Icon(Icons.search, color: Colors.white,),
-                                            decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
-                                            width: widthPercent*0.15,
-                                            height: heightPercent*0.08,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    //Row with the number and complement of the origemAdress if provided by CEP
-                                    SizedBox(height: 10.0,),
-                                    _searchCEP == true ? Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          width: widthPercent*0.20,
-                                          child: TextField(
-                                              controller: _sourceAdressNumber,
-                                              decoration: InputDecoration(hintText: " Nº",
-                                                border: InputBorder.none,
-                                                focusedBorder: InputBorder.none,
-                                                enabledBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
-                                              keyboardType: TextInputType.number
-                                          ),
-                                        ),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          width: widthPercent*0.50,
-                                          child: TextField(
-                                            controller: _sourceAdressComplement,
-                                            decoration: InputDecoration(hintText: " Complemento",
-                                              border: InputBorder.none,
-                                              focusedBorder: InputBorder.none,
-                                              enabledBorder: InputBorder.none,
-                                              disabledBorder: InputBorder.none,
-                                              contentPadding:
-                                              EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
-
-                                          ),
-                                        ),
-                                        /*
-                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressNumber, "Nº"),
-                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressComplement, "Complemento"),
-
-                                   */
-                                      ],
-                                    ) : Container(),
-                                    //text informing user that address was found
-                                    origemAddressVerified != "" ? WidgetsConstructor().makeText("Endereço localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
-                                    //address found
-                                    origemAddressVerified != "" ? WidgetsConstructor().makeText(origemAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
-                                    SizedBox(height: 20.0,),
-                                    //second searchbox of destiny address
-                                    origemAddressVerified != "" ? Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Container(
-                                          height: heightPercent*0.08,
-                                          width: widthPercent*0.6,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          child: TextField(controller: _destinyAdress,
-                                            //enabled: _permissionGranted==true ? true : false,
-                                            decoration: InputDecoration(
-                                                prefixIcon: Icon(Icons.home),
-                                                labelText: "Destino",
-                                                border: InputBorder.none,
-                                                focusedBorder: InputBorder.none,
-                                                enabledBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
-                                                hintText: "Para onde?"),
-
-                                          ) ,
-                                        ),//search adress origem
-                                        GestureDetector(
-                                          onTap: (){
-
-                                            //remove the focus to close the keyboard
-                                            FocusScopeNode currentFocus = FocusScope.of(context);
-                                            if (!currentFocus.hasPrimaryFocus) {
-                                              currentFocus.unfocus();
-                                            }
-
-                                            if(_destinyAdress.text.isNotEmpty){
-
-                                              if(_searchCEP==true && _sourceAdress.text.length==8){
-
-                                                if(isNumeric(_destinyAdress.text)) {
-                                                  findAddress(_destinyAdress, "destiny");
-                                                  //scroll down to end of screen
-                                                  final bottomOffset = _scrollController.position.maxScrollExtent;
-                                                  scrollToBottom();
-                                                } else {
-                                                  _displaySnackBar(context, "O CEP deve ter apenas números");
-                                                }
-
-                                              } else {
-
-                                                if(_destinyAdress.text.contains("0") || _destinyAdress.text.contains("1") || _destinyAdress.text.contains("2") || _destinyAdress.text.contains("3") || _destinyAdress.text.contains("4") || _destinyAdress.text.contains("5") || _destinyAdress.text.contains("6") || _destinyAdress.text.contains("7") || _destinyAdress.text.contains("8") || _destinyAdress.text.contains("9") ){
-                                                  findAddress(_destinyAdress, "destiny");
-                                                } else {
-                                                  _displaySnackBar(context, "Informe o número da residência do destino");
-                                                }
-
-                                              }
-
-                                            }
-                                          },
-                                          child: Container(
-                                            child: Icon(Icons.search, color: Colors.white,),
-                                            decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
-                                            width: widthPercent*0.15,
-                                            height: heightPercent*0.08,
-                                          ),
-                                        ),
-                                      ],
-                                    ): Container(),
-                                    SizedBox(height: 10.0,),
-                                    //second Row with the number and complementing textfields for destiny address
-                                    origemAddressVerified != "" && _searchCEP == true ? Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          width: widthPercent*0.20,
-                                          child: TextField(
-                                              controller: _destinyAdressNumber,
-                                              decoration: InputDecoration(hintText: " Nº",
-                                                border: InputBorder.none,
-                                                focusedBorder: InputBorder.none,
-                                                enabledBorder: InputBorder.none,
-                                                disabledBorder: InputBorder.none,
-                                                contentPadding:
-                                                EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
-                                              keyboardType: TextInputType.number
-                                          ),
-                                        ),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
-                                          width: widthPercent*0.50,
-                                          child: TextField(
-                                            controller: _destinyAdressComplement,
-                                            decoration: InputDecoration(hintText: " Complemento",
-                                              border: InputBorder.none,
-                                              focusedBorder: InputBorder.none,
-                                              enabledBorder: InputBorder.none,
-                                              disabledBorder: InputBorder.none,
-                                              contentPadding:
-                                              EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
-
-                                          ),
-                                        ),
-                                        /*
-                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressNumber, "Nº"),
-                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressComplement, "Complemento"),
-
-                                   */
-                                      ],
-                                    ) : Container(),
-                                    //text informing user that the address of destiny was found
-                                    destinyAddressVerified != "" ? WidgetsConstructor().makeText("Destino localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
-                                    //address found
-                                    destinyAddressVerified != "" ? WidgetsConstructor().makeText(destinyAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
-                                    SizedBox(height: 20.0,),
-                                  ],
-                                ),
-                              )
-                          ) ,
-                          SizedBox(height: 30.0,),
-                          //button to include address
-                          _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
-                              ? GestureDetector(
-                            child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.8, 50.0, 0.0, 4.0, "Incluir endereços", Colors.white, 20.0),
-                            onTap: () async {
-
-                              waitAmoment(3);
-                              //o endereço é colocado logo para n precisa esperar o assyncrono
-                              moveClass = await MoveClass().getTheCoordinates(moveClass, origemAddressVerified, destinyAddressVerified);
-                              setState(() {
-                                moveClass.enderecoOrigem = origemAddressVerified;
-                                moveClass.enderecoDestino = destinyAddressVerified;
-                              });
-
-                              calculateThePrice();
-
-                              scrollToBottom();
-
-
-
-                            },
-                          ) : Container(),
-                          SizedBox(height: 30.0,),
-
-                          //Box com o resumo do preço
-                          //moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
-                          moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || moveClass.enderecoOrigem != null && _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
-                          Container(
-                            width: widthPercent*0.9,
-                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 3.0, 4.0),
+                      //fake superior bar
+                      topCustomBar(heightPercent, widthPercent, "Detalhar agendamento", 3),
+                      SizedBox(height: 40.0,),
+                      //box with the address search engine
+                      Container(
+                          width: widthPercent*0.90,
+                          decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 3.0, 2.0),
+                          child: Padding(
+                            padding: EdgeInsets.all(15.0),
                             child: Column(
                               children: [
-                                WidgetsConstructor().makeText("Resumo e orçamento", Colors.blue, 18.0, 10.0, 10.0, "center"),
+                                SizedBox(height: 10.0,),
+                                //text of centralized title
+                                WidgetsConstructor().makeText("Endereços", Colors.blue, 18.0, 5.0, 0.0, "center"),
+                                SizedBox(height: 20.0,),
+                                //Row with button search criteria select (address or CEP)
+                                Row(
+                                  children: [
+                                    //search by address button
+                                    GestureDetector(
+                                      child: _searchCEP == false ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0)
+                                          :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "Endereço", Colors.white, 15.0),
+                                      onTap: (){
+                                        setState(() {
+                                          _searchCEP = false;
+                                        });
+                                      },
+                                    ),
+                                    //search by CEP button
+                                    GestureDetector(
+                                      child:_searchCEP == true ? WidgetsConstructor().makeButton(Colors.lightBlueAccent, Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0)
+                                          :WidgetsConstructor().makeButton(Colors.grey[10], Colors.white, widthPercent*0.40, 50.0, 1.0, 3.0, "CEP", Colors.white, 15.0),
+                                      onTap: (){
+                                        setState(() {
+                                          _searchCEP = true;
+                                        });
+                                      },
+                                    )
 
-                                //endereços e distancia
-                                Padding(
-                                  padding: EdgeInsets.all(10.0),
-                                  child: Column(
-                                    children: [
-                                      WidgetsConstructor().makeText("Endereço de origem: "+origemAddressVerified, Colors.black, 15.0, 0.0, 5.0, null),
-                                      SizedBox(height: 20.0,),
-                                      WidgetsConstructor().makeText("Endereço de destino: "+destinyAddressVerified, Colors.black, 15.0, 0.0, 5.0, null),
-                                      SizedBox(height: 20.0,),
-                                      WidgetsConstructor().makeText("Distância: "+distance.toStringAsFixed(2)+"km", Colors.black, 15.0, 0.0, 5.0, null),
-                                      SizedBox(height: 20.0,),
-                                      WidgetsConstructor().makeText("Custos ", Colors.blue, 15.0, 0.0, 5.0, "center"),
-                                    ],
-                                  ),
-                                ),
-                                //linha da gasolina
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      WidgetsConstructor().makeText("Combustível", Colors.black, 14.0, 15.0, 5.0, null),
-                                      WidgetsConstructor().makeText(finalGasCosts.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
-                                    ],
-                                ),
-                                SizedBox(height: 5.0,),
-                                //linha ajudantes
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    WidgetsConstructor().makeText("Ajudantes", Colors.black, 14.0, 15.0, 5.0, null),
-                                    WidgetsConstructor().makeText(custoAjudantes.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
                                   ],
                                 ),
-                                SizedBox(height: 5.0,),
-                                //linha custo veiculo
+                                SizedBox(height: 10.0,),
+                                _searchCEP == true ? WidgetsConstructor().makeSimpleText("Digíte o CEP somente com números", Colors.blue, 12.0) : Container(),
+                                SizedBox(height: 10.0,),
+                                //first searchbox of origem address
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    WidgetsConstructor().makeText("Veículo", Colors.black, 14.0, 15.0, 5.0, null),
-                                    WidgetsConstructor().makeText((precoBaseFreteiro+moveClass.giveMeThePriceOfEachvehicle(moveClass.carro)).toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                                    Container(
+                                      height: heightPercent*0.08,
+                                      width: widthPercent*0.6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      child: TextField(controller: _sourceAdress,
+                                        //enabled: _permissionGranted==true ? true : false,
+                                        decoration: InputDecoration(
+                                            prefixIcon: Icon(Icons.home),
+                                            labelText: "Origem",
+                                            border: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                            contentPadding:
+                                            EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
+                                            hintText: "De onde?"),
+
+                                      ) ,
+                                    ),//search adress origem
+                                    GestureDetector(
+                                      onTap: (){
+
+                                        //remove the focus to close the keyboard
+                                        FocusScopeNode currentFocus = FocusScope.of(context);
+                                        if (!currentFocus.hasPrimaryFocus) {
+                                          currentFocus.unfocus();
+                                        }
+
+                                        if(_sourceAdress.text.isNotEmpty){
+
+                                          //if the user meant to search by CEP
+                                          if(_searchCEP==true && _sourceAdress.text.length==8){
+                                            if(isNumeric(_sourceAdress.text)){
+                                              findAddress(_sourceAdress, "origem");
+                                            } else {
+                                              _displaySnackBar(context, "O CEP deve conter apenas números e possuí 8 dígitos");
+                                            }
+                                          } else {
+                                            //if the user meant to search by adress name
+                                            if(_sourceAdress.text.contains("0") || _sourceAdress.text.contains("1") || _sourceAdress.text.contains("2") || _sourceAdress.text.contains("3") || _sourceAdress.text.contains("4") || _sourceAdress.text.contains("5") || _sourceAdress.text.contains("6") || _sourceAdress.text.contains("7") || _sourceAdress.text.contains("8") || _sourceAdress.text.contains("9") ){
+                                              findAddress(_sourceAdress, "origem");
+                                            } else {
+                                              _displaySnackBar(context, "Informe o número da residência");
+                                            }
+                                          }
+
+                                        }
+                                      },
+                                      child: Container(
+                                        child: Icon(Icons.search, color: Colors.white,),
+                                        decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
+                                        width: widthPercent*0.15,
+                                        height: heightPercent*0.08,
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                SizedBox(height: 5.0,),
-                                //linha custo móveis
-                                Row(
+                                //Row with the number and complement of the origemAdress if provided by CEP
+                                SizedBox(height: 10.0,),
+                                _searchCEP == true ? Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    WidgetsConstructor().makeText("Móveis", Colors.black, 14.0, 15.0, 5.0, null),
-                                    WidgetsConstructor().makeText(totalExtraProducts.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
-                                  ],
-                                ),
-                                SizedBox(height: 5.0,),
-                                //linha custo por andar
-                                moveClass.escada == true ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    WidgetsConstructor().makeText("Adicional escadas", Colors.black, 14.0, 15.0, 5.0, null),
-                                    WidgetsConstructor().makeText(calculateTheCostsOfLadder().toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      width: widthPercent*0.20,
+                                      child: TextField(
+                                          controller: _sourceAdressNumber,
+                                          decoration: InputDecoration(hintText: " Nº",
+                                            border: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                            contentPadding:
+                                            EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
+                                          keyboardType: TextInputType.number
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      width: widthPercent*0.50,
+                                      child: TextField(
+                                        controller: _sourceAdressComplement,
+                                        decoration: InputDecoration(hintText: " Complemento",
+                                          border: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding:
+                                          EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
+
+                                      ),
+                                    ),
+                                    /*
+                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressNumber, "Nº"),
+                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressComplement, "Complemento"),
+
+                                   */
                                   ],
                                 ) : Container(),
-                                moveClass.escada == true ? SizedBox(height: 5.0,) : Container(),
-                                //linha total
-                                Row(
+                                //text informing user that address was found
+                                origemAddressVerified != "" ? WidgetsConstructor().makeText("Endereço localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
+                                //address found
+                                origemAddressVerified != "" ? WidgetsConstructor().makeText(origemAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
+                                SizedBox(height: 20.0,),
+                                //second searchbox of destiny address
+                                origemAddressVerified != "" ? Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    WidgetsConstructor().makeText("Total", Colors.blue, 17.0, 15.0, 5.0, null),
-                                    WidgetsConstructor().makeText(moveClass.preco==null ? "Calculando" : moveClass.preco.toStringAsFixed(2), Colors.blue, 17.0, 15.0, 5.0, null),
+                                    Container(
+                                      height: heightPercent*0.08,
+                                      width: widthPercent*0.6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      child: TextField(controller: _destinyAdress,
+                                        //enabled: _permissionGranted==true ? true : false,
+                                        decoration: InputDecoration(
+                                            prefixIcon: Icon(Icons.home),
+                                            labelText: "Destino",
+                                            border: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                            contentPadding:
+                                            EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),
+                                            hintText: "Para onde?"),
+
+                                      ) ,
+                                    ),//search adress origem
+                                    GestureDetector(
+                                      onTap: (){
+
+                                        //remove the focus to close the keyboard
+                                        FocusScopeNode currentFocus = FocusScope.of(context);
+                                        if (!currentFocus.hasPrimaryFocus) {
+                                          currentFocus.unfocus();
+                                        }
+
+                                        if(_destinyAdress.text.isNotEmpty){
+
+                                          if(_searchCEP==true && _sourceAdress.text.length==8){
+
+                                            if(isNumeric(_destinyAdress.text)) {
+                                              findAddress(_destinyAdress, "destiny");
+                                              //scroll down to end of screen
+                                              scrollToBottom();
+                                            } else {
+                                              _displaySnackBar(context, "O CEP deve ter apenas números");
+                                            }
+
+                                          } else {
+
+                                            if(_destinyAdress.text.contains("0") || _destinyAdress.text.contains("1") || _destinyAdress.text.contains("2") || _destinyAdress.text.contains("3") || _destinyAdress.text.contains("4") || _destinyAdress.text.contains("5") || _destinyAdress.text.contains("6") || _destinyAdress.text.contains("7") || _destinyAdress.text.contains("8") || _destinyAdress.text.contains("9") ){
+                                              findAddress(_destinyAdress, "destiny");
+                                              scrollToBottom();
+                                            } else {
+                                              _displaySnackBar(context, "Informe o número da residência do destino");
+                                            }
+
+                                          }
+
+                                        }
+                                      },
+                                      child: Container(
+                                        child: Icon(Icons.search, color: Colors.white,),
+                                        decoration: WidgetsConstructor().myBoxDecoration(Colors.blue, Colors.blue, 1.0, 5.0),
+                                        width: widthPercent*0.15,
+                                        height: heightPercent*0.08,
+                                      ),
+                                    ),
                                   ],
-                                ),
+                                ): Container(),
+                                SizedBox(height: 10.0,),
+                                //second Row with the number and complementing textfields for destiny address
+                                origemAddressVerified != "" && _searchCEP == true ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      width: widthPercent*0.20,
+                                      child: TextField(
+                                          controller: _destinyAdressNumber,
+                                          decoration: InputDecoration(hintText: " Nº",
+                                            border: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                            contentPadding:
+                                            EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
+                                          keyboardType: TextInputType.number
+                                      ),
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius:  BorderRadius.all(Radius.circular(4.0)),),
+                                      width: widthPercent*0.50,
+                                      child: TextField(
+                                        controller: _destinyAdressComplement,
+                                        decoration: InputDecoration(hintText: " Complemento",
+                                          border: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          contentPadding:
+                                          EdgeInsets.only(left: 5, bottom: 5, top: 5, right: 5),),
+
+                                      ),
+                                    ),
+                                    /*
+                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressNumber, "Nº"),
+                                  WidgetsConstructor().makeEditTextNumberOnly(_sourceAdressComplement, "Complemento"),
+
+                                   */
+                                  ],
+                                ) : Container(),
+                                //text informing user that the address of destiny was found
+                                destinyAddressVerified != "" ? WidgetsConstructor().makeText("Destino localizado", Colors.blue, 15.0, 10.0, 5.0, "center") : Container(),
+                                //address found
+                                destinyAddressVerified != "" ? WidgetsConstructor().makeText(destinyAddressVerified, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
+                                SizedBox(height: 20.0,),
                               ],
                             ),
-                          ) : Container(),
+                          )
+                      ) ,
+
+                      SizedBox(height: 30.0,),
+                      //button to include address
+                      _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
+                          ? GestureDetector(
+                        child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.8, 50.0, 0.0, 4.0, "Incluir endereços", Colors.white, 20.0),
+                        onTap: () async {
+
+                          waitAmoment(3);
+                          //o endereço é colocado logo para n precisa esperar o assyncrono
+                          moveClass = await MoveClass().getTheCoordinates(moveClass, origemAddressVerified, destinyAddressVerified);
+                          setState(() {
+                            moveClass.enderecoOrigem = origemAddressVerified;
+                            moveClass.enderecoDestino = destinyAddressVerified;
+                          });
+
+                          calculateThePrice();
+
+                          scrollToBottom();
 
 
-                          SizedBox(height: 30.0,),
-                          //the next button
-                          //obs: Ainda falta verificar se a classe tá com td ok até aqui
-                          moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
-                          GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                isLoading=true;
-                                showSchedulePage=true;
-                                showAddressesPage=false;
-                              });
 
-                            },
-                            child: WidgetsConstructor().makeButton(Colors.blue, Colors.transparent, widthPercent*0.85, heightPercent*0.08,
-                                2.0, 4.0, "Aceitar o preço e agendar", Colors.white, 18.0),
-                          ) : Container(),
-
-                        ],
-                      ),
-                      //loading screen
-                      isLoading==true ? Center(
-                        child: CircularProgressIndicator(),
+                        },
                       ) : Container(),
+                      SizedBox(height: 30.0,),
+
+                      //Box com o resumo do preço
+                      //moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
+                      moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || moveClass.enderecoOrigem != null && _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
+                      Container(
+                        width: widthPercent*0.9,
+                        decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 3.0, 4.0),
+                        child: Column(
+                          children: [
+                            WidgetsConstructor().makeText("Resumo e orçamento", Colors.blue, 18.0, 10.0, 10.0, "center"),
+
+                            //endereços e distancia
+                            Padding(
+                              padding: EdgeInsets.all(10.0),
+                              child: Column(
+                                children: [
+                                  WidgetsConstructor().makeText("Endereço de origem: "+origemAddressVerified, Colors.black, 15.0, 0.0, 5.0, null),
+                                  SizedBox(height: 20.0,),
+                                  WidgetsConstructor().makeText("Endereço de destino: "+destinyAddressVerified, Colors.black, 15.0, 0.0, 5.0, null),
+                                  SizedBox(height: 20.0,),
+                                  WidgetsConstructor().makeText("Distância: "+distance.toStringAsFixed(2)+"km", Colors.black, 15.0, 0.0, 5.0, null),
+                                  SizedBox(height: 20.0,),
+                                  WidgetsConstructor().makeText("Custos ", Colors.blue, 15.0, 0.0, 5.0, "center"),
+                                ],
+                              ),
+                            ),
+                            //linha da gasolina
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Combustível", Colors.black, 14.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText(finalGasCosts.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                              ],
+                            ),
+                            SizedBox(height: 5.0,),
+                            //linha ajudantes
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Ajudantes", Colors.black, 14.0, 15.0, 5.0, null),
+                                //WidgetsConstructor().makeText(custoAjudantes.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText((precoCadaAjudante*moveClass.ajudantes).toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+
+                              ],
+                            ),
+                            SizedBox(height: 5.0,),
+                            //linha custo veiculo
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Veículo", Colors.black, 14.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText((precoBaseFreteiro+moveClass.giveMeThePriceOfEachvehicle(moveClass.carro)).toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                              ],
+                            ),
+                            SizedBox(height: 5.0,),
+                            //linha custo móveis
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Móveis", Colors.black, 14.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText(totalExtraProducts.toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                              ],
+                            ),
+                            SizedBox(height: 5.0,),
+                            //linha custo por andar
+                            moveClass.escada == true ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Adicional escadas", Colors.black, 14.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText(calculateTheCostsOfLadder().toStringAsFixed(2), Colors.black, 14.0, 15.0, 5.0, null),
+                              ],
+                            ) : Container(),
+                            moveClass.escada == true ? SizedBox(height: 5.0,) : Container(),
+                            //linha total
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                WidgetsConstructor().makeText("Total", Colors.blue, 17.0, 15.0, 5.0, null),
+                                WidgetsConstructor().makeText(moveClass.preco==null ? "Calculando" : moveClass.preco.toStringAsFixed(2), Colors.blue, 17.0, 15.0, 5.0, null),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ) : Container(),
+
+
+                      SizedBox(height: 30.0,),
+                      //the next button
+                      //obs: Ainda falta verificar se a classe tá com td ok até aqui
+                      moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
+                      GestureDetector(
+                        onTap: (){
+                          setState(() {
+                            isLoading=true;
+                            showChooseTruckerPage=true;
+                            showAddressesPage=false;
+                          });
+
+                        },
+                        child: WidgetsConstructor().makeButton(Colors.blue, Colors.transparent, widthPercent*0.85, heightPercent*0.08,
+                            2.0, 4.0, "Aceitar o preço e agendar", Colors.white, 18.0),
+                      ) : Container(),
+
                     ],
                   );
                 }
@@ -1311,7 +1317,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
-  int scheduleSelection=0;
+  /*
   Widget schedulePage(){
 
     double heightPercent = MediaQuery
@@ -1333,6 +1339,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
             color: Colors.white,
             child: ScopedModelDescendant<SelectedItemsChartModel>(
                 builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+
+                  CollectionReference queryTruckers = FirebaseFirestore.instance.collection(moveClass.carro);
 
                   return Stack(
                     children: [
@@ -1385,6 +1393,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           //container de achar agora
                           //aqui dentro está a listview
                           Container(
+                            height: 250.0,
                             width: widthPercent*0.9,
                             decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
                             child: Column(
@@ -1392,107 +1401,31 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                 WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
                                 SizedBox(height: 20.0,),
 
+
                                 StreamBuilder<QuerySnapshot>(
-                                  //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                  stream: Firestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                  builder: (context, snapshot) {
-                                    switch (snapshot.connectionState) {
-                                      case ConnectionState.waiting:
-                                      case ConnectionState.none:
-                                        return Center( //caso esteja vazio ou esperando exibir um circular progressbar no meio da tela
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      default:
-                                        List<DocumentSnapshot> documents = snapshot
-                                            .data.documents.toList();
-                                        //return Text(snapshot.data.documents[0]['name']);
-                                        return ScopedModelDescendant<UserModel>(
-                                            builder: (BuildContext context, Widget child, UserModel userModel) {
+                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
+                                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                                      if (snapshot.hasError) {
+                                        return Text('Something went wrong');
+                                      }
 
-                                              return ListView.builder(
-                                                shrinkWrap: true,
-                                                itemBuilder: (BuildContext context, int index) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return Text("Loading");
+                                      }
 
-                                                  print(documents[index].data['vehicle']);
-                                                  print(carSelected);
+                                      return new ListView(
+                                        children: snapshot.data.documents.map((DocumentSnapshot document){
+                                          print(document.data()['name']);
+                                          return new ListTile(
+                                            title: new Text(document.data()['name']),
+                                            subtitle: new Text(document.data()['aval'].toString()),
+                                          );
+                                      }).toList(),
+                                      );
 
-                                                  return InkWell(
-                                                    onTap: (){
-                                                      setState(() {
+                                    },
+                                ),
 
-                                                        //agendar
-                                                        print(documents[index].documentID);
-                                                        moveClass.freteiroId = documents[index].documentID;
-                                                        moveClass.userId = UserModel().Uid;
-                                                        showPopupFinal=true;
-                                                        //scheduleAmove();
-
-
-                                                      });
-
-                                                    },
-                                                    child: Padding(
-                                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 0.0),
-                                                      child: Container(
-                                                        child: Padding(
-                                                            padding: EdgeInsets.fromLTRB(
-                                                                0.0, 5.0, 0.0, 5.0),
-                                                            child: Column(
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child:Image.network(documents[index]['image'], height: 100.0, width: 100.0,),
-                                                                    ),
-                                                                    //Image.asset(myData[index]['image']),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.30,
-                                                                      child: Text(documents[index]["name"]),
-                                                                    ),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child: Text("nota: "+documents[index]['aval'].toString()),
-                                                                    )
-
-                                                                  ],
-                                                                ),
-
-                                                                documents[index].data['vehicle'] == carSelected ?
-                                                                WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                                documents[index].data['vehicle'] == carSelected ?
-                                                                WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index].data['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
-                                                                    : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index].data['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
-
-                                                                documents[index].data['vehicle'] != carSelected ?
-                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(carSelected, documents[index].data['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                              ],
-                                                            )
-                                                        ),
-                                                        decoration: WidgetsConstructor()
-                                                            .myBoxDecoration(
-                                                            Colors.white, Colors.blue, 1.0, 5.0),
-                                                      ),
-                                                    ),
-                                                  ); //card com resultado se não tiver filtr
-
-                                                },
-                                                itemCount: documents == null ? 0 : documents.length,
-
-                                              );
-
-                                            }
-
-                                        );
-
-                                    };
-                                  },
-                                )
 
                               ],
                             ),
@@ -1500,6 +1433,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                           //container de agendar
                               : Container(),
+
+                          SizedBox(height: 100.0,),
 
 
                         ],
@@ -1524,8 +1459,355 @@ class _SelectItensPageState extends State<SelectItensPage> {
       ),
     );
   }
+   */
+
+  Widget chooseTruckerPage(){
+
+    double heightPercent = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double widthPercent = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      body: ListView(
+        controller: _scrollController,
+        children: [
+          Container(
+            color: Colors.white,
+            child: ScopedModelDescendant<SelectedItemsChartModel>(
+                builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+
+                  CollectionReference queryTruckers = FirebaseFirestore.instance.collection(moveClass.carro);
+
+                  return Stack(
+                    children: [
+
+                      Column(
+                        children: [
+                          //barra superior
+                          topCustomBar(heightPercent, widthPercent, "Escolher profissional", 4),
+
+                          SizedBox(height: 40.0,),
+
+                          Container(
+                            width: widthPercent*0.9,
+                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+                            child: Column(
+                              children: [
+                                WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
+                                SizedBox(height: 20.0,),
 
 
+                                StreamBuilder<QuerySnapshot>(
+                                  //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
+                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
+                                  builder: (context, snapshot) {
+                                    switch (snapshot.connectionState) {
+                                      case ConnectionState.waiting:
+                                      case ConnectionState.none:
+                                        return Center( //caso esteja vazio ou esperando exibir um circular progressbar no meio da tela
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      default:
+                                        List<DocumentSnapshot> documents = snapshot
+                                            .data.documents.toList();
+                                        //return Text(snapshot.data.documents[0]['name']);
+                                        return ScopedModelDescendant<UserModel>(
+                                            builder: (BuildContext context, Widget child, UserModel userModel) {
+
+                                              return ListView.builder(
+                                                shrinkWrap: true,
+                                                itemBuilder: (BuildContext context, int index) {
+
+                                                  return InkWell(
+                                                    onTap: (){
+                                                      setState(() {
+
+                                                        //agendar
+                                                        truckerClass.image=documents[index]['image'];
+                                                        truckerClass.id=documents[index].id;
+                                                        truckerClass.name=documents[index]['name'];
+                                                        truckerClass.aval=documents[index]['aval'].toDouble();
+
+                                                        //print(documents[index].documentID); apareceu deprecated
+                                                        //moveClass.freteiroId = documents[index].documentID; apareceu deprecated
+                                                        print(documents[index].id);
+                                                        moveClass.freteiroId = documents[index].id;
+                                                        moveClass.userId = UserModel().Uid;
+                                                        showPopupFinal=true;
+                                                        //scheduleAmove();
+
+
+                                                      });
+
+                                                    },
+                                                    child: Padding(
+                                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 0.0),
+                                                      child: Container(
+                                                        child: Padding(
+                                                            padding: EdgeInsets.fromLTRB(
+                                                                0.0, 5.0, 0.0, 5.0),
+                                                            child: Column(
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.20,
+                                                                      child: Container(
+                                                                        width: 100.0,
+                                                                        height: 100.0,
+                                                                        child: CircleAvatar(
+                                                                          backgroundImage: NetworkImage(documents[index]['image']),
+                                                                        ),
+                                                                      ),
+                                                                      //child:Image.network(documents[index]['image'], height: 100.0, width: 100.0,),
+                                                                    ),
+                                                                    //Image.asset(myData[index]['image']),
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.30,
+                                                                      child: Text(documents[index]["name"]),
+                                                                    ),
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.20,
+                                                                      child: Text("nota: "+documents[index]['aval'].toString()),
+                                                                    )
+
+                                                                  ],
+                                                                ),
+
+                                                                documents[index]['vehicle'] == carSelected ?
+                                                                WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
+
+                                                                documents[index]['vehicle'] == carSelected ?
+                                                                WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
+                                                                    : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
+
+                                                                documents[index]['vehicle'] != carSelected ?
+                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(carSelected, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
+
+                                                              ],
+                                                            )
+                                                        ),
+                                                        decoration: WidgetsConstructor()
+                                                            .myBoxDecoration(
+                                                            Colors.white, Colors.blue, 1.0, 5.0),
+                                                      ),
+                                                    ),
+                                                  ); //card com resultado se não tiver filtr
+
+                                                },
+                                                itemCount: documents == null ? 0 : documents.length,
+
+                                              );
+
+                                            }
+
+                                        );
+
+                                    };
+                                  },
+                                )
+
+
+                              ],
+                            ),
+                          )
+
+
+                        ],
+                      ),
+
+                      showPopupFinal == true ? Positioned(
+
+                        top: 25.0,
+                        left: 25.0,
+                        right: 25.0,
+                        child: Container(
+                          decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 4.0, 5.0),
+                          width: 100.0,
+                          child: Column(
+                              children: [
+                                //titulo
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    GestureDetector(
+                                      child:WidgetsConstructor().makeButton(Colors.grey, Colors.black, widthPercent*0.1, 40.0, 1.0, 3.0, "X", Colors.black, 40.0),
+                                      onTap: (){
+                                        setState(() {
+                                          showPopupFinal=false;
+                                        });
+
+                                      },
+                                    ),
+
+                                  ],
+                                ),
+                                WidgetsConstructor().makeText("Confirmar agendamento", Colors.blue, 17.0, 30.0, 10.0, "center"),
+                                SizedBox(height: 20.0,),
+                                //imagem perfil
+                                Container(
+                                  width: 150.0,
+                                  height: 150.0,
+                                  child: CircleAvatar(
+                                    backgroundImage: NetworkImage(truckerClass.image),
+                                  ),
+                                ),
+                                WidgetsConstructor().makeText(truckerClass.name, Colors.blue, 20.0, 15.0, 10.0, "center"),
+                                WidgetsConstructor().makeText("Classificação: "+truckerClass.aval.toStringAsFixed(2), Colors.black, 18.0, 5.0, 15.0, "center"),
+                                SizedBox(height: 30.0,),
+                                GestureDetector(
+                                  child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "agendar", Colors.white, 18.0),
+                                  onTap: (){
+
+                                    setState(() {
+                                      showChooseTruckerPage=false;
+                                      showDatePage=true;
+                                    });
+                                    //scheduleAmove();
+                                  },
+                                ),
+                                SizedBox(height: 40.0,)
+
+                                //Image.network(truckerClass.image, width: 200.0, height: 200.0,),
+
+                              ],
+                          ),),
+                      ) : Container(),
+
+                    ],
+                  );
+
+                }
+
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget datePage(){
+
+    double heightPercent = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double widthPercent = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+
+    return ScopedModelDescendant<SelectedItemsChartModel>(
+      builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+        return Scaffold(
+            key: _scaffoldKey,
+            body: ListView(
+              children: [
+                Stack(
+                  children: [
+
+                    Container(
+                      width: widthPercent,
+                      height: heightPercent,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+
+                          //barra superior
+                          topCustomBar(heightPercent, widthPercent, "Detalhamento", 5),
+
+                          SizedBox(height: 60.0,),
+
+                          //botao que abre o seletor de data
+                          GestureDetector(
+                            child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
+                            onTap: (){
+                              setState(() {
+
+                                _selectDate(context);
+
+                              });
+
+
+                            },
+
+                          ),
+
+                          SizedBox(height: 35.0,),
+                          WidgetsConstructor().makeText("Data escolhida:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                          WidgetsConstructor().makeText(DateServices().convertToStringFromDate(selectedDate), Colors.blue, 20.0, 10.0, 30.0, "center"),
+
+                          SizedBox(height: 60.0,),
+
+                          //botao que abre o seletor de horario
+                          GestureDetector(
+                            child: WidgetsConstructor().makeButton(Colors.blueAccent, Colors.blueAccent, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
+                            onTap: (){
+                              setState(() {
+
+                                _selectTime(context);
+
+                              });
+
+
+                            },
+
+                          ),
+                          SizedBox(height: 35.0,),
+
+                          WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                          WidgetsConstructor().makeText(selectedtime.hour.toString()+":"+selectedtime.minute.toString(), Colors.blue, 20.0, 10.0, 30.0, "center"),
+
+                          SizedBox(height: 35.0,),
+
+                          //botao final
+                          GestureDetector(
+                            child: WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.9, 50.0, 2.0, 10.0, "Confirmar com freteiro", Colors.white, 18.0),
+                            onTap: (){
+                              setState(() {
+
+                                moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
+                                moveClass.timeSelected = selectedtime.hour.toString()+":"+selectedtime.minute.toString();
+
+                                _displaySnackBar(context, "Contactando o freteiro...");
+
+                                scheduleAmove();
+                                //agora salvar no bd (o metodo ja existe).
+                                //precisa adicionar os campos do horario e data no salvamento.
+
+                              });
+
+
+                            },
+
+                          ),
+
+
+                        ],
+                      ) ,
+                    )
+
+
+
+                  ],
+                )
+              ],
+            )
+        );
+      },
+    );
+
+  }
 
 
 
@@ -1726,7 +2008,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
                   } else if(option==4){
                     //volta para pagina 4 (selectAdress)
                     showAddressesPage=true;
-                    showSchedulePage=false;
+                    showChooseTruckerPage=false;
+                  } else if(option==5){
+                    //volta para a página de selecionar o freiteiro , fecha a pagina de selecionar data
+                    showChooseTruckerPage=true;
+                    showDatePage=false;
                   }
 
                 });
@@ -1846,6 +2132,15 @@ class _SelectItensPageState extends State<SelectItensPage> {
   //carrega dados de gasolina e ajudantes
   void loadDataFromDb() async {
 
+    if(precoCadaAjudante==0.0){
+      precoCadaAjudante = await FirestoreServices().loadCommoditiesAjudanteFromDb();
+      precoBaseFreteiro = await FirestoreServices().loadCommoditiesFreteiroFromDb();
+      precoGasolina = await FirestoreServices().loadCommoditiesGasolinaFromDb();
+    }
+
+    //print('preco ajudante '+precoCadaAjudante.toString());
+
+    /*
     final String _collection = 'infos';
     final Firestore _fireStore = Firestore.instance;
     _fireStore.collection(_collection).getDocuments().then((value) {
@@ -1866,6 +2161,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     });
 
+     */
+
   }
 
   void calculateThePrice() async {
@@ -1873,7 +2170,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
       isLoading=true;
     });
     //carrega o preco das coisas do bd
-    loadDataFromDb();
+    //loadDataFromDb();
 
     if(moveClass.longEnderecoDestino == null || moveClass.longEnderecoOrigem == null || moveClass.latEnderecoDestino == null || moveClass.latEnderecoOrigem == null){
       _displaySnackBar(context, "Ops um erro nos endereços. Por favor refaça o processo de infomar os endereços");
@@ -1962,31 +2259,57 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
-
   void scheduleAmove() async {
 
-    Map<String , dynamic> data = {}; //map<String, dynamic> é como o cloud storage armazena as infos
-
-    data['enderecoOrigem'] = moveClass.enderecoOrigem;
-    data['enderecoDestino'] = moveClass.enderecoDestino;
-    data['ps'] = moveClass.ps;
-    data['carro'] = moveClass.carro;
-    data['ajudantes'] = moveClass.ajudantes;
-    data['ps'] = moveClass.ps;
-    data['escada'] = moveClass.escada;
-    if(moveClass.escada==true){
-      data['lancesEscada'] = moveClass.lancesEscada;
-    }
-    data['idFreteiro'] = moveClass.freteiroId;
-    data['valor'] = moveClass.preco;
-    data['idContratante'] = moveClass.userId;
-
-
-    Firestore.instance.collection('agendamentos_aguardando') .add(data);
+    FirestoreServices().scheduleAmoveInBd(moveClass,() {_onSucess(); }, () {_onFailure();});
 
   }
 
+  void _onSucess(){
+    _displaySnackBar(context, "agendado");
+    //continuar aqui
+    /*
+    adicionar uma variavel bool e criar uma nova tela para agendar horário e data antes de salvar no fb
+     */
+  }
 
+  void _onFailure(){
+    _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi feito. Verifique sua internet e tente novamente");
+  }
+
+  _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate, // Refer step 1
+      firstDate: selectedDate,
+      lastDate: DateTime(DateTime.now().year+5),
+      helpText: "Escolha data da mudança", //opcional
+      //confirmText: "ok" //opcional
+      //cancelText: "ok"  //opcional
+    );
+    setState(() {
+      if (picked != null && picked != selectedDate)
+        setState(() {
+          selectedDate = picked;
+        });
+    });
+
+  }
+
+  _selectTime(BuildContext context) async {
+    final TimeOfDay picked = await showTimePicker(
+      context: context,
+      initialTime: selectedtime,
+      helpText: "Escolha o horário", //opcional
+    );
+    setState(() {
+      if (picked != null && picked != selectedDate)
+        setState(() {
+          selectedtime = picked;
+        });
+    });
+
+  }
 
 /*
   void testing(){
