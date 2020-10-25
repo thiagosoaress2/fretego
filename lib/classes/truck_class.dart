@@ -96,7 +96,7 @@ class TruckClass {
   String formatCodeToHumanName(String truck) {
     String formatedStr = "";
 
-    if(truck == "nao"){
+    if(truck == "null"){
       formatedStr = "Nenhum";
     } else if (truck == "carroca") {
       formatedStr = "carroça";

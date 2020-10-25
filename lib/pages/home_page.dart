@@ -25,6 +25,8 @@ class HomePageState extends State<HomePage> {
   bool userIsLoggedIn=false;
   bool loadingController=false;
 
+  final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
+
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<UserModel>(
@@ -38,6 +40,7 @@ class HomePageState extends State<HomePage> {
             }
 
               return Scaffold(
+                key: _scaffoldKey,
                   floatingActionButton: FloatingActionButton(backgroundColor: Colors.blue, child: Icon(Icons.add_circle, size: 50.0,), onPressed: goToRegEntrepeneurPage,),
                   appBar: AppBar(title: WidgetsConstructor().makeSimpleText("Página principal", Colors.white, 15.0),
                     backgroundColor: Colors.blue,
@@ -56,12 +59,14 @@ class HomePageState extends State<HomePage> {
                                 onTap: (){
 
 
-                        //Navigator.of(context).pop();
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => SelectItensPage()));
+                                  if(userModel.Uid != ""){
+                                    Navigator.of(context).pop();
+                                    Navigator.push(context, MaterialPageRoute(
+                                        builder: (context) => SelectItensPage()));
 
-
-
+                                  } else {
+                                    _displaySnackBar(context, "Você precisa fazer login para acessar");
+                                  }
 
 
                                 },
@@ -170,6 +175,20 @@ class HomePageState extends State<HomePage> {
 
   }
 
+  _displaySnackBar(BuildContext context, String msg) {
+
+    final snackBar = SnackBar(
+      content: Text(msg),
+      action: SnackBarAction(
+        label: "Ok",
+        onPressed: (){
+          _scaffoldKey.currentState.hideCurrentSnackBar();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
 }
 
 void updateUserInfo(UserModel userModel, NewAuthService newAuthService) async {
@@ -187,3 +206,4 @@ void updateUserInfo(UserModel userModel, NewAuthService newAuthService) async {
     //FirestoreServices().loadCurrentUserData(firebaseUser, _auth, userModel);
   }
 }
+

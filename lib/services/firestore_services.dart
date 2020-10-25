@@ -194,6 +194,32 @@ class FirestoreServices {
       lancesEscadaFinal = moveClass.lancesEscada;
     }
 
+    //obs: O id do pedido é o mesmo do user já que cada user só pode ter um ativo por vez
+    return schedule.doc(moveClass.userId)
+        .set({
+
+      'endereco_origem': moveClass.enderecoOrigem,
+      'endereco_destino' : moveClass.enderecoDestino,
+      'ps' : moveClass.ps,
+      'carro' : moveClass.carro,
+      'ajudantes' : moveClass.ajudantes,
+      'escada' : escadaFinal,
+      'lances_escada' : lancesEscadaFinal,
+      'id_freteiro' : moveClass.freteiroId,
+      'valor' : moveClass.preco,
+      'id_contratante' : moveClass.userId,
+      'selectedDate' : moveClass.dateSelected,
+      'selectedTime' : moveClass.timeSelected,
+      'nome_freteiro' : moveClass.nomeFreteiro,
+      'moveId' : schedule.id.toString(),
+    })
+        .then((value) => onSuccess())
+        .whenComplete(() {
+          //schedule.id
+        })
+        .catchError((error) => onFailure());
+
+    /*
     return schedule
         .add({
 
@@ -213,6 +239,15 @@ class FirestoreServices {
     })
         .then((value) => onSuccess())
         .catchError((error) => onFailure());
+
+     */
+  }
+
+  Future<void> deleteAscheduledMove(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
+    CollectionReference move = FirebaseFirestore.instance.collection('agendamentos_aguardando');
+    move.doc(moveClass.userId)
+    .delete()
+    .then((value) => onSuccess()).catchError((onError)=> onFailure());
   }
 
 }

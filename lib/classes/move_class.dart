@@ -21,9 +21,13 @@ class MoveClass {
   String freteiroId;
   String userId;
   String nomeFreteiro;
+  String userImage;
+  String freteiroImage;
+  String situacao;
 
   String dateSelected;
   String timeSelected;
+  String idPedido;
 
 
   static const double priceCarroca = 0.00;
@@ -37,7 +41,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.idPedido});
 
   MoveClass.empty();
 
@@ -131,6 +135,15 @@ class MoveClass {
 
     //return dif;
 
+  }
+
+  String formatSituationToHuman(String sit){
+    String formatedSit="nao";
+
+    if(sit == "aguardando_freteiro"){
+      formatedSit = "Aguardando confirmação do profissional";
+    }
+    return formatedSit;
   }
 
   /*  reference

@@ -75,4 +75,9 @@ class DateServices {
     return convertToStringFromDate(today);
   }
 
+  TimeOfDay convertStringToTimeOfDay(String s){
+    TimeOfDay _startTime = TimeOfDay(hour:int.parse(s.split(":")[0]),minute: int.parse(s.split(":")[1]));
+    return _startTime;
+  }
+
 }

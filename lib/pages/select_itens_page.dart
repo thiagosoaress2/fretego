@@ -378,7 +378,14 @@ class _SelectItensPageState extends State<SelectItensPage> {
       moveClass.ps = _psController.text;
     });
 
-    _psController.text = moveClass.ps;
+    if(moveClass.ps!=null){
+      _psController.text = moveClass.ps;
+    }
+
+    if(moveClass.escada==null){
+      moveClass.escada=false;
+    }
+
 
     return ScopedModelDescendant<SelectedItemsChartModel>(
       builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
@@ -453,7 +460,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             ],
                           ),
                           //linha para dizer quantos lances
-                          moveClass.escada!= null ? Container(
+                          moveClass.escada== true ? Container(
                             width: widthPercent*0.8,
                             child: WidgetsConstructor().makeEditTextNumberOnly(_qntLancesEscadaController, "Quantos lances de escada"),
                           ) : Container(),
@@ -482,35 +489,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           ),
                           SizedBox(height: 80.0,),
                           //botão de continuar
-                          /*
-                          GestureDetector(
-                            onTap: (){
-                              setState(() {
-
-                                if(moveClass.escada==true && _qntLancesEscadaController.text.isEmpty){
-                                  _displaySnackBar(context, "Você informou ter escada mas não definiu a quantidade de lances.");
-                                } else {
-
-                                  showCustomItemPage=false;
-                                  showSelectTruckPage=true;
-
-                                  if(_psController.text.isEmpty){
-                                    moveClass.ps = "nao";
-                                  } else {
-                                    moveClass.ps = _psController.text;
-                                  }
-
-                                }
-
-
-                              });
-
-                            },
-                            child: WidgetsConstructor().makeButton(Colors.blue, Colors.transparent, widthPercent*0.85, heightPercent*0.08,
-                                2.0, 4.0, "Continuar", Colors.white, 18.0),
-                          )
-
-                           */
 
                         ],
                       ),
@@ -535,6 +513,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Widget selectTruckPage(){
 
+    initialLoad=false; //ajusta para as proximas telas
+
     double heightPercent = MediaQuery
         .of(context)
         .size
@@ -556,12 +536,12 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
               setState(() {
 
-                if(carSelected!="nao"){
+                if(moveClass.carro!=null){
                   //ajusta a quantidade de ajudantes desta mudança
                   moveClass.ajudantes = helpersContracted;
-                  moveClass.carro = carSelected;
+                  //moveClass.carro = carSelected;
                   SharedPrefsUtils().saveDataFromSelectTruckPage(moveClass);
-
+                  initialLoad=false;
                   showSelectTruckPage=false;
                   showAddressesPage=true;
 
@@ -605,21 +585,29 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                             setState(() {
                               if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="pickup pequena"){
-                                carSelected="pickupP";
+                                //carSelected="pickupP";
+                                moveClass.carro="pickupP";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="carroça"){
-                                carSelected="carroca";
+                                //carSelected="carroca";
+                                moveClass.carro="carroca";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="pickup grande"){
-                                carSelected="pickupG";
+                                //carSelected="pickupG";
+                                moveClass.carro="pickupG";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="kombi aberta"){
-                                carSelected="kombiA";
+                                //carSelected="kombiA";
+                                moveClass.carro="kombiA";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="kombi fechada"){
-                                carSelected="kombiF";
+                                //carSelected="kombiF";
+                                moveClass.carro="kombiF";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="caminhao pequeno aberto"){
-                                carSelected="caminhaoPA";
+                                //carSelected="caminhaoPA";
+                                moveClass.carro="caminhaoPA";
                               } else if(TruckClass.empty().discoverTheBestTruck(selectedItemsChartModel.getTotalVolumeOfChart())=="caminhao baú pequeno") {
-                                carSelected = "caminhaoBP";
+                                //carSelected = "caminhaoBP";
+                                moveClass.carro= "caminhaoBP";
                               } else {
-                                carSelected = "caminhaoBG";
+                                //carSelected = "caminhaoBG";
+                                moveClass.carro= "caminhaoBG";
                               }
                               scrollToBottom();
                             });
@@ -638,7 +626,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "carroca";
+                                  //carSelected = "carroca";
+                                  moveClass.carro = "carroca";
                                   scrollToBottom();
                                 });
                               },
@@ -654,7 +643,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "pickupP";
+                                  //carSelected = "pickupP";
+                                  moveClass.carro = "pickupP";
                                   scrollToBottom();
                                 });
 
@@ -678,7 +668,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "pickupG";
+                                  //carSelected = "pickupG";
+                                  moveClass.carro = "pickupG";
                                   scrollToBottom();
                                 });
 
@@ -694,7 +685,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "kombiA";
+                                  //carSelected = "kombiA";
+                                  moveClass.carro = "kombiA";
                                   scrollToBottom();
                                 });
 
@@ -718,7 +710,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "caminhaoPA";
+                                  //carSelected = "caminhaoPA";
+                                  moveClass.carro = "caminhaoPA";
                                   scrollToBottom();
                                 });
 
@@ -734,7 +727,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "kombiF";
+                                  //carSelected = "kombiF";
+                                  moveClass.carro = "kombiF";
                                   scrollToBottom();
                                 });
 
@@ -757,7 +751,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "caminhaoBP";
+                                  //carSelected = "caminhaoBP";
+                                  moveClass.carro = "caminhaoBP";
                                   scrollToBottom();
                                 });
 
@@ -773,7 +768,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  carSelected = "caminhaoBG";
+                                  //carSelected = "caminhaoBG";
+                                  moveClass.carro = "caminhaoBG";
                                   scrollToBottom();
                                 });
 
@@ -793,7 +789,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         SizedBox(height: 100.0,),
                         Padding(
                           padding: EdgeInsets.all(10.0),
-                          child: WidgetsConstructor().makeText("Veículo selecionado: "+TruckClass.empty().formatCodeToHumanName(carSelected), Colors.blue, 18.0, 10.0, 30.0, null),
+                          child: WidgetsConstructor().makeText("Veículo selecionado: "+TruckClass.empty().formatCodeToHumanName(moveClass.carro.toString()), Colors.blue, 18.0, 10.0, 30.0, null),
                         ),
 
 
@@ -859,13 +855,15 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           onTap: (){
                             setState(() {
 
-                              if(carSelected!="nao"){
+                              if(moveClass.carro!=null){
                                 //ajusta a quantidade de ajudantes desta mudança
-                                moveClass.ajudantes=helpersContracted;
-                                moveClass.carro = carSelected;
-
+                                moveClass.ajudantes = helpersContracted;
+                                //moveClass.carro = carSelected;
+                                SharedPrefsUtils().saveDataFromSelectTruckPage(moveClass);
+                                initialLoad=false;
                                 showSelectTruckPage=false;
                                 showAddressesPage=true;
+
                               } else {
                                 _displaySnackBar(context, "Selecione o tipo de veículo para o frete");
                               }
@@ -899,6 +897,19 @@ class _SelectItensPageState extends State<SelectItensPage> {
         .of(context)
         .size
         .width;
+
+    if(moveClass.enderecoOrigem!=null && initialLoad==false){
+      _sourceAdress.text = moveClass.enderecoOrigem;
+      findAddress(_sourceAdress, "origem");
+      fakeClickIncludeEndereco();
+    }
+
+    if(moveClass.enderecoDestino!=null && initialLoad==false){
+      initialLoad=true;
+      _destinyAdress.text = moveClass.enderecoDestino;
+      findAddress(_destinyAdress, "destiny");
+      fakeClickIncludeEndereco();
+    }
 
     //loadDataFromDb();
 
@@ -1217,7 +1228,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           scrollToBottom();
 
 
-
                         },
                       ) : Container(),
                       SizedBox(height: 30.0,),
@@ -1315,6 +1325,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         onTap: (){
                           setState(() {
                             isLoading=true;
+                            SharedPrefsUtils().saveDataFromSelectAddressPage(moveClass);
                             showChooseTruckerPage=true;
                             showAddressesPage=false;
                           });
@@ -1335,150 +1346,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
     );
 
   }
-
-  /*
-  Widget schedulePage(){
-
-    double heightPercent = MediaQuery
-        .of(context)
-        .size
-        .height;
-    double widthPercent = MediaQuery
-        .of(context)
-        .size
-        .width;
-
-
-    return Scaffold(
-      key: _scaffoldKey,
-      body: ListView(
-        controller: _scrollController,
-        children: [
-          Container(
-            color: Colors.white,
-            child: ScopedModelDescendant<SelectedItemsChartModel>(
-                builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
-
-                  CollectionReference queryTruckers = FirebaseFirestore.instance.collection(moveClass.carro);
-
-                  return Stack(
-                    children: [
-
-                      Column(
-                        children: [
-                          WidgetsConstructor().makeText("Agendar mudança", Colors.blue, 20.0, 40.0, 40.0, "center"),
-
-                          //botoes agendar ou agora
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-
-                              //botao agora
-                              GestureDetector(
-                                child:Container(
-                                  height: 50.0,
-                                  width: widthPercent*0.4,
-                                  decoration: WidgetsConstructor().myBoxDecoration(scheduleSelection==1 ? Colors.blue : Colors.white, scheduleSelection==1 ? Colors.blue : Colors.grey, 3.0, 5.0),
-                                  child: WidgetsConstructor().makeText("Agora", scheduleSelection==1 ? Colors.white : Colors.grey, 18.0, 10.0, 10.0, "center"),
-                                ),
-                                onTap: (){
-                                  setState(() {
-                                    scheduleSelection=1;
-                                    //isLoading=true;
-                                  });
-                                },
-                              ),
-
-                              //botao agendar
-                              GestureDetector(
-                                child:Container(
-                                  height: 50.0,
-                                  width: widthPercent*0.4,
-                                  decoration: WidgetsConstructor().myBoxDecoration(scheduleSelection==2 ? Colors.blue : Colors.white, scheduleSelection==2 ? Colors.blue : Colors.grey, 3.0, 5.0),
-                                  child: WidgetsConstructor().makeText("Agendar", scheduleSelection==2 ? Colors.white : Colors.grey, 18.0, 10.0, 10.0, "center"),
-                                ),
-                                onTap: (){
-                                  setState(() {
-                                    scheduleSelection=2;
-                                  });
-                                },
-                              ),
-
-                            ],
-                          ),
-                          SizedBox(height: 40.0,),
-
-                          scheduleSelection == 1 ?
-                          //container de achar agora
-                          //aqui dentro está a listview
-                          Container(
-                            height: 250.0,
-                            width: widthPercent*0.9,
-                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
-                            child: Column(
-                              children: [
-                                WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
-                                SizedBox(height: 20.0,),
-
-
-                                StreamBuilder<QuerySnapshot>(
-                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                                      if (snapshot.hasError) {
-                                        return Text('Something went wrong');
-                                      }
-
-                                      if (snapshot.connectionState == ConnectionState.waiting) {
-                                        return Text("Loading");
-                                      }
-
-                                      return new ListView(
-                                        children: snapshot.data.documents.map((DocumentSnapshot document){
-                                          print(document.data()['name']);
-                                          return new ListTile(
-                                            title: new Text(document.data()['name']),
-                                            subtitle: new Text(document.data()['aval'].toString()),
-                                          );
-                                      }).toList(),
-                                      );
-
-                                    },
-                                ),
-
-
-                              ],
-                            ),
-                          )
-
-                          //container de agendar
-                              : Container(),
-
-                          SizedBox(height: 100.0,),
-
-
-                        ],
-                      ),
-
-                      showPopupFinal == true ? Positioned(
-                        bottom: 40.0,
-                        top: 40.0,
-                        left: 40.0,
-                        right: 40.0,
-                        child: Container(color: Colors.yellow, height: 100.0, width: 100.0,),
-                      ) : Container(),
-
-                    ],
-                  );
-
-                }
-
-            ),
-          )
-        ],
-      ),
-    );
-  }
-   */
 
   Widget chooseTruckerPage(){
 
@@ -1511,8 +1378,33 @@ class _SelectItensPageState extends State<SelectItensPage> {
                           //barra superior
                           topCustomBar(heightPercent, widthPercent, "Escolher profissional", 4),
 
-                          SizedBox(height: 40.0,),
+                          SizedBox(height: 20.0,),
+                          moveClass.nomeFreteiro != null ?
+                          Container(
+                          child: Padding(
+                            padding: EdgeInsets.all(10.0),
+                            child: Column(
+                              children: [
 
+                                WidgetsConstructor().makeText("Você já selecionou um profissional", Colors.blue, 17.0, 15.0, 12.0, "center"),
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: NetworkImage(moveClass.freteiroImage),
+                                    ),
+                                    WidgetsConstructor().makeText(moveClass.nomeFreteiro, Colors.blue, 16.0, 10.0, 10.0, "center"),
+                                  ],
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                ),
+
+                              ],
+                            ),
+                          ),
+                          width: widthPercent*0.8,
+                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+                          ) : Container(),
+
+                          SizedBox(height: 20.0,),
                           Container(
                             width: widthPercent*0.9,
                             decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
@@ -1559,6 +1451,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                                         moveClass.freteiroId = documents[index].id;
                                                         moveClass.userId = UserModel().Uid;
                                                         moveClass.nomeFreteiro = documents[index]['name'];
+                                                        moveClass.freteiroImage = documents[index]['image'];
+                                                        SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
+
+
                                                         showPopupFinal=true;
                                                         //scheduleAmove();
 
@@ -1603,15 +1499,15 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                                                   ],
                                                                 ),
 
-                                                                documents[index]['vehicle'] == carSelected ?
+                                                                documents[index]['vehicle'] == moveClass.carro ?
                                                                 WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
 
-                                                                documents[index]['vehicle'] == carSelected ?
+                                                                documents[index]['vehicle'] == moveClass.carro ?
                                                                 WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
                                                                     : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
 
-                                                                documents[index]['vehicle'] != carSelected ?
-                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(carSelected, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
+                                                                documents[index]['vehicle'] != moveClass.carro ?
+                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(moveClass.carro, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
 
                                                               ],
                                                             )
@@ -1644,6 +1540,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                         ],
                       ),
+
+
 
                       showPopupFinal == true ? Positioned(
 
@@ -1689,6 +1587,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                   onTap: (){
 
                                     setState(() {
+
                                       showChooseTruckerPage=false;
                                       showDatePage=true;
                                     });
@@ -1726,108 +1625,123 @@ class _SelectItensPageState extends State<SelectItensPage> {
         .size
         .width;
 
+    if(moveClass.dateSelected!=null){
+        selectedDate = DateServices().convertToDateFromString(moveClass.dateSelected);
+    }
+
+    if(moveClass.timeSelected!=null){
+      selectedtime = DateServices().convertStringToTimeOfDay(moveClass.timeSelected);
+    }
+
 
     return ScopedModelDescendant<SelectedItemsChartModel>(
       builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
-        return Scaffold(
-            key: _scaffoldKey,
-            body: ListView(
-              children: [
-                Stack(
+        return ScopedModelDescendant<UserModel>(
+          builder: (BuildContext context, Widget widget, UserModel userModel){
+            return Scaffold(
+                key: _scaffoldKey,
+                body: ListView(
                   children: [
+                    Stack(
+                      children: [
 
-                    Container(
-                      width: widthPercent,
-                      height: heightPercent,
-                      color: Colors.white,
-                      child: Column(
-                        children: [
+                        Container(
+                          width: widthPercent,
+                          height: heightPercent,
+                          color: Colors.white,
+                          child: Column(
+                            children: [
 
-                          //barra superior
-                          topCustomBar(heightPercent, widthPercent, "Detalhamento", 5),
+                              //barra superior
+                              topCustomBar(heightPercent, widthPercent, "Detalhamento", 5),
 
-                          SizedBox(height: 60.0,),
+                              SizedBox(height: 60.0,),
 
-                          //botao que abre o seletor de data
-                          GestureDetector(
-                            child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
-                            onTap: (){
-                              setState(() {
+                              //botao que abre o seletor de data
+                              GestureDetector(
+                                child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
+                                onTap: (){
+                                  setState(() {
 
-                                _selectDate(context);
+                                    _selectDate(context);
 
-                              });
-
-
-                            },
-
-                          ),
-
-                          SizedBox(height: 35.0,),
-                          WidgetsConstructor().makeText("Data escolhida:", Colors.black, 20.0, 0.0, 10.0, "center"),
-                          WidgetsConstructor().makeText(DateServices().convertToStringFromDate(selectedDate), Colors.blue, 20.0, 10.0, 30.0, "center"),
-
-                          SizedBox(height: 60.0,),
-
-                          //botao que abre o seletor de horario
-                          GestureDetector(
-                            child: WidgetsConstructor().makeButton(Colors.blueAccent, Colors.blueAccent, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
-                            onTap: (){
-                              setState(() {
-
-                                _selectTime(context);
-
-                              });
+                                  });
 
 
-                            },
+                                },
 
-                          ),
-                          SizedBox(height: 35.0,),
+                              ),
 
-                          WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
-                          WidgetsConstructor().makeText(selectedtime.format(context), Colors.blue, 20.0, 10.0, 30.0, "center"),
+                              SizedBox(height: 35.0,),
+                              WidgetsConstructor().makeText("Data escolhida:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                              WidgetsConstructor().makeText(DateServices().convertToStringFromDate(selectedDate), Colors.blue, 20.0, 10.0, 30.0, "center"),
 
-                          SizedBox(height: 35.0,),
+                              SizedBox(height: 60.0,),
 
-                          //botao final
-                          GestureDetector(
-                            child: WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.9, 50.0, 2.0, 10.0, "Confirmar com freteiro", Colors.white, 18.0),
-                            onTap: (){
-                              setState(() {
+                              //botao que abre o seletor de horario
+                              GestureDetector(
+                                child: WidgetsConstructor().makeButton(Colors.blueAccent, Colors.blueAccent, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
+                                onTap: (){
+                                  setState(() {
 
-                                moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
-                                moveClass.timeSelected = selectedtime.format(context);
+                                    _selectTime(context);
 
-                                _displaySnackBar(context, "Contactando o freteiro...");
-
-                                SharedPrefsUtils().saveMoveClassToShared(moveClass);
-                                scheduleAmove();
-
-                                waitAmoment(3);
-                                showDatePage=false;
-                                showFinalPage=true;
-                                //agora salvar no bd (o metodo ja existe).
-                                //precisa adicionar os campos do horario e data no salvamento.
-
-                              });
+                                  });
 
 
-                            },
+                                },
 
-                          ),
+                              ),
+                              SizedBox(height: 35.0,),
+
+                              WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                              WidgetsConstructor().makeText(selectedtime.format(context), Colors.blue, 20.0, 10.0, 30.0, "center"),
+
+                              SizedBox(height: 35.0,),
+
+                              //botao final
+                              GestureDetector(
+                                child: WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.9, 50.0, 2.0, 10.0, "Confirmar com freteiro", Colors.white, 18.0),
+                                onTap: (){
+                                  setState(() {
+
+                                    moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
+                                    moveClass.timeSelected = selectedtime.format(context);
+
+                                    _displaySnackBar(context, "Contactando o freteiro...");
+
+                                    moveClass.situacao = "aguardando_freteiro";
+
+                                    moveClass.userId = userModel.Uid;
+                                    SharedPrefsUtils().saveMoveClassToShared(moveClass);
+                                    scheduleAmove();
+
+                                    waitAmoment(3);
+                                    showDatePage=false;
+                                    showFinalPage=true;
+                                    //agora salvar no bd (o metodo ja existe).
+                                    //precisa adicionar os campos do horario e data no salvamento.
+
+                                  });
 
 
-                        ],
-                      ) ,
+                                },
+
+                              ),
+
+
+                            ],
+                          ) ,
+                        )
+
+
+
+                      ],
                     )
-
-
-
                   ],
                 )
-              ],
-            )
+            );
+          },
         );
       },
     );
@@ -1847,34 +1761,56 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      body: Container(
-        width: widthPercent,
-        height: heightPercent,
-        color: Colors.white,
-        child: Padding(
-          padding: EdgeInsets.all(15.0),
-          child: Column(
-            children: [
+      body: ListView(
+        children: [
+          Container(
+              width: widthPercent,
+              height: heightPercent,
+              color: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.all(15.0),
+                child: Column(
+                  children: [
 
-              SizedBox(height: 50.0,),
-              WidgetsConstructor().makeText("Pronto. Agora aguarde a confirmação de "+moveClass.nomeFreteiro.toString(), Colors.blue, 17.0, 20.0, 20.0, "center"),
-              WidgetsConstructor().makeText("Resumo", Colors.black, 15.0, 0.0, 20.0, "center"),
-              WidgetsConstructor().makeText("Endereço de origem: "+moveClass.enderecoOrigem.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Endereço de destino: "+moveClass.enderecoDestino.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Data: "+moveClass.dateSelected.toString()+" às "+moveClass.timeSelected.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Freteiro: "+moveClass.nomeFreteiro.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Veículo: "+TruckClass().formatCodeToHumanName(moveClass.carro), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Nº ajudantes: "+moveClass.ajudantes.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
-              WidgetsConstructor().makeText("Preço: R\$"+moveClass.preco.toStringAsFixed(2), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    SizedBox(height: 15.0,),
+                    WidgetsConstructor().makeText("Pronto. Agora aguarde a confirmação de "+moveClass.nomeFreteiro.toString(), Colors.blue, 17.0, 20.0, 20.0, "center"),
+                    WidgetsConstructor().makeText("Resumo", Colors.black, 15.0, 0.0, 20.0, "center"),
+                    WidgetsConstructor().makeText("Endereço de origem: "+moveClass.enderecoOrigem.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Endereço de destino: "+moveClass.enderecoDestino.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Data: "+moveClass.dateSelected.toString()+" às "+moveClass.timeSelected.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Freteiro: "+moveClass.nomeFreteiro.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Veículo: "+TruckClass().formatCodeToHumanName(moveClass.carro), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Nº ajudantes: "+moveClass.ajudantes.toString(), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Preço: R\$"+moveClass.preco.toStringAsFixed(2), Colors.black, 15.0, 0.0, 10.0, "no"),
+                    WidgetsConstructor().makeText("Situação: "+MoveClass().formatSituationToHuman(moveClass.situacao), Colors.redAccent, 15.0, 0.0, 12.0, "no"),
 
-              SizedBox(height: 40.0,),
-              WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.75, 50.0, 2.0, 4.0, "Fechar", Colors.white, 16.0),
+                    SizedBox(height: 25.0,),
+                    GestureDetector(
+                      onTap: (){
+                        Navigator.of(context).pop();
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => HomePage()));
+                      },
+                      child:WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.75, 50.0, 2.0, 4.0, "Fechar", Colors.white, 16.0),
+                    ),
+
+                    SizedBox(height: 10.0,),
+                    GestureDetector(
+                      onTap: (){
+                          SharedPrefsUtils().clearSelectedTrucker(moveClass);
+                          FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucessDelete(); }, () { _onFailureDelete(); });
+                      },
+                      child:WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.75, 50.0, 2.0, 4.0, "Cancelar", Colors.white, 16.0),
+                    ),
 
 
-            ],
+
+                  ],
+                ),
+              )
           ),
-        )
-      ),
+        ],
+      )
     );
 
   }
@@ -1885,12 +1821,37 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
 
 
+  Future<void> fakeClickIncludeEndereco() async {
+
+    moveClass = await MoveClass().getTheCoordinates(moveClass, origemAddressVerified, destinyAddressVerified);
+    setState(() {
+      moveClass.enderecoOrigem = origemAddressVerified;
+      moveClass.enderecoDestino = destinyAddressVerified;
+    });
+
+    calculateThePrice();
+
+    scrollToBottom();
+
+  }
 
   Future<void> loadMoveClassFromShared() async {
     setState(() async {
       moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs();
+      shouldOpenOnlyResume();
     });
 
+
+
+  }
+
+  void shouldOpenOnlyResume(){
+    if(moveClass.situacao!=null){
+      setState(() {
+        showSelectItemPage=false;
+        showFinalPage=true;
+      });
+    }
   }
 
   Future<void> loadItemsFromShared( SelectedItemsChartModel selectedItemsChartModel) async {
@@ -2101,6 +2062,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                     showSelectItemPage=true;
                   } else if(option==2) {
                     //volta pra pagina 2 (customItemPage)
+                    isLoading=false;
                     showCustomItemPage=true;
                     showSelectTruckPage=false;
                   } else if(option==3){
@@ -2304,16 +2266,13 @@ class _SelectItensPageState extends State<SelectItensPage> {
         finalGasCosts=5.00;
       }
       custoTotal=custoTotal+finalGasCosts;
-      print("custo total: "+custoTotal.toStringAsFixed(2));
       
       //custo com ajudantes
       custoAjudantes = moveClass.ajudantes*precoCadaAjudante;
       custoTotal=custoTotal+custoAjudantes;
-      print("custo total: "+custoTotal.toStringAsFixed(2));
 
       //custo de cada caminhão adicionado
       custoTotal=custoTotal+precoBaseFreteiro+moveClass.giveMeThePriceOfEachvehicle(moveClass.carro);
-      print("custo total: "+custoTotal.toStringAsFixed(2));
 
       //custo de cada móvel
       totalExtraProducts = 0.0;
@@ -2322,7 +2281,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
         totalExtraProducts = totalExtraProducts+3.00;
       });
       custoTotal = custoTotal+totalExtraProducts;
-      print("custo totoal final: "+custoTotal.toStringAsFixed(2));
 
      custoTotal = calculateTheCostsOfLadder()+custoTotal;
 
@@ -2378,6 +2336,18 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   void _onFailure(){
     _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi feito. Verifique sua internet e tente novamente");
+  }
+
+  void _onSucessDelete(){
+    _displaySnackBar(context, "O agendamento foi cancelado.");
+    //continuar aqui
+    /*
+    adicionar uma variavel bool e criar uma nova tela para agendar horário e data antes de salvar no fb
+     */
+  }
+
+  void _onFailureDelete(){
+    _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi cancelado. Tente novamente em instantes.");
   }
 
   _selectDate(BuildContext context) async {

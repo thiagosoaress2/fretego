@@ -9,6 +9,10 @@ class SharedPrefsUtils {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('enderecoOrigem', moveClass.enderecoOrigem);
     await prefs.setString('enderecoDestino', moveClass.enderecoDestino);
+    await prefs.setDouble('latEnderecoOrigem', moveClass.latEnderecoOrigem);
+    await prefs.setDouble('longEnderecoOrigem', moveClass.longEnderecoOrigem);
+    await prefs.setDouble('latEnderecoDestino', moveClass.latEnderecoDestino);
+    await prefs.setDouble('longEnderecoDestino', moveClass.longEnderecoDestino);
     await prefs.setInt('ajudantes', moveClass.ajudantes);
     await prefs.setString('carro', moveClass.carro);
     await prefs.setDouble('preco', moveClass.preco);
@@ -19,6 +23,10 @@ class SharedPrefsUtils {
     await prefs.setString('nomeFreteiro', moveClass.nomeFreteiro);
     await prefs.setString('dateSelected', moveClass.dateSelected);
     await prefs.setString('timeSelected', moveClass.timeSelected);
+    await prefs.setString('userImage', moveClass.userImage);
+    await prefs.setString('freteiroImage', moveClass.freteiroImage);
+    await prefs.setString('situacao', moveClass.situacao);
+    await prefs.setString('userId', moveClass.userId);
 
   }
 
@@ -31,6 +39,10 @@ class SharedPrefsUtils {
     if(endereco!= null){ //se for diferente de null é pq tem coisa armazenada
       moveClass.enderecoOrigem = (prefs.getString('enderecoOrigem'));
       moveClass.enderecoDestino = (prefs.getString('enderecoDestino'));
+      moveClass.latEnderecoOrigem = (prefs.getDouble('latEnderecoOrigem'));
+      moveClass.longEnderecoOrigem = (prefs.getDouble('longEnderecoOrigem'));
+      moveClass.latEnderecoDestino = (prefs.getDouble('latEnderecoDestino'));
+      moveClass.longEnderecoDestino = (prefs.getDouble('longEnderecoDestino'));
       moveClass.ajudantes = (prefs.getInt('ajudantes'));
       moveClass.carro = (prefs.getString('carro'));
       moveClass.preco = (prefs.getDouble('preco'));
@@ -41,6 +53,10 @@ class SharedPrefsUtils {
       moveClass.nomeFreteiro = (prefs.getString('nomeFreteiro'));
       moveClass.dateSelected = (prefs.getString('dateSelected'));
       moveClass.timeSelected = (prefs.getString('timeSelected'));
+      moveClass.userImage = (prefs.getString('userImage'));
+      moveClass.freteiroImage = (prefs.getString('freteiroImage'));
+      moveClass.situacao = (prefs.getString('situacao'));
+      moveClass.userId = (prefs.getString('userId'));
     }
 
     return moveClass;
@@ -117,6 +133,61 @@ class SharedPrefsUtils {
     await prefs.setInt('ajudantes', moveClass.ajudantes);
     await prefs.setString('carro', moveClass.carro);
 
+  }
+
+  Future<void> saveDataFromSelectAddressPage(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  }
+
+  Future<void> saveDataFromSelectTruckERPage(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('freteiroId', moveClass.freteiroId);
+    await prefs.setString('freteiroImage', moveClass.freteiroImage);
+    await prefs.setString('nomeFreteiro', moveClass.nomeFreteiro);
+
+  }
+
+  Future<void> clearSharedPrefs(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('enderecoOrigem');
+    await prefs.remove('enderecoDestino');
+    await prefs.remove('latEnderecoOrigem');
+    await prefs.remove('longEnderecoOrigem');
+    await prefs.remove('latEnderecoDestino');
+    await prefs.remove('longEnderecoDestino');
+    await prefs.remove('ajudantes');
+    await prefs.remove('carro');
+    await prefs.remove('preco');
+    await prefs.remove('ps');
+    await prefs.remove('escada');
+    await prefs.remove('lancesEscada');
+    await prefs.remove('freteiroId');
+    await prefs.remove('nomeFreteiro');
+    await prefs.remove('dateSelected');
+    await prefs.remove('timeSelected');
+    await prefs.remove('userImage');
+    await prefs.remove('freteiroImage');
+    await prefs.remove('situacao');
+
+
+  }
+
+  Future<void> clearSelectedTrucker(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('freteiroId');
+    await prefs.remove('nomeFreteiro');
+    await prefs.remove('dateSelected');
+    await prefs.remove('timeSelected');
+    await prefs.remove('freteiroImage');
+    await prefs.remove('situacao');
   }
 
 }
