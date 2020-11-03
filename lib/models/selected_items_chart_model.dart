@@ -16,12 +16,15 @@ class SelectedItemsChartModel extends Model {
     itemsSelectedCart.add(itemClass);
   }
 
+  get getList => itemsSelectedCart;
+
   int getItemsChartSize(){
     return itemsSelectedCart.length;
   }
 
   void clearChart(){
     itemsSelectedCart = [];
+    notifyListeners();
   }
 
   double getTotalVolumeOfChart(){

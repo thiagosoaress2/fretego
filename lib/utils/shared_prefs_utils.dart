@@ -30,9 +30,8 @@ class SharedPrefsUtils {
 
   }
 
-  Future<MoveClass> loadMoveClassFromSharedPrefs() async {
-
-    MoveClass moveClass = MoveClass.empty();
+  Future<MoveClass> loadMoveClassFromSharedPrefs(MoveClass moveClass) async {
+    //MoveClass moveClass = MoveClass.empty();
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String endereco = (prefs.getString('enderecoOrigem').toString());
@@ -81,6 +80,22 @@ class SharedPrefsUtils {
     }
   }
 
+  //obs: Este método precisa ser chamado antes de apagar a lista
+  Future<void> clearListInShared(int size) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    int cont=0;
+    while(cont<size){
+      await prefs.remove('item_name'+cont.toString());
+      await prefs.remove('item_image'+cont.toString());
+      await prefs.remove('item_single_person'+cont.toString());
+      await prefs.remove('item_volume'+cont.toString());
+      await prefs.remove('item_weight'+cont.toString());
+      await prefs.remove('item_list_size');
+    }
+
+  }
+
   Future<bool> thereIsItemsSavedInShared() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -93,6 +108,7 @@ class SharedPrefsUtils {
 
   }
 
+  //esta funçao está ultrapassada e foi substituida pela abaixo. Agora busca as infos direto na classe.
   Future<List<ItemClass>> loadListOfItemsInShared() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -113,6 +129,30 @@ class SharedPrefsUtils {
     }
 
     return itemsSelectedCart;
+
+  }
+
+  Future<MoveClass> loadListOfItemsInSharedToMoveClass(MoveClass moveClass) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int size = (prefs.getInt('item_list_size'));
+    List<ItemClass> itemsSelectedCart =[];
+
+    int cont=0;
+    while(cont<size){
+      ItemClass itemClass = ItemClass.empty();
+      itemClass.name = prefs.getString('item_name'+cont.toString());
+      itemClass.image = prefs.getString('item_image'+cont.toString());
+      itemClass.singlePerson = prefs.getBool('item_single_person'+cont.toString());
+      itemClass.volume = prefs.getDouble('item_volume'+cont.toString());
+      itemClass.weight = prefs.getDouble('item_weigth'+cont.toString());
+      itemsSelectedCart.add(itemClass);
+      cont++;
+    }
+
+    moveClass.itemsSelectedCart=itemsSelectedCart;
+    //return itemsSelectedCart;
+    return moveClass;
 
   }
 
@@ -178,7 +218,7 @@ class SharedPrefsUtils {
 
   }
 
-  Future<void> clearSelectedTrucker(MoveClass moveClass) async {
+  Future<void> clearScheduledMove() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -189,5 +229,18 @@ class SharedPrefsUtils {
     await prefs.remove('freteiroImage');
     await prefs.remove('situacao');
   }
+
+  Future<bool> checkIfThereIsScheduledMove() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String sit = (prefs.getString('situacao')) ?? 'nao';  //?? significa que vai assignar 2 se for null
+    if(sit=='nao'){
+      return false;
+    } else {
+      return true;
+    }
+
+  }
+
 
 }

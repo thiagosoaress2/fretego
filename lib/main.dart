@@ -20,6 +20,7 @@ class MyApp extends StatefulWidget {
   //new firebase auth
   @override
   _MyAppState createState() => _MyAppState();
+
 }
 
 class _MyAppState extends State<MyApp> {
@@ -84,6 +85,7 @@ class _MyAppState extends State<MyApp> {
           model: newAuthService,
           child: MaterialApp(
             title: 'Fretes Go',
+            debugShowCheckedModeBanner: false,
             theme: ThemeData(
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,

@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'package:geocoder/geocoder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home_page.dart';
 
@@ -89,6 +90,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
   double totalExtraProducts = 0.00;
 
   bool showResume=false;
+  bool isUpdating=false;
 
   //String carSelected="nao";
 
@@ -101,6 +103,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
   Future<void> initState(){
     super.initState();
 
+    //deleteForTests();
+
+    checkIfExistsInShared();
 
     /* para testes
     setState(() {
@@ -109,8 +114,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
     });
 
      */
-
-    loadMoveClassFromShared();
 
     //listener da busca
     _searchController.addListener(() {
@@ -129,19 +132,34 @@ class _SelectItensPageState extends State<SelectItensPage> {
     super.dispose();
   }
 
+  Future<void> deleteForTests() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('situacao');
+  }
+
   @override
   Widget build(BuildContext context) {
 
-    return
-      showSelectItemPage==true ? selectItemsPage()
-      : showCustomItemPage==true ? customItemPage()
-      : showSelectTruckPage==true ? selectTruckPage()
-      : showAddressesPage==true ?  selectAdressPage()
-      : showChooseTruckerPage==true ? chooseTruckerPage()
-      : showDatePage==true ? datePage()
-      : showFinalPage==true ? finalPage()
-      :showListOfItemsEdit==true ? editListOfItemsPage()
-          : Container();
+    return ScopedModelDescendant<SelectedItemsChartModel>(
+      builder: (BuildContext context, Widget child, SelectedItemsChartModel selectedItemsChartModel) {
+
+        if(initialLoad==false){
+          initialLoad=true;
+          loadItemsFromShared(selectedItemsChartModel);
+        }
+
+        return showSelectItemPage==true ? selectItemsPage()
+            : showCustomItemPage==true ? customItemPage()
+        : showSelectTruckPage==true ? selectTruckPage()
+        : showAddressesPage==true ?  selectAdressPage()
+        : showChooseTruckerPage==true ? chooseTruckerPage()
+        : showDatePage==true ? datePage()
+        : showFinalPage==true ? finalPage()
+        :showListOfItemsEdit==true ? editListOfItemsPage()
+        : Container();
+
+    },
+    );
 
     /*
     return  showCustomItemPage==false && showSelectTruckPage==false
@@ -167,10 +185,19 @@ class _SelectItensPageState extends State<SelectItensPage> {
         return ScopedModelDescendant<SelectedItemsChartModel>(
           builder: (BuildContext context, Widget child, SelectedItemsChartModel selectedItemsChartModel){
 
+            /*
             if(initialLoad==false){
               initialLoad=true;
               loadItemsFromShared(selectedItemsChartModel);
             }
+             */
+            /*
+            if(initialLoad==false){
+              initialLoad=true;
+              loadItemsFromShared(selectedItemsChartModel);
+            }
+
+             */
 
 
             return Scaffold(
@@ -205,6 +232,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
                     icon: Icon(Icons.arrow_back, color: Colors.white,),
                     onPressed: () {
                       Navigator.of(context).pop();
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => HomePage()));
                     },),
 
                 ),
@@ -1327,6 +1356,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             isLoading=true;
                             SharedPrefsUtils().saveDataFromSelectAddressPage(moveClass);
                             showChooseTruckerPage=true;
+                            isUpdating=false;
                             showAddressesPage=false;
                           });
 
@@ -1365,10 +1395,449 @@ class _SelectItensPageState extends State<SelectItensPage> {
         children: [
           Container(
             color: Colors.white,
+            child: ScopedModelDescendant<UserModel>(
+                builder: (BuildContext context, Widget widget, UserModel userModel){
+
+
+                  if(isUpdating==false) {
+                    isUpdating = true;
+                    checkIfExistsAscheduledMoveInFb(userModel);
+                  }
+
+                  final double lat = moveClass.latEnderecoOrigem;
+                  final double long = moveClass.longEnderecoOrigem;
+                  final double latlong = lat + long;  //esta latlong é um double para calculos
+                  double startAtval = latlong-(0.01*0.6);
+                  final double endAtval = latlong+(0.01*0.6);
+                  final double dif = -0.07576889999999992;
+                  startAtval = (dif+startAtval); //ajusta erro que percebi testando
+
+                  Query query =
+                  FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
+                      .where('latlong', isLessThan: endAtval);
+
+
+                  /*  funciona mas retorna resultaod fora de uma lista
+                  FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
+                      .where('latlong', isLessThan: endAtval).get().then((querySnapshot) {
+                    querySnapshot.docs.forEach((result) {
+                      print(result.data());
+                    });
+                  });
+
+                   */
+
+
+
+                  //https://morioh.com/p/b7b4a0b44c9c
+                  //video para seguir
+
+                  return Stack(
+                    children: [
+
+                      Column(
+                        children: [
+                          //barra superior
+                          topCustomBar(heightPercent, widthPercent, "Escolher profissional", 4),
+
+                          SizedBox(height: 20.0,),
+                          moveClass.nomeFreteiro != null ?
+                          Container(
+                            child: Padding(
+                              padding: EdgeInsets.all(10.0),
+                              child: Column(
+                                children: [
+
+                                  WidgetsConstructor().makeText("Você já selecionou um profissional", Colors.blue, 17.0, 15.0, 12.0, "center"),
+                                  Row(
+                                    children: [
+                                      moveClass.freteiroImage != null
+                                      ? CircleAvatar(
+                                        backgroundImage: NetworkImage(moveClass.freteiroImage),
+                                      )
+                                      : Image.asset('images/carrinhobaby'),
+                                      WidgetsConstructor().makeText(moveClass.nomeFreteiro, Colors.blue, 16.0, 10.0, 10.0, "center"),
+                                    ],
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  ),
+
+                                ],
+                              ),
+                            ),
+                            width: widthPercent*0.8,
+                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+                          ) : Container(),
+
+                          SizedBox(height: 20.0,),
+
+                          Container(
+                            height: heightPercent*0.6,
+                            width: widthPercent*0.9,
+                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+                            child: Column(
+                              children: [
+                                WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
+                                SizedBox(height: 20.0,),
+
+                                //tentando modelo do site do fireastore update
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: query.snapshots(),
+                                    builder: (context, stream){
+
+                                      if (stream.connectionState == ConnectionState.waiting) {
+                                        return Center(child: CircularProgressIndicator());
+                                      }
+
+                                      if (stream.hasError) {
+                                        return Center(child: Text(stream.error.toString()));
+                                      }
+
+                                      QuerySnapshot querySnapshot = stream.data;
+
+                                      return
+                                          querySnapshot.size == 0
+                                          ? Center(child: Text("Não encontramos profissionais próximos."),)
+                                          : Expanded(child: ListView.builder(
+                                              itemCount: querySnapshot.size,
+                                              //itemBuilder: (context, index) => Trucker(querySnapshot.docs[index]),
+                                              itemBuilder: (context, index) {
+
+
+                                                Map<String, dynamic> map = querySnapshot.docs[index].data();
+                                                return GestureDetector(
+                                                  onTap: (){
+
+                                                    setState(() {
+
+                                                      print(querySnapshot.docs[index].id);
+
+                                                      //agendar
+                                                      truckerClass.image=map['image'];
+                                                      truckerClass.id=querySnapshot.docs[index].id;
+                                                      truckerClass.name=map['name'];
+                                                      truckerClass.aval=map['aval'].toDouble();
+
+                                                      //print(documents[index].documentID); apareceu deprecated
+                                                      //moveClass.freteiroId = documents[index].documentID; apareceu deprecated;
+                                                      moveClass.freteiroId = querySnapshot.docs[index].id;
+                                                      moveClass.userId = UserModel().Uid;
+                                                      moveClass.nomeFreteiro = map['name'];
+                                                      moveClass.freteiroImage = map['image'];
+                                                      SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
+
+
+                                                      showPopupFinal=true;
+                                                      //scheduleAmove();
+
+                                                    });
+
+
+
+                                                  },
+                                                  //child: Text(map['name']),
+                                                  child: truckerSelectListViewLine(map),
+                                                );
+                                                //return Trucker(querySnapshot.docs[index]);
+
+                                              } ),);
+
+                                    },
+                                ),
+
+
+
+
+
+
+                                //nesse eu consegui pegar o tamanho do resultado mas n cosnigo exibir
+                                /*
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
+                                      .where('latlong', isLessThan: endAtval).snapshots(),
+                                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                                    if (snapshot.hasError) {
+                                      return Text('Something went wrong');
+                                    }
+
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      return Text("Loading");
+                                    }
+
+                                    QuerySnapshot querySnapshot = snapshot.data;
+
+                                    return ListView.builder(
+                                      itemCount: querySnapshot.size,
+                                      itemBuilder: (BuildContext context, int index){
+                                        print('teste');
+                                          print(querySnapshot.docs[index].data()['name']);
+
+                                      },
+
+                                      //children: snapshot.data.docs.map((DocumentSnapshot document) {
+
+                                    );
+                                  },
+                                ),
+                                 */
+
+
+
+                                /* funciona mas n sei como exibir os resultados. Base no site do pling do firestore para flutter mas está mt confuso
+                                StreamBuilder<QuerySnapshot>(
+                                    stream: query.snapshots(),
+                                    builder: (context, stream){
+                                      if (stream.connectionState == ConnectionState.waiting) {
+                                        return Center(child: CircularProgressIndicator());
+                                      }
+
+                                      if (stream.hasError) {
+                                        return Center(child: Text(stream.error.toString()));
+                                      }
+                                      QuerySnapshot querySnapshot = stream.data;
+                                      return ListView.builder(
+                                        itemCount: querySnapshot.size,
+                                        itemBuilder: (context, index) =>
+                                            Text(querySnapshot.docs[index]['name']),
+                                      );
+                                    }
+                                ),
+
+                                 */
+
+                                /* ORIGINAL
+                                StreamBuilder<QuerySnapshot>(
+                                  //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
+                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval).where('latlong', isLessThan: endAtval).limit(25).snapshots(),
+                                  builder: (context, snapshot) {
+                                    switch (snapshot.connectionState) {
+                                      case ConnectionState.waiting:
+                                      case ConnectionState.none:
+                                        return Center( //caso esteja vazio ou esperando exibir um circular progressbar no meio da tela
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      default:
+                                        List<DocumentSnapshot> documents = snapshot
+                                            .data.documents.toList();
+                                        //return Text(snapshot.data.documents[0]['name']);
+                                        return ScopedModelDescendant<UserModel>(
+                                            builder: (BuildContext context, Widget child, UserModel userModel) {
+
+                                              return ListView.builder(
+                                                shrinkWrap: true,
+                                                itemBuilder: (BuildContext context, int index) {
+
+                                                  return InkWell(
+                                                    onTap: (){
+                                                      setState(() {
+
+                                                        //agendar
+                                                        truckerClass.image=documents[index]['image'];
+                                                        truckerClass.id=documents[index].id;
+                                                        truckerClass.name=documents[index]['name'];
+                                                        truckerClass.aval=documents[index]['aval'].toDouble();
+
+                                                        //print(documents[index].documentID); apareceu deprecated
+                                                        //moveClass.freteiroId = documents[index].documentID; apareceu deprecated
+                                                        print(documents[index].id);
+                                                        moveClass.freteiroId = documents[index].id;
+                                                        moveClass.userId = UserModel().Uid;
+                                                        moveClass.nomeFreteiro = documents[index]['name'];
+                                                        moveClass.freteiroImage = documents[index]['image'];
+                                                        SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
+
+
+                                                        showPopupFinal=true;
+                                                        //scheduleAmove();
+
+
+                                                      });
+
+                                                    },
+                                                    child: Padding(
+                                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 0.0),
+                                                      child: Container(
+                                                        child: Padding(
+                                                            padding: EdgeInsets.fromLTRB(
+                                                                0.0, 5.0, 0.0, 5.0),
+                                                            child: Column(
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.20,
+                                                                      child: Container(
+                                                                        width: 100.0,
+                                                                        height: 100.0,
+                                                                        child: CircleAvatar(
+                                                                          backgroundImage: NetworkImage(documents[index]['image']),
+                                                                        ),
+                                                                      ),
+                                                                      //child:Image.network(documents[index]['image'], height: 100.0, width: 100.0,),
+                                                                    ),
+                                                                    //Image.asset(myData[index]['image']),
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.30,
+                                                                      child: Text(documents[index]["name"]),
+                                                                    ),
+                                                                    SizedBox(width: widthPercent * 0.03,),
+                                                                    Container(
+                                                                      width: widthPercent*0.20,
+                                                                      child: Text("nota: "+documents[index]['aval'].toString()),
+                                                                    )
+
+                                                                  ],
+                                                                ),
+
+                                                                documents[index]['vehicle'] == moveClass.carro ?
+                                                                WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
+
+                                                                documents[index]['vehicle'] == moveClass.carro ?
+                                                                WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
+                                                                    : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
+
+                                                                documents[index]['vehicle'] != moveClass.carro ?
+                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(moveClass.carro, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
+
+                                                              ],
+                                                            )
+                                                        ),
+                                                        decoration: WidgetsConstructor()
+                                                            .myBoxDecoration(
+                                                            Colors.white, Colors.blue, 1.0, 5.0),
+                                                      ),
+                                                    ),
+                                                  ); //card com resultado se não tiver filtr
+
+                                                },
+                                                itemCount: documents == null ? 0 : documents.length,
+
+                                              );
+
+                                            }
+
+                                        );
+
+                                    };
+                                  },
+                                )
+                                 */
+
+                              ],
+                            ),
+                          ),
+
+
+
+                        ],
+                      ),
+
+
+
+                      showPopupFinal == true ? Positioned(
+
+                        top: 25.0,
+                        left: 25.0,
+                        right: 25.0,
+                        child: Container(
+                          decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 4.0, 5.0),
+                          width: 100.0,
+                          child: Column(
+                            children: [
+                              //titulo
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  GestureDetector(
+                                    child:WidgetsConstructor().makeButton(Colors.grey, Colors.black, widthPercent*0.1, 40.0, 1.0, 3.0, "X", Colors.black, 40.0),
+                                    onTap: (){
+                                      setState(() {
+                                        showPopupFinal=false;
+                                      });
+
+                                    },
+                                  ),
+
+                                ],
+                              ),
+                              WidgetsConstructor().makeText("Confirmar agendamento", Colors.blue, 17.0, 30.0, 10.0, "center"),
+                              SizedBox(height: 20.0,),
+                              //imagem perfil
+                              Container(
+                                width: 150.0,
+                                height: 150.0,
+                                child: CircleAvatar(
+                                  backgroundImage: NetworkImage(truckerClass.image),
+                                ),
+                              ),
+                              WidgetsConstructor().makeText(truckerClass.name, Colors.blue, 20.0, 15.0, 10.0, "center"),
+                              WidgetsConstructor().makeText("Classificação: "+truckerClass.aval.toStringAsFixed(2), Colors.black, 18.0, 5.0, 15.0, "center"),
+                              SizedBox(height: 30.0,),
+                              GestureDetector(
+                                child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "agendar", Colors.white, 18.0),
+                                onTap: (){
+
+                                  setState(() {
+
+                                    showChooseTruckerPage=false;
+                                    showDatePage=true;
+                                  });
+                                  //scheduleAmove();
+                                },
+                              ),
+                              SizedBox(height: 40.0,)
+
+                              //Image.network(truckerClass.image, width: 200.0, height: 200.0,),
+
+                            ],
+                          ),),
+                      ) : Container(),
+
+                    ],
+                  );
+
+                }
+
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  /*
+  Widget chooseTruckerPage(){
+
+    double heightPercent = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double widthPercent = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      body: ListView(
+        controller: _scrollController,
+        children: [
+          Container(
+            color: Colors.white,
             child: ScopedModelDescendant<SelectedItemsChartModel>(
                 builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
 
                   CollectionReference queryTruckers = FirebaseFirestore.instance.collection(moveClass.carro);
+
+                  double lat = moveClass.latEnderecoOrigem;
+                  double long = moveClass.longEnderecoOrigem;
+                  double latlong = lat + long;  //esta latlong é um double para calculos
+                  double startAtval = latlong-(0.01*0.6);
+                  double endAtval = latlong+(0.01*0.6);
+                  final double dif = -0.07576889999999992;
+                  startAtval = (dif+startAtval);
+
 
                   return Stack(
                     children: [
@@ -1413,10 +1882,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                 WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
                                 SizedBox(height: 20.0,),
 
-
                                 StreamBuilder<QuerySnapshot>(
                                   //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
+                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval).where('latlong', isLessThan: endAtval).limit(25).snapshots(),
                                   builder: (context, snapshot) {
                                     switch (snapshot.connectionState) {
                                       case ConnectionState.waiting:
@@ -1613,7 +2081,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
       ),
     );
   }
-
+   */
   Widget datePage(){
 
     double heightPercent = MediaQuery
@@ -1797,7 +2265,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                     SizedBox(height: 10.0,),
                     GestureDetector(
                       onTap: (){
-                          SharedPrefsUtils().clearSelectedTrucker(moveClass);
+                          SharedPrefsUtils().clearScheduledMove();
                           FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucessDelete(); }, () { _onFailureDelete(); });
                       },
                       child:WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.75, 50.0, 2.0, 4.0, "Cancelar", Colors.white, 16.0),
@@ -1816,10 +2284,158 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   Widget editListOfItemsPage(){
-    return Container(color: Colors.yellow, height: 150.0, width: 150.0,);
+
+    double heightPercent = MediaQuery
+        .of(context)
+        .size
+        .height;
+    double widthPercent = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+    return ScopedModelDescendant<SelectedItemsChartModel>(
+      builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+
+        print("Teste 3 "+selectedItemsChartModel.getItemsChartSize().toString());
+
+        moveClass.itemsSelectedCart = selectedItemsChartModel.getList;
+        print("Teste 4 "+moveClass.itemsSelectedCart.length.toString());
+
+        return Scaffold(
+          key: _scaffoldKey,
+          body:  Container(
+              child: Column(
+                children: [
+
+                  SizedBox(height: 30.0,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CloseButton(
+                        onPressed: (){
+                          setState(() {
+                            showListOfItemsEdit=false;
+                            showSelectItemPage=true;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 10.0),
+                  WidgetsConstructor().makeText("Seus itens na mudança", Colors.blue, 17.0, 0.0, 10.0, "center"),
+                  SizedBox(height: heightPercent*0.7,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: moveClass.itemsSelectedCart.length,
+                    itemBuilder: (context, index) {
+                      final item = moveClass.itemsSelectedCart[index];
+
+                      //obs TUDO QUE MEXER NA LISTA ATUALIZAR NA MOVECLASS E NA MODEL PRA N DAR ERRO EM NENHUM LUGAR
+                      return Card(
+                        child: ListTile(
+                          title: Text(item.name),
+                          leading: Image.asset(item.image),
+                          trailing: CloseButton(
+                            color: Colors.red,
+                            onPressed: (){
+                              setState(() {
+                                moveClass.itemsSelectedCart.removeAt(index);
+                                _displaySnackBar(context, "Item removido");
+                              });
+                            },
+                          ),
+                        ),
+                      );
+
+                    },
+
+                  ),
+                  ),
+                ],
+              ),
+              )
+        );
+      },
+    );
   }
 
 
+  Future<bool> checkIfExistsAscheduledMoveInFb(UserModel userModel) async {
+
+    String id = userModel.Uid;
+    await FirestoreServices().checkIfExistsAmoveScheduled(id, () {_onSucessScheduled(userModel);}, () {_onFailureScheduled();});
+
+  }
+
+  Future<void> _onSucessScheduled(UserModel userModel) async {
+    _displaySnackBar(context, "Opa. Parece que você já tem uma mudança agendada.");
+
+      moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
+
+      await Future.delayed(Duration(seconds: 1)).then((_){
+        setState(() {
+          showFinalPage=true;
+          showChooseTruckerPage=false;
+        });
+      });
+
+    await SharedPrefsUtils().saveMoveClassToShared(moveClass);
+
+
+
+
+      //await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
+
+  }
+
+  void _onFailureScheduled(){
+    //do nothing
+  }
+
+  Future<Widget> checkIfExistsInShared() async {
+
+    if(await SharedPrefsUtils().checkIfThereIsScheduledMove()==true){
+
+      setState(() async {
+        moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
+        showFinalPage = true;
+        showSelectItemPage=false;
+      });
+
+    }
+
+  }
+
+  Widget truckerSelectListViewLine(Map map){
+
+    return Padding(
+        padding: EdgeInsets.only(bottom: 4, top: 4, right: 5, left: 5),
+        child: Container(
+            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 3.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+
+              Padding(
+                  padding: EdgeInsets.only(left: 8, right: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(map['name']),
+                      Text(map['aval'].toString()),
+                      //metadata,
+                      //genres,
+                    ],
+                  )),
+              Container(width: 100, child: Center(child: Image.network(map['image']))),
+
+
+            ],
+          )
+        ));
+    
+  }
 
   Future<void> fakeClickIncludeEndereco() async {
 
@@ -1837,7 +2453,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Future<void> loadMoveClassFromShared() async {
     setState(() async {
-      moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs();
+      moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
+      //moveClass = await SharedPrefsUtils().loadListOfItemsInSharedToMoveClass(moveClass);
       shouldOpenOnlyResume();
     });
 
@@ -1856,12 +2473,16 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Future<void> loadItemsFromShared( SelectedItemsChartModel selectedItemsChartModel) async {
 
-    bool shouldRead = await SharedPrefsUtils().thereIsItemsSavedInShared(); //verifica se tem algum item savo
+    bool shouldRead = await SharedPrefsUtils().thereIsItemsSavedInShared(); //verifica se tem algum item salvo
     if(shouldRead==true){
 
       List<ItemClass> list = await SharedPrefsUtils().loadListOfItemsInShared(); //carrega os dados salvos
       selectedItemsChartModel.updateItemsSelectedCartList(list);  //adiciona na model para compartilhar com a app
+      moveClass = await SharedPrefsUtils().loadListOfItemsInSharedToMoveClass(moveClass); // salva a lista na classe pra acessar mais rápdio
     }
+
+
+
   }
 
   Widget popUpSelectItemQuantity(index, heightP, widhtP){
@@ -1940,7 +2561,17 @@ class _SelectItensPageState extends State<SelectItensPage> {
                             //cria um objeto
                             ItemClass item = ItemClass(myData[selectedIndex]['name'].toString(), myData[selectedIndex]['weigth'], myData[selectedIndex]['singlePerson'], myData[selectedIndex]['volume'], myData[selectedIndex]['image']);
                             //adiciona a lista disponivel no model
-                            selectedItemsChartModel.addItemToChart(item);
+                            if(moveClass.itemsSelectedCart == null){
+                              List<ItemClass>list=[];
+                              list.add(item);
+                              moveClass.itemsSelectedCart = list;
+                              selectedItemsChartModel.addItemToChart(item);
+                              //moveClass.itemsSelectedCart.add(item);
+                            } else {
+                              selectedItemsChartModel.addItemToChart(item);
+                              moveClass.itemsSelectedCart.add(item);
+                            }
+
                             cont++;
                           }
                         }
@@ -1951,6 +2582,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                         SharedPrefsUtils().saveListOfItemsInShared(moveClass.itemsSelectedCart);
 
                         isLoading = false;
+
                       });
                     },
                     child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widhtP*0.30, 50.0, 1.0, 5.0, "Fechar", Colors.white, 15.0),
@@ -1980,47 +2612,70 @@ class _SelectItensPageState extends State<SelectItensPage> {
   Widget bottomCard(double widthPercent, double heightPercent){
     return ScopedModelDescendant<SelectedItemsChartModel>(
       builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+
+        print("teste "+selectedItemsChartModel.getItemsChartSize().toString());
+
         return Container(
           child: Padding(
-            padding: EdgeInsets.all(10.0),
+            padding: EdgeInsets.all(1.0),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-
-                selectedItemsChartModel.getItemsChartSize() == 0
-                    ? WidgetsConstructor().makeSimpleText(
-                    "Nenhum item selecionado", Colors.redAccent, 15.0)
-                    : GestureDetector(
+                GestureDetector(
                   onTap: (){
-
                     setState(() {
                       showListOfItemsEdit=true;
                       showSelectItemPage=false;
-                      showCustomItemPage=false; //fecha as duas pq uso o mesmo widget. O user pode querer editar a lista na página 2
+                      showCustomItemPage=false;
                     });
-
                   },
-                  child: WidgetsConstructor().makeSimpleText(
-                      "Itens: ", Colors.blue, 15.0),
+                  child: Container(
+                    width: widthPercent*0.60,
+                    height: heightPercent*0.10,
+                    child: Row(
+                      children: [
+                        moveClass.itemsSelectedCart == null || moveClass.itemsSelectedCart.length == 0
+                            ? WidgetsConstructor().makeSimpleText(
+                            "Nenhum item escolhido", Colors.redAccent, 15.0)
+                            : GestureDetector(
+                          onTap: (){
+
+                            setState(() {
+                              showListOfItemsEdit=true;
+                              showSelectItemPage=false;
+                              showCustomItemPage=false; //fecha as duas pq uso o mesmo widget. O user pode querer editar a lista na página 2
+                            });
+
+                          },
+                          child: WidgetsConstructor().makeSimpleText(
+                              "Itens: ", Colors.blue, 15.0),
+                        ),
+                        moveClass.itemsSelectedCart == null || moveClass.itemsSelectedCart.length == 0
+                            ? Container()
+                            : WidgetsConstructor().makeSimpleText(moveClass.itemsSelectedCart.length.toString(), Colors.blue, 15.0),
+
+                      ],
+                    ),
+                  ),
                 ),
-                selectedItemsChartModel.getItemsChartSize() == 0
-                    ? Container()
-                    : WidgetsConstructor().makeSimpleText(
-                    selectedItemsChartModel.getItemsChartSize().toString(), Colors.blue, 15.0),
-                selectedItemsChartModel.getItemsChartSize() == 0 ? Container() : SizedBox(
-                  width: widthPercent * 0.42,),
-                //espaço vazio para colocar o X no cando direito
-                selectedItemsChartModel.getItemsChartSize() == 0 ? Container() : Positioned(
+
+                moveClass.itemsSelectedCart == null || moveClass.itemsSelectedCart.length == 0
+                ? Container() :
+                Positioned(
                   right: 5.0, child: Container(width: 40.0,
                   height: 40.0,
                   child: IconButton(
                     icon: Icon(Icons.close, color: Colors.redAccent,),
                     onPressed: () {
                       setState(() {
+                        SharedPrefsUtils().clearListInShared(moveClass.itemsSelectedCart.length);
                         selectedItemsChartModel.clearChart();
-                        showCustomItemPage=false;
-                        showSelectItemPage=true;
+                        moveClass.itemsSelectedCart.clear();
+
+                        _displaySnackBar(context, "Todos os itens foram removidos");
                       });
                     },),),)
+
 
               ],
             ),
@@ -2339,7 +2994,12 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   void _onSucessDelete(){
-    _displaySnackBar(context, "O agendamento foi cancelado.");
+    _displaySnackBar(context, "O agendamento está sendo cancelado.");
+    waitAmoment(3);
+    //retorna pra página principal
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => HomePage()));
     //continuar aqui
     /*
     adicionar uma variavel bool e criar uma nova tela para agendar horário e data antes de salvar no fb
@@ -2384,59 +3044,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
-/*
-  void testing(){
-
-    /* estes dados sao para a busca
-        var latlong = lat + long  //esta latlong é um double para calculos
-        var startAtval = latlong-(0.01f*0.6*multiple)
-        var endAtval = latlong+(0.01f*0.6*multiple)
-   */
-
-    int multiple =1; //2 para dobrar o raio
-    //var latlong = lat + long  //esta latlong é um double para calculos
-    double latlong = (-22.889936) + (-43.121547);  //esta latlong é um double para calculos
-    var startAtval = latlong-(0.01*0.6*multiple); //1 é o multiplador da distancia
-    var endAtval = latlong+(0.01*0.6*multiple);
-
-
-    var raioBusca = 5.0; //var raioBusca  = 0.3 //marca o raio da busca dos pets  0.1 = 1km no mapa              obs: Mudamos para 10 km
-    var raioUser = 7000; //obs: A busca está pegando endereços de um raio um pouco maior do que o desenhado. Vou aumentar o raio desenhado para nao apareceer o erro pro usuario               //var raioUser = 3000 //marca o circulo da distancia que foi buscada pelo user. 1000 = 1km no mapa    obs: Mudamos de 3000 para 10000 (10km)
-    var dif = -0.07576889999999992; //diferença a ser adicona em startAtVal
-
-    startAtval = (dif+startAtval);
-
-    final String _collection = 'truckers';
-    final Firestore _fireStore = Firestore.instance;
-    _fireStore.collection(_collection).orderBy('aval').startAt(startAtval).getDocuments().then((value) {
-
-      if(value.documents.length > 0){
-        precoCadaAjudante =  value.documents[0].data['preco'].toDouble();
-        print(precoCadaAjudante);
-        precoBaseFreteiro = value.documents[1].data['preco'].toDouble();
-        print(precoBaseFreteiro);
-        precoGasolina = value.documents[2].data['preco'].toDouble();
-        print(precoGasolina);
-
-
-
-      } else {
-        print("dados não encontrados");
-      }
-
-    });
-
-    https://www.youtube.com/watch?v=2KknXzalXfg
-
-
-  }
-
-
-   */
-
-
 
 
 }
-
-

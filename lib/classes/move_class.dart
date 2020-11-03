@@ -27,7 +27,7 @@ class MoveClass {
 
   String dateSelected;
   String timeSelected;
-  String idPedido;
+  String moveId;
 
 
   static const double priceCarroca = 0.00;
@@ -41,7 +41,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.idPedido});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId});
 
   MoveClass.empty();
 
@@ -144,6 +144,13 @@ class MoveClass {
       formatedSit = "Aguardando confirmação do profissional";
     }
     return formatedSit;
+  }
+
+  MoveClass clearTheList(MoveClass moveClass){
+
+    List<ItemClass> itemsSelectedCart2 =[];
+    moveClass.itemsSelectedCart = itemsSelectedCart2;
+    return moveClass;
   }
 
   /*  reference

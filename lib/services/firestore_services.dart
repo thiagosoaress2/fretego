@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
@@ -59,6 +60,8 @@ class FirestoreServices {
   UserModel userModel;
 
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  final String agendamentos = "agendamentos_aguardando";
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -185,13 +188,20 @@ class FirestoreServices {
 
   Future<void> scheduleAmoveInBd(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
 
-    CollectionReference schedule = FirebaseFirestore.instance.collection('agendamentos_aguardando');
+    CollectionReference schedule = FirebaseFirestore.instance.collection(agendamentos);
 
     String escadaFinal = "nao";
     int lancesEscadaFinal = 0;
     if(moveClass.escada!=null){
       escadaFinal = "sim";
       lancesEscadaFinal = moveClass.lancesEscada;
+    }
+
+    bool escada;
+    if(escadaFinal=='sim'){
+      escada=true;
+    } else {
+      escada = false;
     }
 
     //obs: O id do pedido é o mesmo do user já que cada user só pode ter um ativo por vez
@@ -203,7 +213,8 @@ class FirestoreServices {
       'ps' : moveClass.ps,
       'carro' : moveClass.carro,
       'ajudantes' : moveClass.ajudantes,
-      'escada' : escadaFinal,
+      'escada' : escada,
+      'moveId' : moveClass.userId,
       'lances_escada' : lancesEscadaFinal,
       'id_freteiro' : moveClass.freteiroId,
       'valor' : moveClass.preco,
@@ -211,12 +222,9 @@ class FirestoreServices {
       'selectedDate' : moveClass.dateSelected,
       'selectedTime' : moveClass.timeSelected,
       'nome_freteiro' : moveClass.nomeFreteiro,
-      'moveId' : schedule.id.toString(),
+      'situacao' : "aguardando",
     })
         .then((value) => onSuccess())
-        .whenComplete(() {
-          //schedule.id
-        })
         .catchError((error) => onFailure());
 
     /*
@@ -243,12 +251,50 @@ class FirestoreServices {
      */
   }
 
+  Future<MoveClass> loadScheduledMoveInFb(MoveClass moveClass, UserModel userModel){
+
+    FirebaseFirestore.instance.collection(agendamentos).doc(userModel.Uid).get().then((querySnapshot) {
+
+      moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
+      moveClass.enderecoDestino = querySnapshot['endereco_destino'];
+      moveClass.ajudantes = querySnapshot['ajudantes'];
+      moveClass.carro = querySnapshot['carro'];
+      moveClass.escada = querySnapshot['escada'] ?? false;
+      moveClass.lancesEscada = querySnapshot['lances_escada'] ?? 0;
+      moveClass.userId = userModel.Uid;
+      moveClass.freteiroId = querySnapshot['id_freteiro'];
+      moveClass.nomeFreteiro = querySnapshot['nome_freteiro'];
+      moveClass.situacao = querySnapshot['situacao'];
+      moveClass.ps = querySnapshot['ps'];
+      moveClass.dateSelected = querySnapshot['selectedDate'];
+      moveClass.timeSelected = querySnapshot['selectedTime'];
+      moveClass.preco = querySnapshot['valor'];
+      moveClass.moveId = querySnapshot['moveId'];
+
+    });
+
+  }
+
   Future<void> deleteAscheduledMove(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
-    CollectionReference move = FirebaseFirestore.instance.collection('agendamentos_aguardando');
+    CollectionReference move = FirebaseFirestore.instance.collection(agendamentos);
     move.doc(moveClass.userId)
     .delete()
     .then((value) => onSuccess()).catchError((onError)=> onFailure());
   }
 
+  Future<bool> checkIfExistsAmoveScheduled(id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
+
+    bool result;
+    await FirebaseFirestore.instance.collection('agendamentos_aguardando').doc(id).get().then((querySnapshot) {
+
+      if(querySnapshot.data().isNotEmpty) {
+        onSuccess();
+        result = true;
+      } else {
+        onFailure();
+        result = false;
+      }
+    });
+  }
 }
 
