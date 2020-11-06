@@ -251,9 +251,11 @@ class FirestoreServices {
      */
   }
 
-  Future<MoveClass> loadScheduledMoveInFb(MoveClass moveClass, UserModel userModel){
+  Future<MoveClass> loadScheduledMoveInFb(MoveClass moveClass, UserModel userModel, [VoidCallback onSucess]) async {
 
-    FirebaseFirestore.instance.collection(agendamentos).doc(userModel.Uid).get().then((querySnapshot) {
+    MoveClass moveClassUpdated;
+
+    await FirebaseFirestore.instance.collection(agendamentos).doc(userModel.Uid).get().then((querySnapshot) {
 
       moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
       moveClass.enderecoDestino = querySnapshot['endereco_destino'];
@@ -270,9 +272,11 @@ class FirestoreServices {
       moveClass.timeSelected = querySnapshot['selectedTime'];
       moveClass.preco = querySnapshot['valor'];
       moveClass.moveId = querySnapshot['moveId'];
-
+      moveClassUpdated = moveClass;
+      onSucess();
     });
 
+    return moveClassUpdated;
   }
 
   Future<void> deleteAscheduledMove(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
@@ -284,17 +288,16 @@ class FirestoreServices {
 
   Future<bool> checkIfExistsAmoveScheduled(id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
 
-    bool result;
     await FirebaseFirestore.instance.collection('agendamentos_aguardando').doc(id).get().then((querySnapshot) {
 
       if(querySnapshot.data().isNotEmpty) {
         onSuccess();
-        result = true;
       } else {
         onFailure();
-        result = false;
       }
     });
   }
+
+
 }
 

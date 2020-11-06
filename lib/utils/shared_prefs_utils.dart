@@ -6,6 +6,7 @@ class SharedPrefsUtils {
 
   Future<void> saveMoveClassToShared(MoveClass moveClass) async {
 
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('enderecoOrigem', moveClass.enderecoOrigem);
     await prefs.setString('enderecoDestino', moveClass.enderecoDestino);
@@ -27,6 +28,7 @@ class SharedPrefsUtils {
     await prefs.setString('freteiroImage', moveClass.freteiroImage);
     await prefs.setString('situacao', moveClass.situacao);
     await prefs.setString('userId', moveClass.userId);
+
 
   }
 
@@ -241,6 +243,12 @@ class SharedPrefsUtils {
     }
 
   }
+
+  Future<void> clearEntireList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.clear();
+  }
+
 
 
 }

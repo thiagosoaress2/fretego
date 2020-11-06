@@ -45,6 +45,9 @@ class HomePageState extends State<HomePage> {
                   appBar: AppBar(title: WidgetsConstructor().makeSimpleText("Página principal", Colors.white, 15.0),
                     backgroundColor: Colors.blue,
                     centerTitle: true,
+                    actions: [
+                      IconButton(icon: Icon(Icons.add_alert_outlined),)
+                    ],
                   ),
                   drawer: MenuDrawer(),
                   body: Center(

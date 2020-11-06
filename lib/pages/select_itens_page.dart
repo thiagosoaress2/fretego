@@ -103,18 +103,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
   Future<void> initState(){
     super.initState();
 
-    //deleteForTests();
-
-    checkIfExistsInShared();
-
-    /* para testes
-    setState(() {
-      showSelectItemPage=false;
-      showFinalPage=true;
-    });
-
-     */
-
     //listener da busca
     _searchController.addListener(() {
       setState(() {
@@ -142,21 +130,32 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     return ScopedModelDescendant<SelectedItemsChartModel>(
       builder: (BuildContext context, Widget child, SelectedItemsChartModel selectedItemsChartModel) {
+        return ScopedModelDescendant<UserModel>(
+          builder: (BuildContext context, Widget child, UserModel userModel){
 
-        if(initialLoad==false){
-          initialLoad=true;
-          loadItemsFromShared(selectedItemsChartModel);
-        }
 
-        return showSelectItemPage==true ? selectItemsPage()
-            : showCustomItemPage==true ? customItemPage()
-        : showSelectTruckPage==true ? selectTruckPage()
-        : showAddressesPage==true ?  selectAdressPage()
-        : showChooseTruckerPage==true ? chooseTruckerPage()
-        : showDatePage==true ? datePage()
-        : showFinalPage==true ? finalPage()
-        :showListOfItemsEdit==true ? editListOfItemsPage()
-        : Container();
+
+
+            if(initialLoad==false){
+              initialLoad=true;
+              checkIfExistsInShared(userModel); //it will also check if there is in firebase if there is no data in shared
+              loadItemsFromShared(selectedItemsChartModel);
+            }
+
+            return showSelectItemPage==true ? selectItemsPage()
+                : showCustomItemPage==true ? customItemPage()
+                : showSelectTruckPage==true ? selectTruckPage()
+                : showAddressesPage==true ?  selectAdressPage()
+                : showChooseTruckerPage==true ? chooseTruckerPage()
+                : showDatePage==true ? datePage()
+                : showFinalPage==true ? finalPage()
+                :showListOfItemsEdit==true ? editListOfItemsPage()
+                : Container();
+
+          },
+        );
+
+
 
     },
     );
@@ -927,13 +926,18 @@ class _SelectItensPageState extends State<SelectItensPage> {
         .size
         .width;
 
-    if(moveClass.enderecoOrigem!=null && initialLoad==false){
+
+    String enderecoOrigem = moveClass.enderecoOrigem?? 'nao';
+
+    if(enderecoOrigem!='nao' && initialLoad==false){
       _sourceAdress.text = moveClass.enderecoOrigem;
       findAddress(_sourceAdress, "origem");
       fakeClickIncludeEndereco();
     }
 
-    if(moveClass.enderecoDestino!=null && initialLoad==false){
+    String enderecoDest = moveClass.enderecoDestino?? 'nao';
+
+    if(enderecoDest!='nao' && initialLoad==false){
       initialLoad=true;
       _destinyAdress.text = moveClass.enderecoDestino;
       findAddress(_destinyAdress, "destiny");
@@ -950,8 +954,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
         children: [
           Container(
             color: Colors.white,
-            child: ScopedModelDescendant<SelectedItemsChartModel>(
-                builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
+            child: ScopedModelDescendant<UserModel>(
+                builder: (BuildContext context, Widget widget, UserModel userModel){
 
                   return Column(
                     children: [
@@ -1351,14 +1355,26 @@ class _SelectItensPageState extends State<SelectItensPage> {
                       //obs: Ainda falta verificar se a classe tá com td ok até aqui
                       moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
                       GestureDetector(
-                        onTap: (){
+                        onTap: () async {
+                          await SharedPrefsUtils().saveDataFromSelectAddressPage(moveClass);
+
+                          /*
                           setState(() {
                             isLoading=true;
-                            SharedPrefsUtils().saveDataFromSelectAddressPage(moveClass);
+
+                          });
+                          
+                           */
+
+
+                          setState(() {
+                            isLoading=true;
                             showChooseTruckerPage=true;
-                            isUpdating=false;
+                            //isUpdating=false;
                             showAddressesPage=false;
                           });
+
+
 
                         },
                         child: WidgetsConstructor().makeButton(Colors.blue, Colors.transparent, widthPercent*0.85, heightPercent*0.08,
@@ -1399,10 +1415,13 @@ class _SelectItensPageState extends State<SelectItensPage> {
                 builder: (BuildContext context, Widget widget, UserModel userModel){
 
 
+                  /*
                   if(isUpdating==false) {
                     isUpdating = true;
                     checkIfExistsAscheduledMoveInFb(userModel);
                   }
+
+                   */
 
                   final double lat = moveClass.latEnderecoOrigem;
                   final double long = moveClass.longEnderecoOrigem;
@@ -1806,282 +1825,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
     );
   }
 
-  /*
-  Widget chooseTruckerPage(){
-
-    double heightPercent = MediaQuery
-        .of(context)
-        .size
-        .height;
-    double widthPercent = MediaQuery
-        .of(context)
-        .size
-        .width;
-
-    return Scaffold(
-      key: _scaffoldKey,
-      body: ListView(
-        controller: _scrollController,
-        children: [
-          Container(
-            color: Colors.white,
-            child: ScopedModelDescendant<SelectedItemsChartModel>(
-                builder: (BuildContext context, Widget widget, SelectedItemsChartModel selectedItemsChartModel){
-
-                  CollectionReference queryTruckers = FirebaseFirestore.instance.collection(moveClass.carro);
-
-                  double lat = moveClass.latEnderecoOrigem;
-                  double long = moveClass.longEnderecoOrigem;
-                  double latlong = lat + long;  //esta latlong é um double para calculos
-                  double startAtval = latlong-(0.01*0.6);
-                  double endAtval = latlong+(0.01*0.6);
-                  final double dif = -0.07576889999999992;
-                  startAtval = (dif+startAtval);
-
-
-                  return Stack(
-                    children: [
-
-                      Column(
-                        children: [
-                          //barra superior
-                          topCustomBar(heightPercent, widthPercent, "Escolher profissional", 4),
-
-                          SizedBox(height: 20.0,),
-                          moveClass.nomeFreteiro != null ?
-                          Container(
-                          child: Padding(
-                            padding: EdgeInsets.all(10.0),
-                            child: Column(
-                              children: [
-
-                                WidgetsConstructor().makeText("Você já selecionou um profissional", Colors.blue, 17.0, 15.0, 12.0, "center"),
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundImage: NetworkImage(moveClass.freteiroImage),
-                                    ),
-                                    WidgetsConstructor().makeText(moveClass.nomeFreteiro, Colors.blue, 16.0, 10.0, 10.0, "center"),
-                                  ],
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                ),
-
-                              ],
-                            ),
-                          ),
-                          width: widthPercent*0.8,
-                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
-                          ) : Container(),
-
-                          SizedBox(height: 20.0,),
-                          Container(
-                            width: widthPercent*0.9,
-                            decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
-                            child: Column(
-                              children: [
-                                WidgetsConstructor().makeText("Freteiros próximos de você", Colors.blue, 15.0, 15.0, 15.0, "center"),
-                                SizedBox(height: 20.0,),
-
-                                StreamBuilder<QuerySnapshot>(
-                                  //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval).where('latlong', isLessThan: endAtval).limit(25).snapshots(),
-                                  builder: (context, snapshot) {
-                                    switch (snapshot.connectionState) {
-                                      case ConnectionState.waiting:
-                                      case ConnectionState.none:
-                                        return Center( //caso esteja vazio ou esperando exibir um circular progressbar no meio da tela
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      default:
-                                        List<DocumentSnapshot> documents = snapshot
-                                            .data.documents.toList();
-                                        //return Text(snapshot.data.documents[0]['name']);
-                                        return ScopedModelDescendant<UserModel>(
-                                            builder: (BuildContext context, Widget child, UserModel userModel) {
-
-                                              return ListView.builder(
-                                                shrinkWrap: true,
-                                                itemBuilder: (BuildContext context, int index) {
-
-                                                  return InkWell(
-                                                    onTap: (){
-                                                      setState(() {
-
-                                                        //agendar
-                                                        truckerClass.image=documents[index]['image'];
-                                                        truckerClass.id=documents[index].id;
-                                                        truckerClass.name=documents[index]['name'];
-                                                        truckerClass.aval=documents[index]['aval'].toDouble();
-
-                                                        //print(documents[index].documentID); apareceu deprecated
-                                                        //moveClass.freteiroId = documents[index].documentID; apareceu deprecated
-                                                        print(documents[index].id);
-                                                        moveClass.freteiroId = documents[index].id;
-                                                        moveClass.userId = UserModel().Uid;
-                                                        moveClass.nomeFreteiro = documents[index]['name'];
-                                                        moveClass.freteiroImage = documents[index]['image'];
-                                                        SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
-
-
-                                                        showPopupFinal=true;
-                                                        //scheduleAmove();
-
-
-                                                      });
-
-                                                    },
-                                                    child: Padding(
-                                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 0.0),
-                                                      child: Container(
-                                                        child: Padding(
-                                                            padding: EdgeInsets.fromLTRB(
-                                                                0.0, 5.0, 0.0, 5.0),
-                                                            child: Column(
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child: Container(
-                                                                        width: 100.0,
-                                                                        height: 100.0,
-                                                                        child: CircleAvatar(
-                                                                          backgroundImage: NetworkImage(documents[index]['image']),
-                                                                        ),
-                                                                      ),
-                                                                      //child:Image.network(documents[index]['image'], height: 100.0, width: 100.0,),
-                                                                    ),
-                                                                    //Image.asset(myData[index]['image']),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.30,
-                                                                      child: Text(documents[index]["name"]),
-                                                                    ),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child: Text("nota: "+documents[index]['aval'].toString()),
-                                                                    )
-
-                                                                  ],
-                                                                ),
-
-                                                                documents[index]['vehicle'] == moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                                documents[index]['vehicle'] == moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
-                                                                    : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
-
-                                                                documents[index]['vehicle'] != moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(moveClass.carro, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                              ],
-                                                            )
-                                                        ),
-                                                        decoration: WidgetsConstructor()
-                                                            .myBoxDecoration(
-                                                            Colors.white, Colors.blue, 1.0, 5.0),
-                                                      ),
-                                                    ),
-                                                  ); //card com resultado se não tiver filtr
-
-                                                },
-                                                itemCount: documents == null ? 0 : documents.length,
-
-                                              );
-
-                                            }
-
-                                        );
-
-                                    };
-                                  },
-                                )
-
-
-                              ],
-                            ),
-                          )
-
-
-                        ],
-                      ),
-
-
-
-                      showPopupFinal == true ? Positioned(
-
-                        top: 25.0,
-                        left: 25.0,
-                        right: 25.0,
-                        child: Container(
-                          decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 4.0, 5.0),
-                          width: 100.0,
-                          child: Column(
-                              children: [
-                                //titulo
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    GestureDetector(
-                                      child:WidgetsConstructor().makeButton(Colors.grey, Colors.black, widthPercent*0.1, 40.0, 1.0, 3.0, "X", Colors.black, 40.0),
-                                      onTap: (){
-                                        setState(() {
-                                          showPopupFinal=false;
-                                        });
-
-                                      },
-                                    ),
-
-                                  ],
-                                ),
-                                WidgetsConstructor().makeText("Confirmar agendamento", Colors.blue, 17.0, 30.0, 10.0, "center"),
-                                SizedBox(height: 20.0,),
-                                //imagem perfil
-                                Container(
-                                  width: 150.0,
-                                  height: 150.0,
-                                  child: CircleAvatar(
-                                    backgroundImage: NetworkImage(truckerClass.image),
-                                  ),
-                                ),
-                                WidgetsConstructor().makeText(truckerClass.name, Colors.blue, 20.0, 15.0, 10.0, "center"),
-                                WidgetsConstructor().makeText("Classificação: "+truckerClass.aval.toStringAsFixed(2), Colors.black, 18.0, 5.0, 15.0, "center"),
-                                SizedBox(height: 30.0,),
-                                GestureDetector(
-                                  child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "agendar", Colors.white, 18.0),
-                                  onTap: (){
-
-                                    setState(() {
-
-                                      showChooseTruckerPage=false;
-                                      showDatePage=true;
-                                    });
-                                    //scheduleAmove();
-                                  },
-                                ),
-                                SizedBox(height: 40.0,)
-
-                                //Image.network(truckerClass.image, width: 200.0, height: 200.0,),
-
-                              ],
-                          ),),
-                      ) : Container(),
-
-                    ],
-                  );
-
-                }
-
-            ),
-          )
-        ],
-      ),
-    );
-  }
-   */
   Widget datePage(){
 
     double heightPercent = MediaQuery
@@ -2267,6 +2010,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
                       onTap: (){
                           SharedPrefsUtils().clearScheduledMove();
                           FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucessDelete(); }, () { _onFailureDelete(); });
+                          setState(() {
+                            isLoading=true;
+                          });
                       },
                       child:WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.75, 50.0, 2.0, 4.0, "Cancelar", Colors.white, 16.0),
                     ),
@@ -2363,37 +2109,41 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Future<bool> checkIfExistsAscheduledMoveInFb(UserModel userModel) async {
 
-    String id = userModel.Uid;
-    await FirestoreServices().checkIfExistsAmoveScheduled(id, () {_onSucessScheduled(userModel);}, () {_onFailureScheduled();});
+    FirestoreServices().checkIfExistsAmoveScheduled(userModel.Uid, () {_onSucessScheduled(userModel);}, () {_onFailureScheduled();});
 
   }
 
   Future<void> _onSucessScheduled(UserModel userModel) async {
+
     _displaySnackBar(context, "Opa. Parece que você já tem uma mudança agendada.");
 
-      moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
+    moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
 
-      await Future.delayed(Duration(seconds: 1)).then((_){
-        setState(() {
-          showFinalPage=true;
-          showChooseTruckerPage=false;
-        });
-      });
+    print(moveClass);
 
     await SharedPrefsUtils().saveMoveClassToShared(moveClass);
 
+    setState(() {
+      showFinalPage=true;
+      showSelectItemPage=false;
+      isLoading=false;
+    });
 
-
-
-      //await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
 
   }
+
 
   void _onFailureScheduled(){
-    //do nothing
+    //do nothing, open normal next page
+    setState(() {
+      showChooseTruckerPage=true;
+      showAddressesPage=false;
+      isLoading=false;
+    });
+
   }
 
-  Future<Widget> checkIfExistsInShared() async {
+  Future<Widget> checkIfExistsInShared(UserModel userModel) async {
 
     if(await SharedPrefsUtils().checkIfThereIsScheduledMove()==true){
 
@@ -2403,6 +2153,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
         showSelectItemPage=false;
       });
 
+    } else {
+      //if there is no data in shared, check in firebase
+      checkIfExistsAscheduledMoveInFb(userModel);
     }
 
   }
@@ -2991,6 +2744,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   void _onFailure(){
     _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi feito. Verifique sua internet e tente novamente");
+    setState(() {
+      isLoading=false;
+    });
   }
 
   void _onSucessDelete(){
@@ -3044,6 +2800,26 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
+  Future<void> _makeAddressConfig () async {
+
+    moveClass = await MoveClass().getTheCoordinates(moveClass, origemAddressVerified, destinyAddressVerified);
+
+    setState(() {
+      moveClass.enderecoOrigem = origemAddressVerified;
+      moveClass.enderecoDestino = destinyAddressVerified;
+    });
+
+    calculateThePrice();
+
+    scrollToBottom();
+
+  }
+
+  _checkIfNeedNewTrucker(){
+    if(moveClass.situacao=="sem motorista"){
+
+    }
+  }
 
 
 }

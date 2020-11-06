@@ -142,6 +142,10 @@ class MoveClass {
 
     if(sit == "aguardando_freteiro"){
       formatedSit = "Aguardando confirmação do profissional";
+    } else if(sit == 'nao'){
+      formatedSit = "Aguardando confirmação do profissional";
+    } else if(sit == 'aguardando'){
+      formatedSit = "Aguardando confirmação do profissional";
     }
     return formatedSit;
   }
@@ -151,6 +155,17 @@ class MoveClass {
     List<ItemClass> itemsSelectedCart2 =[];
     moveClass.itemsSelectedCart = itemsSelectedCart2;
     return moveClass;
+  }
+
+  String returnSituation (String sit){
+
+    String newStr;
+    if(sit=='aguardando confirmação do profissional'){
+      newStr = sit;
+    } else if(sit=='accepted'){
+      newStr = "O profissional aceitou o serviço";
+    }
+    return newStr;
   }
 
   /*  reference
