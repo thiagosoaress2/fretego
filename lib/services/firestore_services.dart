@@ -61,7 +61,7 @@ class FirestoreServices {
 
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  final String agendamentos = "agendamentos_aguardando";
+  final String agendamentosPath = "agendamentos_aguardando";
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -188,7 +188,7 @@ class FirestoreServices {
 
   Future<void> scheduleAmoveInBd(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
 
-    CollectionReference schedule = FirebaseFirestore.instance.collection(agendamentos);
+    CollectionReference schedule = FirebaseFirestore.instance.collection(agendamentosPath);
 
     String escadaFinal = "nao";
     int lancesEscadaFinal = 0;
@@ -223,6 +223,8 @@ class FirestoreServices {
       'selectedTime' : moveClass.timeSelected,
       'nome_freteiro' : moveClass.nomeFreteiro,
       'situacao' : "aguardando",
+      'alert' : 'trucker',
+      'alert_saw' : false,
     })
         .then((value) => onSuccess())
         .catchError((error) => onFailure());
@@ -255,7 +257,7 @@ class FirestoreServices {
 
     MoveClass moveClassUpdated;
 
-    await FirebaseFirestore.instance.collection(agendamentos).doc(userModel.Uid).get().then((querySnapshot) {
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
 
       moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
       moveClass.enderecoDestino = querySnapshot['endereco_destino'];
@@ -272,6 +274,8 @@ class FirestoreServices {
       moveClass.timeSelected = querySnapshot['selectedTime'];
       moveClass.preco = querySnapshot['valor'];
       moveClass.moveId = querySnapshot['moveId'];
+      moveClass.alert = querySnapshot['alert'];
+      moveClass.alertSaw = querySnapshot['alert_saw'];
       moveClassUpdated = moveClass;
       onSucess();
     });
@@ -279,22 +283,70 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
-  Future<void> deleteAscheduledMove(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
-    CollectionReference move = FirebaseFirestore.instance.collection(agendamentos);
+  Future<void> deleteAscheduledMove(MoveClass moveClass, [@required VoidCallback onSuccess, @required VoidCallback onFailure]){
+    CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
     move.doc(moveClass.userId)
     .delete()
     .then((value) => onSuccess()).catchError((onError)=> onFailure());
   }
 
-  Future<bool> checkIfExistsAmoveScheduled(id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
+  Future<void> checkIfExistsAmoveScheduled(id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
 
-    await FirebaseFirestore.instance.collection('agendamentos_aguardando').doc(id).get().then((querySnapshot) {
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
       if(querySnapshot.data().isNotEmpty) {
         onSuccess();
       } else {
         onFailure();
       }
+    });
+  }
+
+  Future<void> checkIfThereIsAlert(id, @required VoidCallback onSuccess) async {
+
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
+
+      if(querySnapshot['alert'].toString().contains("user") && querySnapshot['alert_saw'] == false){
+          onSuccess();
+      }
+
+    });
+  }
+
+  Future<void> changeTrucker(id, @required VoidCallback onSucess, @required VoidCallback onFailure) async {
+
+    CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
+    return move.doc(id)
+        .update({
+
+      'situacao': 'sem motorista',
+      'nome_freteiro' : null,
+      'id_freteiro': null,
+
+    })
+        .then((value) => onSucess())
+        .catchError((error) => onFailure());
+
+  }
+
+  Future<void> updateAlertView(id){
+
+    CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
+    return alert
+        .doc(id)
+        .update({
+      'alert_saw' : "true",
+    });
+
+  }
+
+  Future<void> alertSetTruckerAlert(id){
+    CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
+    return alert
+        .doc(id)
+        .update({
+      'alert_saw' : "false",
+      'alert' : 'trucker',
     });
   }
 

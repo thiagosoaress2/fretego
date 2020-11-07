@@ -123,6 +123,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
   Future<void> deleteForTests() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('situacao');
+    FirestoreServices().deleteAscheduledMove(moveClass);
   }
 
   @override
@@ -1250,16 +1251,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
                           waitAmoment(3);
                           //o endereço é colocado logo para n precisa esperar o assyncrono
-                          moveClass = await MoveClass().getTheCoordinates(moveClass, origemAddressVerified, destinyAddressVerified);
-                          setState(() {
-                            moveClass.enderecoOrigem = origemAddressVerified;
-                            moveClass.enderecoDestino = destinyAddressVerified;
-                          });
-
-                          calculateThePrice();
-
+                          await _makeAddressConfig();
                           scrollToBottom();
-
 
                         },
                       ) : Container(),
@@ -1356,6 +1349,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                       moveClass.enderecoOrigem != null && _searchCEP== false && origemAddressVerified != "" && destinyAddressVerified != "" || _searchCEP== true && origemAddressVerified !="" && destinyAddressVerified != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty ?
                       GestureDetector(
                         onTap: () async {
+
                           await SharedPrefsUtils().saveDataFromSelectAddressPage(moveClass);
 
                           /*
@@ -2135,9 +2129,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   void _onFailureScheduled(){
     //do nothing, open normal next page
+    _checkIfNeedNewTrucker(); //verifica se precisa trocar o motorista
     setState(() {
-      showChooseTruckerPage=true;
-      showAddressesPage=false;
+      //showChooseTruckerPage=true;
+      //showAddressesPage=false;
       isLoading=false;
     });
 
@@ -2147,11 +2142,15 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     if(await SharedPrefsUtils().checkIfThereIsScheduledMove()==true){
 
-      setState(() async {
-        moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
+      moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
+
+      setState((){
         showFinalPage = true;
         showSelectItemPage=false;
+
       });
+
+      _checkIfNeedNewTrucker();
 
     } else {
       //if there is no data in shared, check in firebase
@@ -2811,13 +2810,22 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     calculateThePrice();
 
-    scrollToBottom();
-
   }
 
-  _checkIfNeedNewTrucker(){
-    if(moveClass.situacao=="sem motorista"){
+  void _checkIfNeedNewTrucker() async {
 
+    if(moveClass.situacao=="sem motorista"){
+      setState(() {
+        isLoading=true;
+      });
+
+      //await _makeAddressConfig();
+
+      setState(() {
+        showChooseTruckerPage=true;
+        showFinalPage=false;
+        isLoading=false;
+      });
     }
   }
 

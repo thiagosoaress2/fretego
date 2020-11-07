@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/select_itens_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -83,7 +85,7 @@ class _MyMovesState extends State<MyMoves> {
 
 
                 showPopUp==true
-                ? popUp()
+                ? popUp(userModel)
                 : Container(),
 
               ],
@@ -225,6 +227,9 @@ class _MyMovesState extends State<MyMoves> {
       onTap: (){
         setState(() {
           showPopUp=true;
+          if(_moveClass.alert.contains('user')  && _moveClass.alertSaw == false){
+            FirestoreServices().updateAlertView(_moveClass.moveId); //coloca como visto e remove o alerta
+          }
         });
       },
       child: Padding(padding: EdgeInsets.all(10.0),
@@ -232,6 +237,22 @@ class _MyMovesState extends State<MyMoves> {
             decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 3.0),
             child: Column(
               children: [
+
+                //alerta
+                //icone notificação
+                _moveClass.alert.contains('user')  && _moveClass.alertSaw == false
+                    ? Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(
+                      Icons.add_alert,
+                      color: Colors.pink,
+                      size: 24.0,
+                      semanticLabel: 'Novidades',
+                    ),
+                  ],
+                ) : Container(),
+
                 Row(
                   children: [
                     WidgetsConstructor().makeText("Situação: ", Colors.blue, 15.0, 10.0, 5.0, null),
@@ -276,7 +297,7 @@ class _MyMovesState extends State<MyMoves> {
     );
   }
 
-  Widget popUp(){
+  Widget popUp(UserModel userModel){
 
     return Container(
       width: widthPercent,
@@ -310,9 +331,34 @@ class _MyMovesState extends State<MyMoves> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    WidgetsConstructor().makeButton(Colors.red, Colors.white, _moveClass.situacao == "aguardando" ? widthPercent*0.3 : widthPercent*0.7, 60.0, 2.0, 4.0, "Cancelar", Colors.white, 18.0),
+                    //botao de cancelar
+                    GestureDetector(
+                      onTap: (){
+
+                        _displaySnackBar(context, "O agendamento está sendo cancelado.");
+                        setState(() {
+                          isLoading=true;
+                        });
+                        SharedPrefsUtils().clearScheduledMove();
+                        FirestoreServices().deleteAscheduledMove(_moveClass, () {_onSucessDelete(); }, () { _onFailureDelete(); });
+
+                      },
+                      child: WidgetsConstructor().makeButton(Colors.red, Colors.white, _moveClass.situacao == "aguardando" ? widthPercent*0.3 : widthPercent*0.7, 60.0, 2.0, 4.0, "Cancelar", Colors.white, 18.0),
+                    ),
+
+                    //botao de trocar motorista
                     _moveClass.situacao == "aguardando"
-                    ? WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.3, 60.0, 2.0, 4.0, "Trocar motorista", Colors.white, 18.0)
+                    ? GestureDetector(
+                      onTap: (){
+                        //trocar a situação do motorista no firestore e no shared.
+                        setState(() {
+                          isLoading=true;
+                        });
+                        FirestoreServices().changeTrucker(userModel.Uid, () {_onSucessChangeTrucker(); }, () {_onFailureChangeTrucker(); });
+
+                      },
+                      child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.3, 60.0, 2.0, 4.0, "Trocar motorista", Colors.white, 18.0),
+                    )
                         : Container(),
                     
                   ],
@@ -325,6 +371,34 @@ class _MyMovesState extends State<MyMoves> {
       ),
     );
 
+  }
+
+  void _onSucessDelete(){
+
+    _displaySnackBar(context, "Pronto, o agendamento foi cancelado.");
+    _moveClass= MoveClass();
+    setState(() {
+      isLoading=false;
+    });
+  }
+
+  void _onFailureDelete(){
+    _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi cancelado. Tente novamente em instantes.");
+  }
+
+  Future<void> _onSucessChangeTrucker() async {
+    await SharedPrefsUtils().updateSituation("sem motorista");
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => SelectItensPage()));
+
+  }
+
+  void _onFailureChangeTrucker(){
+    setState(() {
+      isLoading=false;
+    });
+    _displaySnackBar(context, "Ocorreu um erro. Tente novamente");
   }
 
   _displaySnackBar(BuildContext context, String msg) {

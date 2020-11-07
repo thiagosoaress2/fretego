@@ -244,6 +244,32 @@ class SharedPrefsUtils {
 
   }
 
+  Future<bool> checkIfThereIsNeedNewTrucker() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String sit = (prefs.getString('situacao')) ?? 'nao';  //?? significa que vai assignar 2 se for null
+    if(sit=='sem motorista'){
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
+  Future<void> updateSituation(String str) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if(str=="sem motorista"){
+      await prefs.setString('situacao', str);
+      await prefs.remove('freteiroId');
+      await prefs.remove('nomeFreteiro');
+      await prefs.remove('dateSelected');
+      await prefs.remove('timeSelected');
+      await prefs.remove('freteiroImage');
+    }
+
+  }
+
   Future<void> clearEntireList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.clear();

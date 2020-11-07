@@ -29,6 +29,9 @@ class MoveClass {
   String timeSelected;
   String moveId;
 
+  String alert;
+  bool alertSaw;
+
 
   static const double priceCarroca = 0.00;
   static const double pricePickupP = 20.0;
@@ -41,7 +44,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId, this.alert, this.alertSaw});
 
   MoveClass.empty();
 
@@ -162,10 +165,17 @@ class MoveClass {
     String newStr;
     if(sit=='aguardando confirmação do profissional'){
       newStr = sit;
+    } else if(sit=='aguardando'){
+      newStr = 'aguardando confirmação do profissional';
     } else if(sit=='accepted'){
       newStr = "O profissional aceitou o serviço";
+    } else if(sit=='sem motorista'){
+      newStr = 'Sem motorista escolhido';
+    } else if(sit=='deny'){
+      newStr = 'O profissional rejeitou o serviço';
     }
-    return newStr;
+
+    return newStr?? 'ERRO';
   }
 
   /*  reference
