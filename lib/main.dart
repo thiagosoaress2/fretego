@@ -1,16 +1,25 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/pages/home_page.dart';
+import 'package:fretego/utils/notificationHelper.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
 import 'models/userModel.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+NotificationAppLaunchDetails notificationAppLaunchDetails;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  notificationAppLaunchDetails =
+  await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+  await initNotifications(flutterLocalNotificationsPlugin);
+
   await Firebase.initializeApp();
   runApp(MyApp());
 }

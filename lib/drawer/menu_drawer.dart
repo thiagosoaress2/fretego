@@ -56,10 +56,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
 
                         },
-                        child: userModel.Uid == "" ? Container(
+                        child: Container(
                           margin: EdgeInsets.only(left: 20.0),
                           child: _drawLine(Icons.person, "Login", Theme.of(context).primaryColor, context),
-                        ) : Container(),
+                        ),
                       ),
                       InkWell( //toque com animação
                         onTap: (){ //click

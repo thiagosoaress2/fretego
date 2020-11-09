@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
+import 'package:fretego/utils/date_utils.dart';
 import 'package:geocoder/geocoder.dart';
 
 class MoveClass {
@@ -176,6 +177,14 @@ class MoveClass {
     }
 
     return newStr?? 'ERRO';
+  }
+
+  DateTime formatMyDateToNotify(String originalDate, String time){
+
+    DateTime moveDate = DateUtils().convertDateFromString(originalDate);
+    moveDate = DateUtils().addMinutesAndHoursFromStringToAdate(moveDate, time);
+    return moveDate;
+
   }
 
   /*  reference

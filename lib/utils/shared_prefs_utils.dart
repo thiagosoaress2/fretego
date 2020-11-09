@@ -1,8 +1,48 @@
 import 'package:fretego/classes/item_class.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/models/userModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPrefsUtils {
+
+
+  Future<bool> thereIsBasicInfoSavedInShared() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String uid = 'nao';
+    uid = (prefs.getString('uid'));
+    if(uid==null){
+      return false;
+    } else {
+      return true;
+    }
+
+  }
+
+  Future<void> saveBasicInfo(UserModel userModel) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('uid', userModel.Uid);
+    await prefs.setString('email', userModel.Email);
+
+  }
+
+  Future<UserModel> loadBasicInfoFromSharedPrefs() async {
+    //MoveClass moveClass = MoveClass.empty();
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    UserModel userModel;
+
+    String value = (prefs.getString('uid').toString());
+    userModel.updateUid(value);
+    value = (prefs.getString('email').toString());
+    userModel.updateEmail(value);
+
+    return userModel;
+
+  }
+
 
   Future<void> saveMoveClassToShared(MoveClass moveClass) async {
 

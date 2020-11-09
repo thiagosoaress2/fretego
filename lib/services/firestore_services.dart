@@ -62,6 +62,7 @@ class FirestoreServices {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   final String agendamentosPath = "agendamentos_aguardando";
+  final String truckerCancelmentNotify = 'notificacoes_cancelamento';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -290,7 +291,7 @@ class FirestoreServices {
     .then((value) => onSuccess()).catchError((onError)=> onFailure());
   }
 
-  Future<void> checkIfExistsAmoveScheduled(id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
+  Future<void> checkIfExistsAmoveScheduled(String id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
 
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
@@ -302,7 +303,7 @@ class FirestoreServices {
     });
   }
 
-  Future<void> checkIfThereIsAlert(id, @required VoidCallback onSuccess) async {
+  Future<void> checkIfThereIsAlert(String id, @required VoidCallback onSuccess) async {
 
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
@@ -313,7 +314,7 @@ class FirestoreServices {
     });
   }
 
-  Future<void> changeTrucker(id, @required VoidCallback onSucess, @required VoidCallback onFailure) async {
+  Future<void> changeTrucker(String id, @required VoidCallback onSucess, @required VoidCallback onFailure) async {
 
     CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
     return move.doc(id)
@@ -329,25 +330,56 @@ class FirestoreServices {
 
   }
 
-  Future<void> updateAlertView(id){
+  Future<void> notifyTruckerThatHeWasChanged(String idFreteiro) async {
 
-    CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
-    return alert
-        .doc(id)
-        .update({
-      'alert_saw' : "true",
+    CollectionReference move = FirebaseFirestore.instance.collection(truckerCancelmentNotify);
+    return move.doc(idFreteiro)
+        .set({
+
+      'freteiro': idFreteiro,
+      'saw' : false,
+
     });
 
   }
 
-  Future<void> alertSetTruckerAlert(id){
+  Future<void> updateAlertView(String id){
+
+    bool test = true;
     CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
     return alert
         .doc(id)
         .update({
-      'alert_saw' : "false",
+      'alert_saw' : test,
+    });
+
+  }
+
+  Future<void> alertSetTruckerAlert(String id){
+
+    bool test = false;
+    CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
+    return alert
+        .doc(id)
+        .update({
+      'alert_saw' : test,
       'alert' : 'trucker',
     });
+  }
+
+  Future<String> getTruckerPhone(String truckerId, [@required VoidCallback onSucess, @required VoidCallback onFailure]) async {
+
+    String phone;
+    await FirebaseFirestore.instance.collection('truckers').doc(truckerId).get().then((querySnapshot) {
+      phone = querySnapshot['phone'];
+      phone = phone.replaceAll("(", "");
+      phone = phone.replaceAll(")", "");
+      phone = phone.replaceAll("-", "");
+      phone = phone.trim();
+
+    });
+
+    return phone;
   }
 
 

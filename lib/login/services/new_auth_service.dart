@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class NewAuthService extends Model {
@@ -116,4 +117,14 @@ class NewAuthService extends Model {
       }
     });
   }
+
+  void loadUserBasicDataInSharedPrefs(UserModel userModel){
+    _user = FirebaseAuth.instance.currentUser;
+    _user.reload();
+    userModel.updateUid(_user.uid);
+    userModel.updateEmail(_user.email);
+    SharedPrefsUtils().saveBasicInfo(userModel);
+    notifyListeners();
+  }
+
 }

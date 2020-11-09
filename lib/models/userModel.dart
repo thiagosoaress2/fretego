@@ -7,6 +7,8 @@ class UserModel extends Model {
   String _email="";
   String _userRole="";
 
+  bool _alert=false;
+
   //UserModel({this.uid, this.fullName, this.email, this.userRole});
   //UserModel();
 
@@ -37,6 +39,13 @@ class UserModel extends Model {
     _email="";
     _userRole="";
   }
+
+  void updateAlert(bool value) {
+    _alert = value;
+    notifyListeners();
+  }
+
+  get Alert=>_alert;
 
 
   //esta função é para fazer o upload pro firestore em formato json

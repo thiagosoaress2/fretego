@@ -5,8 +5,10 @@ import 'package:fretego/login/pages/email_verify_view.dart';
 import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -18,12 +20,10 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
 
-  //FirebaseAuth mAuth = FirebaseAuth.instance;
-  //FirebaseUser firebaseUser;
+  bool userIsLoggedIn;
+  bool needCheck=true;
 
-  FirebaseAuth auth = FirebaseAuth.instance;
-  bool userIsLoggedIn=false;
-  bool loadingController=false;
+  bool userHasAlert=false;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
@@ -35,8 +35,12 @@ class HomePageState extends State<HomePage> {
         return ScopedModelDescendant<NewAuthService>(
           builder: (BuildContext context, Widget child, NewAuthService newAuthService) {
 
-            if(loadingController==false){
-              checkUserStatus(userModel, newAuthService);
+            if(needCheck==true){
+              needCheck=false;
+              //se nao está logado n precisa verificar nada. Pois ele pode fazer login quando quiser
+              if(userIsLoggedIn==true){
+                checkEmailVerified(userModel, newAuthService);
+              }
             }
 
               return Scaffold(
@@ -46,7 +50,15 @@ class HomePageState extends State<HomePage> {
                     backgroundColor: Colors.blue,
                     centerTitle: true,
                     actions: [
-                      IconButton(icon: Icon(Icons.add_alert_outlined),)
+                      IconButton(color: userModel.Alert == false ? Colors.grey[50] : Colors.red, icon: Icon(Icons.add_alert_outlined, color: userModel.Alert == false ? Colors.grey[50] : Colors.red,), onPressed: (){
+
+                        if(userModel.Alert==true){
+                          Navigator.of(context).pop();
+                          Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => MyMoves()));
+                        }
+
+                      },)
                     ],
                   ),
                   drawer: MenuDrawer(),
@@ -56,13 +68,13 @@ class HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
 
-                          userModel.Uid != "" ? Text("Logado") : Text("Nao logado"),
+                          userIsLoggedIn == true ? Text("Logado") : Text("Nao logado"),
                           Center(
                               child: InkWell(
                                 onTap: (){
 
 
-                                  if(userModel.Uid != ""){
+                                  if(userIsLoggedIn == true){
                                     Navigator.of(context).pop();
                                     Navigator.push(context, MaterialPageRoute(
                                         builder: (context) => SelectItensPage()));
@@ -134,9 +146,11 @@ class HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    checkFBconnection();
 
   }
 
+  /*
   void isUserLoggedIn() {
     FirebaseAuth.instance
         .authStateChanges()
@@ -177,6 +191,84 @@ class HomePageState extends State<HomePage> {
     loadingController=true;
 
   }
+   */
+
+
+
+  //NOVOS METODOS LOGIN
+  Future<void> checkEmailVerified(UserModel userModel, NewAuthService newAuthService) async {
+
+    //load data in model
+    await newAuthService.loadUser();
+
+    await newAuthService.loadUserBasicDataInSharedPrefs(userModel);
+
+    //check if email is verified
+    bool isUserEmailVerified = false;
+    isUserEmailVerified = await newAuthService.isUserEmailVerified();
+    if(isUserEmailVerified==true){
+
+      //now check if there is basic data in sharedPrefs
+      bool existsDataInSharedPrefs = await SharedPrefsUtils().thereIsBasicInfoSavedInShared();
+      if(existsDataInSharedPrefs==true){
+        //if there is data, load it
+
+        //obs: Nao precisa do metodo abaixo pois o user comum so precisa do email e id...q é pego automático no login do fb no método acima loadUserBasicDataInSharedPrefs
+       //userModel = await SharedPrefsUtils().loadBasicInfoFromSharedPrefs();
+
+      } else {
+        //if there is not, load it from FB
+        //await newAuthService.loadUserBasicDataInSharedPrefs(userModel);
+        //the rest will be done on another metch to check what need to be done in case of more info required
+
+        //ESTE MÉTODO ABAIXO FOI UTILIZADO NO FRETEIRO MAS AQUI APARENTEMENTE N PRECISA POIS O USER N TEM MAIS NADA A CARREGAR
+        //await FirestoreServices().loadUserInfos(userModel, () {_onSucessLoadInfos(userModel);}, () {_onFailureLoadInfos(userModel);});
+
+      }
+
+      //verifica se tem alerta
+      FirestoreServices().checkIfThereIsAlert(userModel.Uid, () { _AlertExists(userModel);});
+
+    } else{
+
+      Navigator.of(context).pop();
+      Navigator.push(context, MaterialPageRoute(
+          builder: (context) => EmailVerify()));
+
+    }
+  }
+
+  void checkFBconnection() async {
+
+    //SharedPrefsUtils().deletePageOneInfo();
+
+    FirebaseAuth.instance
+        .authStateChanges()
+        .listen((User user) {
+      if (user == null) {
+
+        setState(() {
+          userIsLoggedIn=false;
+        });
+
+
+      } else {
+
+        setState(() {
+          userIsLoggedIn=true;
+          needCheck=true;
+        });
+
+      }
+    });
+  }
+
+  void _AlertExists(UserModel userModel) {
+    setState(() {
+      userModel.updateAlert(true);
+    });
+  }
+
 
   _displaySnackBar(BuildContext context, String msg) {
 

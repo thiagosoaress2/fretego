@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/classes/item_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/truck_class.dart';
@@ -12,6 +13,7 @@ import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/date_services.dart';
 import 'package:fretego/services/distance_latlong_calculation.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/notificationMeths.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -98,6 +100,9 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedtime = TimeOfDay.now();
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  NotificationAppLaunchDetails notificationAppLaunchDetails;
 
   @override
   Future<void> initState(){
@@ -2751,6 +2756,12 @@ class _SelectItensPageState extends State<SelectItensPage> {
   void _onSucessDelete(){
     _displaySnackBar(context, "O agendamento está sendo cancelado.");
     waitAmoment(3);
+
+
+    FirestoreServices().notifyTruckerThatHeWasChanged(moveClass.freteiroId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+    //cancelar as notificações neste caso
+    NotificationMeths().turnOffNotification(flutterLocalNotificationsPlugin); //apaga todas as notificações deste user
+
     //retorna pra página principal
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(

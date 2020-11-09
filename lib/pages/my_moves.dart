@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/select_itens_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/date_utils.dart';
+import 'package:fretego/utils/notificationMeths.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -30,6 +34,9 @@ class _MyMovesState extends State<MyMoves> {
 
   double heightPercent;
   double widthPercent;
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  NotificationAppLaunchDetails notificationAppLaunchDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +70,25 @@ class _MyMovesState extends State<MyMoves> {
                     ? ListLine2()
                     : Text("Nao tem mudança"),
 
-                    SizedBox(height: heightPercent*0.35,),
+                    SizedBox(height: 10.0,),
+
+                    _moveClass.situacao == 'deny'
+                    ? GestureDetector(
+                      onTap: (){
+                        _changeTrucker(userModel.Uid, _moveClass.freteiroId);
+                      },
+                      child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.8, 80.0, 2.0, 4.0, "Escolher outro\profissional", Colors.white, 16.0),
+                    ) : Container(),
+
+                    _moveClass.situacao == 'accepted'
+                        ? GestureDetector(
+                      onTap: (){
+                        sendWhatsAppMsg();
+                      },
+                      child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.8, 80.0, 2.0, 4.0, "Enviar mensagem", Colors.white, 16.0),
+                    ) : Container(),
+
+                    SizedBox(height: heightPercent*0.30,),
 
                     Positioned(
                       child: WidgetsConstructor().makeButton(Colors.red, Colors.white, widthPercent*0.95, 60.0, 3.0, 4.0, "Ver histórico", Colors.white, 17.0),
@@ -96,6 +121,20 @@ class _MyMovesState extends State<MyMoves> {
     );
   }
 
+  Future<void> sendWhatsAppMsg() async {
+    //fazer query e pegar o n do trucker
+    setState(() {
+      isLoading=true;
+    });
+    String phone;
+    phone = await FirestoreServices().getTruckerPhone(_moveClass.freteiroId);
+    //FlutterOpenWhatsapp.sendSingleMessage("918179015345", "Olá");
+    setState(() {
+      isLoading=false;
+    });
+    FlutterOpenWhatsapp.sendSingleMessage("55"+phone, "Olá, escolhi você no fretesGo. Tudo bem?");
+  }
+
   void loadInfoFromFb(UserModel userModel){
     if(isMovesLoadedFromFb==false){
       isMovesLoadedFromFb=true;
@@ -105,14 +144,26 @@ class _MyMovesState extends State<MyMoves> {
 
   Future<void> _onSucessExistsMove(UserModel userModel) async {
     //existe uma mudança para você
-    _moveClass = await FirestoreServices().loadScheduledMoveInFb(_moveClass, userModel, () {_onSucessLoadScheduledMoveInFb();});
+    _moveClass = await FirestoreServices().loadScheduledMoveInFb(_moveClass, userModel, () {_onSucessLoadScheduledMoveInFb(userModel);});
   }
 
   void _onFailExistsMove(){
     _displaySnackBar(context, "Você não possui mudança agendada");
   }
 
-  void _onSucessLoadScheduledMoveInFb(){
+  void _onSucessLoadScheduledMoveInFb(UserModel userModel){
+
+    //lets schedule a notification for 24 earlyer
+    DateTime moveDate = MoveClass().formatMyDateToNotify(_moveClass.dateSelected, _moveClass.timeSelected);
+    DateTime notifyDateTime = DateUtils().subHoursFromDate(moveDate, 24); //ajusta 24 horas antes
+    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, userModel.Uid, "Lembrete: Sua mudança é amanhã às "+_moveClass.timeSelected, notifyDateTime);
+
+
+    //notificação com 2 horas de antecedencia (obs: o id da notificação é moveID (id do cliente+2)
+    notifyDateTime = DateUtils().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
+    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, userModel.Uid+'2', "Lembrete: Mudança em duas horas às "+mapSelected['selectedTime'] , notifyDateTime);
+
+
     //update the screen
     setState(() {
       _moveClass = _moveClass;
@@ -351,11 +402,8 @@ class _MyMovesState extends State<MyMoves> {
                     ? GestureDetector(
                       onTap: (){
                         //trocar a situação do motorista no firestore e no shared.
-                        setState(() {
-                          isLoading=true;
-                        });
-                        FirestoreServices().changeTrucker(userModel.Uid, () {_onSucessChangeTrucker(); }, () {_onFailureChangeTrucker(); });
-
+                        _changeTrucker(userModel.Uid, _moveClass.freteiroId);
+                        
                       },
                       child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.3, 60.0, 2.0, 4.0, "Trocar motorista", Colors.white, 18.0),
                     )
@@ -373,10 +421,25 @@ class _MyMovesState extends State<MyMoves> {
 
   }
 
+  void _changeTrucker(String id, String idFreteiro){
+
+    setState(() {
+      isLoading=true;
+    });
+    FirestoreServices().changeTrucker(id, () {_onSucessChangeTrucker(idFreteiro); }, () {_onFailureChangeTrucker(); });
+
+  }
+  
   void _onSucessDelete(){
+
+    FirestoreServices().notifyTruckerThatHeWasChanged(_moveClass.freteiroId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+
+    //cancelar as notificações neste caso
+    NotificationMeths().turnOffNotification(flutterLocalNotificationsPlugin); //apaga todas as notificações deste user
 
     _displaySnackBar(context, "Pronto, o agendamento foi cancelado.");
     _moveClass= MoveClass();
+
     setState(() {
       isLoading=false;
     });
@@ -386,7 +449,10 @@ class _MyMovesState extends State<MyMoves> {
     _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi cancelado. Tente novamente em instantes.");
   }
 
-  Future<void> _onSucessChangeTrucker() async {
+  Future<void> _onSucessChangeTrucker(String idFreteiro) async {
+
+    FirestoreServices().notifyTruckerThatHeWasChanged(idFreteiro); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+
     await SharedPrefsUtils().updateSituation("sem motorista");
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(
