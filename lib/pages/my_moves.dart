@@ -153,17 +153,6 @@ class _MyMovesState extends State<MyMoves> {
 
   void _onSucessLoadScheduledMoveInFb(UserModel userModel){
 
-    //lets schedule a notification for 24 earlyer
-    DateTime moveDate = MoveClass().formatMyDateToNotify(_moveClass.dateSelected, _moveClass.timeSelected);
-    DateTime notifyDateTime = DateUtils().subHoursFromDate(moveDate, 24); //ajusta 24 horas antes
-    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, userModel.Uid, "Lembrete: Sua mudança é amanhã às "+_moveClass.timeSelected, notifyDateTime);
-
-
-    //notificação com 2 horas de antecedencia (obs: o id da notificação é moveID (id do cliente+2)
-    notifyDateTime = DateUtils().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
-    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, userModel.Uid+'2', "Lembrete: Mudança em duas horas às "+mapSelected['selectedTime'] , notifyDateTime);
-
-
     //update the screen
     setState(() {
       _moveClass = _moveClass;
@@ -426,13 +415,13 @@ class _MyMovesState extends State<MyMoves> {
     setState(() {
       isLoading=true;
     });
-    FirestoreServices().changeTrucker(id, () {_onSucessChangeTrucker(idFreteiro); }, () {_onFailureChangeTrucker(); });
+    FirestoreServices().changeTrucker(id, () {_onSucessChangeTrucker(idFreteiro, id); }, () {_onFailureChangeTrucker(); });
 
   }
   
   void _onSucessDelete(){
 
-    FirestoreServices().notifyTruckerThatHeWasChanged(_moveClass.freteiroId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+    FirestoreServices().notifyTruckerThatHeWasChanged(_moveClass.freteiroId, _moveClass.moveId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
 
     //cancelar as notificações neste caso
     NotificationMeths().turnOffNotification(flutterLocalNotificationsPlugin); //apaga todas as notificações deste user
@@ -449,9 +438,9 @@ class _MyMovesState extends State<MyMoves> {
     _displaySnackBar(context, "Ocorreu um erro. O agendamento não foi cancelado. Tente novamente em instantes.");
   }
 
-  Future<void> _onSucessChangeTrucker(String idFreteiro) async {
+  Future<void> _onSucessChangeTrucker(String idFreteiro, String moveId) async {
 
-    FirestoreServices().notifyTruckerThatHeWasChanged(idFreteiro); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+    FirestoreServices().notifyTruckerThatHeWasChanged(idFreteiro, moveId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
 
     await SharedPrefsUtils().updateSituation("sem motorista");
     Navigator.of(context).pop();

@@ -155,4 +155,29 @@ class DateUtils {
 
   }
 
+  int compareTwoDatesInMinutes(DateTime date1, DateTime date2){
+
+    //String result;
+    final int difference = date2.difference(date1).inMinutes;
+    return difference;
+
+    /*
+    OBS
+    se der resultado negativo é porque a date1 é maior (ou seja, já passou da hora. Ex: date1=10/11/2020 06:50  date2=10/11/2020 14:20 deu -440)
+
+     */
+
+    /*
+    if(difference==0){
+      result = 'equal';
+    } else if(difference.isNegative){
+      result = 'date2bigger';
+    } else {
+      result = 'date1bigger';
+    }
+
+     */
+
+  }
+
 }

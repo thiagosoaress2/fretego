@@ -284,6 +284,10 @@ class SharedPrefsUtils {
 
   }
 
+  Future<bool> checkMoveSituation() async {
+
+  }
+
   Future<bool> checkIfThereIsNeedNewTrucker() async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();

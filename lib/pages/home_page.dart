@@ -1,13 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/drawer/menu_drawer.dart';
 import 'package:fretego/login/pages/email_verify_view.dart';
 import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/mercadopago.dart';
+import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -26,6 +30,8 @@ class HomePageState extends State<HomePage> {
   bool userHasAlert=false;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
+
+  MoveClass moveClass = MoveClass();
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +154,10 @@ class HomePageState extends State<HomePage> {
     super.initState();
     checkFBconnection();
 
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => MercadoPago()));
+
   }
 
   /*
@@ -195,6 +205,7 @@ class HomePageState extends State<HomePage> {
 
 
 
+
   //NOVOS METODOS LOGIN
   Future<void> checkEmailVerified(UserModel userModel, NewAuthService newAuthService) async {
 
@@ -228,6 +239,9 @@ class HomePageState extends State<HomePage> {
 
       //verifica se tem alerta
       FirestoreServices().checkIfThereIsAlert(userModel.Uid, () { _AlertExists(userModel);});
+
+      //verifica se tem uma mudança acontecendo agora
+      checkIfExistMovegoingNow(userModel);
 
     } else{
 
@@ -267,6 +281,71 @@ class HomePageState extends State<HomePage> {
     setState(() {
       userModel.updateAlert(true);
     });
+  }
+
+  Future<void> checkIfExistMovegoingNow(UserModel userModel) async {
+
+    bool shouldCheckMove = await SharedPrefsUtils().checkIfThereIsScheduledMove();
+    if(shouldCheckMove==true){
+
+      await FirestoreServices().loadScheduledMoveSituationAndDateTime(moveClass, userModel, () { _ExistAmovegoinOnNow(userModel, moveClass);});
+
+    }
+
+  }
+
+  Future<void> _ExistAmovegoinOnNow(UserModel userModel, MoveClass moveClass) async {
+
+    if(moveClass.situacao == 'accepted'){
+
+      DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
+      DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
+      final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
+
+      if(dif.isNegative) {
+        //a data já expirou
+
+
+        moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
+
+        Future.delayed(Duration(seconds: 5)).then((_) {
+
+          /*
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => AvaliationPage(_moveClass)));
+          */
+
+        });
+
+      } else if(dif<=60 && dif>15){
+
+        _displaySnackBar(context, "Você possui uma mudança agendada às "+moveClass.timeSelected);
+
+      } else if(dif<=15){
+
+        Future<void> _onSucessLoadScheduledMoveInFb() async {
+
+          moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => MoveDayPage(moveClass)));
+
+          });
+        }
+
+        //ta na hora da mudança. Abrir a pagina de mudança
+        await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
+
+
+      } else {
+
+        //do nothing, falta mt ainda
+
+      }
+
+    }
   }
 
 

@@ -3,57 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/classes/trucker_movement_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
 
-/*
-class FirestoreServices {
-
-  UserModel userModel;
-
-  final CollectionReference _usersCollectionReference = Firestore.instance.collection("users");
-
-  Future<Null> saveUserData(Map<String, dynamic> userData, FirebaseUser firebaseUser) async {
-    await Firestore.instance.collection("users").document(firebaseUser.uid).setData(userData);
-  }
-
-  Future loadCurrentUserData(FirebaseUser firebaseUser, FirebaseAuth _auth, UserModel userModel) async {
-
-    if(firebaseUser == null){  //verifica se tem acesso a informação do user
-      firebaseUser = await _auth.currentUser(); //se for nulo, vai tentaar pegar
-      if (firebaseUser != null){ //verifica novamente
-        if(userModel.Uid == ""){
-          DocumentSnapshot docUser = await Firestore.instance.collection("users").document(firebaseUser.uid).get();
-          //userData = docUser.data;
-          userModel.updateUid(firebaseUser.uid);
-          userModel.updateEmail(firebaseUser.email);
-          userModel.updateFullName(docUser.data['name'].toString());
-
-          print("printing userclass info "+userModel.Uid);
-
-        }
-      }
-    } else {
-      if(userModel.Uid == ""){
-        DocumentSnapshot docUser = await Firestore.instance.collection("users").document(firebaseUser.uid).get().then((docUser) {
-
-          userModel.updateUid(firebaseUser.uid);
-          userModel.updateEmail(firebaseUser.email);
-          userModel.updateFullName(docUser.data['name'].toString());
-
-          print("printing userclass info "+userModel.Uid);
-          print("nome do user é "+userModel.FullName);
-        });
-      }
-    }
-
-  }
-
-
-}
-
-
- */
 
 class FirestoreServices {
 
@@ -284,6 +237,21 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
+  Future<void> loadScheduledMoveSituationAndDateTime(MoveClass moveClass, UserModel userModel,  [VoidCallback onSucess]) async {
+
+    //MoveClass moveClassUpdated;
+    //String situacao;
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
+
+      moveClass.situacao = querySnapshot['situacao'];
+      moveClass.dateSelected = querySnapshot['selectedDate'];
+      moveClass.timeSelected = querySnapshot['selectedTime'];
+      onSucess();
+    });
+
+    //return moveClassUpdated;
+  }
+
   Future<void> deleteAscheduledMove(MoveClass moveClass, [@required VoidCallback onSuccess, @required VoidCallback onFailure]){
     CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
     move.doc(moveClass.userId)
@@ -295,7 +263,7 @@ class FirestoreServices {
 
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
-      if(querySnapshot.data().isNotEmpty) {
+      if(querySnapshot.data() != null) {
         onSuccess();
       } else {
         onFailure();
@@ -330,14 +298,13 @@ class FirestoreServices {
 
   }
 
-  Future<void> notifyTruckerThatHeWasChanged(String idFreteiro) async {
+  Future<void> notifyTruckerThatHeWasChanged(String idFreteiro, String idUser) async {
 
     CollectionReference move = FirebaseFirestore.instance.collection(truckerCancelmentNotify);
     return move.doc(idFreteiro)
         .set({
 
-      'freteiro': idFreteiro,
-      'saw' : false,
+      'moveId': idUser,
 
     });
 
@@ -382,6 +349,16 @@ class FirestoreServices {
     return phone;
   }
 
+  Future<void> loadLastKnownTruckerPosition(String id, TruckerMovementClass truckerMovementClass, [@required VoidCallback onSucess]) async {
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id)
+        .get()
+        .then((querySnapshot) {
+      truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
+      truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+
+      onSucess();
+    });
+  }
 
 }
 

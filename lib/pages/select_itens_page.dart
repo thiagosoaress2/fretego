@@ -13,6 +13,7 @@ import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/date_services.dart';
 import 'package:fretego/services/distance_latlong_calculation.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/notificationMeths.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
@@ -2739,6 +2740,18 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   void _onSucess(){
+
+    //lets schedule a notification for 24 earlyer
+    DateTime moveDate = MoveClass().formatMyDateToNotify(moveClass.dateSelected, moveClass.timeSelected);
+    DateTime notifyDateTime = DateUtils().subHoursFromDate(moveDate, 24); //ajusta 24 horas antes
+    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId, "Lembrete: Sua mudança é amanhã às "+moveClass.timeSelected, notifyDateTime);
+
+
+    //notificação com 2 horas de antecedencia (obs: o id da notificação é moveID (id do cliente+2)
+    notifyDateTime = DateUtils().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
+    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId+'2', "Lembrete: Mudança em duas horas às "+moveClass.timeSelected , notifyDateTime);
+
+
     _displaySnackBar(context, "agendado");
     //continuar aqui
     /*
@@ -2758,7 +2771,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
     waitAmoment(3);
 
 
-    FirestoreServices().notifyTruckerThatHeWasChanged(moveClass.freteiroId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+    FirestoreServices().notifyTruckerThatHeWasChanged(moveClass.freteiroId, moveClass.userId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
     //cancelar as notificações neste caso
     NotificationMeths().turnOffNotification(flutterLocalNotificationsPlugin); //apaga todas as notificações deste user
 
@@ -2842,3 +2855,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
 
 }
+
+/*
+FLUXOS
+
+cancelamento:
+ao cancelar são cancelados as notificações todas do user.
+cria um campo no bd 'notificacoes_cancelamento' com o bd do freteiro. Serve para fazer verificações de freteiros canceladas
+ */

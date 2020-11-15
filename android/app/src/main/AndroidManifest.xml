@@ -20,7 +20,13 @@
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:label="fretego"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        >
+
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDoOclLuSyKtTf6jlGhWiHJnbXeMjYZ2NI"/>
+
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
