@@ -16,6 +16,7 @@ class FirestoreServices {
 
   final String agendamentosPath = "agendamentos_aguardando";
   final String truckerCancelmentNotify = 'notificacoes_cancelamento';
+  final String ordersPath = 'orders';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -358,6 +359,42 @@ class FirestoreServices {
 
       onSucess();
     });
+  }
+
+
+
+  //payments functions
+  Future<void> deleteCode(String id){
+
+    CollectionReference alert = FirebaseFirestore.instance.collection(ordersPath);
+    return alert
+        .doc(id)
+        .update({
+      'code_global' : null,
+    });
+
+  }
+
+  Future<void> deleteOrder(String id){
+
+    CollectionReference alert = FirebaseFirestore.instance.collection(ordersPath);
+    return alert
+        .doc(id)
+        .delete();
+
+  }
+
+  Future<void> updateOrderafterPayment(String id, String formaPgto, String tipoPgto){
+
+    CollectionReference alert = FirebaseFirestore.instance.collection(ordersPath);
+    return alert
+        .doc(id)
+        .update({
+      'status' : 'pago',
+      'bandeira' : formaPgto,
+      'tipo_pgto' : tipoPgto,
+    });
+
   }
 
 }
