@@ -5,6 +5,8 @@ import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/mercadopago.dart';
+import 'package:fretego/pages/mercadopago2.dart';
+import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
@@ -114,24 +116,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                         child: userModel.Uid != "" ? Container(margin: EdgeInsets.only(left: 20.0), child:_drawLine(Icons.exit_to_app, "Sair da conta", Theme.of(context).primaryColor, context),) : Container(),
 
                       ),
-
-
-                      InkWell( //toque com animação
-                        onTap: (){ //click
-
-
-                          Navigator.of(context).pop();
-                          Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => MercadoPago()));
-
-
-                        },
-                        child: Container(
-                          margin: EdgeInsets.only(left: 20.0),
-                          child: _drawLine(Icons.airport_shuttle, "Mercado pago", Theme.of(context).primaryColor, context),
-                        ),
-                      ),
-
 
 
                     ]

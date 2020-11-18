@@ -372,7 +372,7 @@ class _MoveDayPageState extends State<MoveDayPage> {
                   ],
                 ),
                 SizedBox(height: 80.0,),
-                WidgetsConstructor().makeText("Você tem certeza que deseja encerrar esta mudança e avaliar o cliente?", Colors.blue, 18.0, 0.0, 20.0, 'center'),
+                WidgetsConstructor().makeText("Você tem certeza que deseja encerrar esta mudança e realizar o pagamento?", Colors.blue, 18.0, 0.0, 20.0, 'center'),
                 GestureDetector(
                   onTap: (){
 

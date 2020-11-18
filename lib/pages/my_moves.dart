@@ -144,7 +144,7 @@ class _MyMovesState extends State<MyMoves> {
 
   Future<void> _onSucessExistsMove(UserModel userModel) async {
     //existe uma mudança para você
-    _moveClass = await FirestoreServices().loadScheduledMoveInFb(_moveClass, userModel, () {_onSucessLoadScheduledMoveInFb(userModel);});
+    _moveClass = await FirestoreServices().loadScheduledMoveInFbWithCallBack(_moveClass, userModel, () {_onSucessLoadScheduledMoveInFb(userModel);});
   }
 
   void _onFailExistsMove(){

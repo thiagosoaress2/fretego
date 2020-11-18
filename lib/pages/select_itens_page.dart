@@ -2117,7 +2117,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     _displaySnackBar(context, "Opa. Parece que você já tem uma mudança agendada.");
 
-    moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
+    moveClass = await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel);
 
     print(moveClass);
 

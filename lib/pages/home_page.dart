@@ -34,8 +34,18 @@ class HomePageState extends State<HomePage> {
 
   MoveClass moveClass = MoveClass();
 
+  double heightPercent;
+  double widthPercent;
+
+  bool showPayBtn=false;
+
   @override
   Widget build(BuildContext context) {
+
+    heightPercent = MediaQuery.of(context).size.height;
+    widthPercent = MediaQuery.of(context).size.width;
+
+
     return ScopedModelDescendant<UserModel>(
       builder: (BuildContext context, Widget child, UserModel userModel) {
         //isLoggedIn(userModel);
@@ -108,7 +118,12 @@ class HomePageState extends State<HomePage> {
                                   ),//..........
                                 ),
                               )
-                          )
+                          ),
+
+                          showPayBtn == true
+                          ? _payBtn()
+                          : Container(),
+
                         ],
                       ),
                     ),
@@ -155,9 +170,12 @@ class HomePageState extends State<HomePage> {
     super.initState();
     checkFBconnection();
 
+    /*
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(
         builder: (context) => MercadoPago2()));
+
+     */
 
   }
 
@@ -205,6 +223,23 @@ class HomePageState extends State<HomePage> {
    */
 
 
+
+  Widget _payBtn(){
+    return Positioned(
+      right: 10.0,
+      top: heightPercent*0.55,
+      child: GestureDetector(
+        onTap: (){
+
+          Navigator.of(context).pop();
+          Navigator.push(context, MaterialPageRoute(
+              builder: (context) => MercadoPago2(moveClass)));
+
+        },
+        child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.5, 60.0, 2.0, 4.0, "Realizar pagamento pendente", Colors.white, 17.0),
+      ),
+    );
+  }
 
 
   //NOVOS METODOS LOGIN
@@ -297,6 +332,7 @@ class HomePageState extends State<HomePage> {
 
   Future<void> _ExistAmovegoinOnNow(UserModel userModel, MoveClass moveClass) async {
 
+
     if(moveClass.situacao == 'accepted'){
 
       DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
@@ -306,17 +342,10 @@ class HomePageState extends State<HomePage> {
       if(dif.isNegative) {
         //a data já expirou
 
+        moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
 
-        moveClass = await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel);
-
-        Future.delayed(Duration(seconds: 5)).then((_) {
-
-          /*
-            Navigator.of(context).pop();
-            Navigator.push(context, MaterialPageRoute(
-                builder: (context) => AvaliationPage(_moveClass)));
-          */
-
+        setState(() {
+          showPayBtn=true;
         });
 
       } else if(dif<=60 && dif>15){
@@ -337,7 +366,7 @@ class HomePageState extends State<HomePage> {
         }
 
         //ta na hora da mudança. Abrir a pagina de mudança
-        await FirestoreServices().loadScheduledMoveInFb(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
+        await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
 
 
       } else {
