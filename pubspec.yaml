@@ -50,6 +50,7 @@ dependencies:
   intl: ^0.16.1
   location: ^3.0.2
   mercadopago_sdk: ^1.2.0
+  after_layout: ^1.0.7+2
 
 
 dev_dependencies:

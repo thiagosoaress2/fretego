@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/globals_strings.dart';
@@ -22,26 +23,25 @@ double widthPercent;
 
 MoveClass _moveClass = MoveClass();
 
-String email;
+String _email;
 String _name;
 
 
 final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
-class MercadoPago2 extends StatefulWidget {
+class PaymentPage extends StatefulWidget {
   MoveClass moveClass = MoveClass(); //tipo de data, poderia ser String. Aqui é uma classe
 
-  MercadoPago2(this.moveClass);  //receiver
+  PaymentPage(this.moveClass);  //receiver
 
 
   @override
-  _MercadoPago2State createState() => _MercadoPago2State();
+  _PaymentPageState createState() => _PaymentPageState();
 }
 
 
 
-class _MercadoPago2State extends State<MercadoPago2> {
-
+class _PaymentPageState extends State<PaymentPage> {
 
 
   createOrder () async {
@@ -50,7 +50,7 @@ class _MercadoPago2State extends State<MercadoPago2> {
     await orderRef.set(
         {
           'name': _moveClass.moveId,
-          'email': email,
+          'email': _email,
           'price' : _moveClass.preco,
           'quantity' : 1,
           'name' : _name,
@@ -86,10 +86,10 @@ class _MercadoPago2State extends State<MercadoPago2> {
 
           FirestoreServices().deleteCode(event.id);
            _sucessScreen();
-          //print('aprovado');
-          //print(result.paymentMethodId);
-          //print(result.paymentTypeId);
-          FirestoreServices().updateOrderafterPayment(event.id, result.paymentMethodId.toString(), result.paymentTypeId.toString());
+
+
+          await FirestoreServices().updatescheduldMoveAfterPayment(_moveClass.moveId);
+          FirestoreServices().updateOrderafterPayment(event.id, result.paymentMethodId.toString(), result.paymentTypeId.toString(), _moveClass.freteiroId);
 
         } else {
 
@@ -144,8 +144,8 @@ class _MercadoPago2State extends State<MercadoPago2> {
 
         //_moveClass.moveId = 'moveIdCode';
         //_moveClass.preco = 200.0;
-        //email = userModel.Email;
-        email = 'teste@emailteste.com';
+        _email = userModel.Email;
+        print(_email);
         _name = userModel.FullName;
 
 
@@ -160,14 +160,51 @@ class _MercadoPago2State extends State<MercadoPago2> {
                   ? Column(
                     children: <Widget>[
                       SizedBox(height: 40.0,),
-                      RaisedButton(
-                        onPressed: () async {
 
+                      Padding(
+                          padding: EdgeInsets.all(10.0),
+                        child: Column(
+                          children: [
+
+                            WidgetsConstructor().makeText("Resumo da mudança", Colors.blue, 18.0, 25.0, 20.0, 'center'),
+                            Row(
+                              children: [
+                                WidgetsConstructor().makeText('Origem: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
+                                SizedBox(width: 5.0,),
+                                WidgetsConstructor().makeText(_moveClass.enderecoOrigem, Colors.black, 16.0, 0.0, 15.0, 'no'),
+                              ],
+                            ),
+
+                            Row(
+                              children: [
+                                WidgetsConstructor().makeText('Destino: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
+                                SizedBox(width: 5.0,),
+                                WidgetsConstructor().makeText(_moveClass.enderecoDestino, Colors.black, 16.0, 0.0, 15.0, 'no'),
+                              ],
+                            ),
+                            SizedBox(height: 30.0,),
+                            Row(
+                              children: [
+                                WidgetsConstructor().makeText('Total a ser pago: ', Colors.blue, 16.0, 15.0, 20.0, 'no'),
+                                WidgetsConstructor().makeText('R\$'+_moveClass.preco.toStringAsFixed(2), Colors.black, 16.0, 15.0, 20.0, 'no'),
+
+                              ],
+                            )
+
+                          ],
+                        ),
+                      ),
+
+
+                      RaisedButton(
+                        color: Colors.blue,
+                        splashColor: Colors.blue[100],
+                        onPressed: () async {
                           if(isLoading==false){
                             setState(() {
                               isLoading=true;
                             });
-                            _displaySnackBar(context, 'aguarde, iniciando pagamento', 5);
+                            _displaySnackBar(context, 'aguarde, iniciando pagamento. Isto pode demorar um pouco.', 10);
                             createOrder();
 
                           } else {
@@ -176,7 +213,7 @@ class _MercadoPago2State extends State<MercadoPago2> {
 
                         },
                         child: Center(
-                          child: Text("Pagar"),
+                          child: Text("Efetuar pagamento",),
                         ),
                       ),
                     ],
@@ -212,16 +249,28 @@ class _MercadoPago2State extends State<MercadoPago2> {
         child: Column(
           children: [
 
-            WidgetsConstructor().makeText("Pagamento confirmado!", Colors.blue, 18.0, 20.0, 20.0, 'center'),
+            WidgetsConstructor().makeText("Pagamento confirmado!", Colors.blue, 18.0, 20.0, 00.0, 'center'),
+            WidgetsConstructor().makeText('O pagamento já foi efetuado. Você não precisa fazer mais nenhum tipo de pagamento ao profissional.', Colors.black, 16.0, 10.0, 20.0, 'no'),
 
             GestureDetector(
-              onTap: (){
+              onTap: () async {
 
-                Navigator.of(context).pop();
+                _displaySnackBar(context, "Carregando informações do freteiro", 5);
+                setState(() {
+                  isLoading=true;
+                });
+
+                _moveClass = await MoveClass().getTheCoordinates(_moveClass, _moveClass.enderecoOrigem, _moveClass.enderecoDestino).whenComplete((){
+
+                  Navigator.of(context).pop();
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => MoveDayPage(_moveClass)));
+
+                });
 
 
               },
-              child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.75, 65.0, 2.0, 4.0, 'Avaliar profissional', Colors.white, 18.0),
+              child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.75, 65.0, 2.0, 4.0, 'Ir para a mudança', Colors.white, 18.0),
             )
 
 

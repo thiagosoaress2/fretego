@@ -127,4 +127,9 @@ class NewAuthService extends Model {
     notifyListeners();
   }
 
+  String loadUserMail(){
+    _user = FirebaseAuth.instance.currentUser;
+    return _user.email;
+  }
+
 }

@@ -5,7 +5,7 @@ import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/mercadopago.dart';
-import 'package:fretego/pages/mercadopago2.dart';
+import 'package:fretego/pages/payment_page.dart';
 import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';

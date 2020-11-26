@@ -1,3 +1,4 @@
+import 'package:after_layout/after_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
@@ -7,7 +8,7 @@ import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/mercadopago.dart';
-import 'package:fretego/pages/mercadopago2.dart';
+import 'package:fretego/pages/payment_page.dart';
 import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';
@@ -23,7 +24,7 @@ class HomePage extends StatefulWidget {
 }
 
 
-class HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   bool userIsLoggedIn;
   bool needCheck=true;
@@ -38,6 +39,26 @@ class HomePageState extends State<HomePage> {
   double widthPercent;
 
   bool showPayBtn=false;
+  bool _showPayPopUp=false;
+
+  UserModel userModelGLobal;
+  NewAuthService _newAuthService;
+
+  @override
+  Future<void> afterFirstLayout(BuildContext context) async {
+    // isto é exercutado após todo o layout ser renderizado
+
+    await checkFBconnection();
+    if(userIsLoggedIn==true){
+      checkEmailVerified(userModelGLobal, _newAuthService);
+    }
+
+
+
+
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,53 +100,66 @@ class HomePageState extends State<HomePage> {
                     ],
                   ),
                   drawer: MenuDrawer(),
-                  body: Center(
-                    child: Container(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+                  body: SafeArea(
+                    child: Stack(
+                      children: [
 
-                          userIsLoggedIn == true ? Text("Logado") : Text("Nao logado"),
-                          Center(
-                              child: InkWell(
-                                onTap: (){
+                        Center(
+                          child: Container(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
 
-
-                                  if(userIsLoggedIn == true){
-                                    Navigator.of(context).pop();
-                                    Navigator.push(context, MaterialPageRoute(
-                                        builder: (context) => SelectItensPage()));
-
-                                  } else {
-                                    _displaySnackBar(context, "Você precisa fazer login para acessar");
-                                  }
+                                userIsLoggedIn == true ? Text("Logado") : Text("Nao logado"),
+                                Center(
+                                    child: InkWell(
+                                      onTap: (){
 
 
-                                },
-                                child: Container(
-                                  width: 250.0,
-                                  height: 250.0,
-                                  padding: const EdgeInsets.all(20.0),//I used some padding without fixed width and height
-                                  decoration: new BoxDecoration(
-                                    shape: BoxShape.circle,// You can use like this way or like the below line
-                                    //borderRadius: new BorderRadius.circular(30.0),
-                                    color: Colors.redAccent,
-                                  ),
-                                  child: Center(
-                                      child: Text("Quero me mudar", textAlign: TextAlign.center, style:TextStyle(color: Colors.white, fontSize: 30.0),
-                                      )// You can add a Icon instead of text also, like below.
-                                    //child: new Icon(Icons.arrow_forward, size: 50.0, color: Colors.black38)),
-                                  ),//..........
+                                        if(userIsLoggedIn == true){
+                                          Navigator.of(context).pop();
+                                          Navigator.push(context, MaterialPageRoute(
+                                              builder: (context) => SelectItensPage()));
+
+                                        } else {
+                                          _displaySnackBar(context, "Você precisa fazer login para acessar");
+                                        }
+
+
+                                      },
+                                      child: Container(
+                                        width: 250.0,
+                                        height: 250.0,
+                                        padding: const EdgeInsets.all(20.0),//I used some padding without fixed width and height
+                                        decoration: new BoxDecoration(
+                                          shape: BoxShape.circle,// You can use like this way or like the below line
+                                          //borderRadius: new BorderRadius.circular(30.0),
+                                          color: Colors.redAccent,
+                                        ),
+                                        child: Center(
+                                            child: Text("Quero me mudar", textAlign: TextAlign.center, style:TextStyle(color: Colors.white, fontSize: 30.0),
+                                            )// You can add a Icon instead of text also, like below.
+                                          //child: new Icon(Icons.arrow_forward, size: 50.0, color: Colors.black38)),
+                                        ),//..........
+                                      ),
+                                    )
                                 ),
-                              )
+
+                              ],
+                            ),
                           ),
+                        ),
 
-                          showPayBtn == true
-                          ? _payBtn()
-                          : Container(),
+                        showPayBtn == true
+                            ? WidgetsConstructor().customPopUp('Efetuar pagamento', 'Sua mudança ocorrerá em instantes. Efetue o pagamento para que o motorista inicie os procedimentos.', 'Pagar', 'Depois', widthPercent, heightPercent,  () {_onPressPopup();}, () {_onPressPopupCancel();})
+                            : Container(),
 
-                        ],
-                      ),
+                        _showPayPopUp==true
+                        ? WidgetsConstructor().customPopUp('Chegou a hora', 'Você têm uma mudança agendada para às '+moveClass.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_callbackPopupBtnPay(userModel);}, () {_callbackPopupBtnCancel();})
+                            : Container(),
+
+
+                      ],
                     ),
                   )
               );
@@ -133,6 +167,22 @@ class HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  void _onPressPopup(){
+
+    print(moveClass);
+    print('preco'+moveClass.preco.toString());
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => PaymentPage(moveClass)));
+
+  }
+
+  void _onPressPopupCancel(){
+        setState(() {
+          showPayBtn=false;
+        });
   }
 
   goToRegEntrepeneurPage(){
@@ -224,7 +274,7 @@ class HomePageState extends State<HomePage> {
 
 
 
-  Widget _payBtn(){
+  Widget _showPayAlertScreen(){
     return Positioned(
       right: 10.0,
       top: heightPercent*0.55,
@@ -233,14 +283,13 @@ class HomePageState extends State<HomePage> {
 
           Navigator.of(context).pop();
           Navigator.push(context, MaterialPageRoute(
-              builder: (context) => MercadoPago2(moveClass)));
+              builder: (context) => PaymentPage(moveClass)));
 
         },
         child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.5, 60.0, 2.0, 4.0, "Realizar pagamento pendente", Colors.white, 17.0),
       ),
     );
   }
-
 
   //NOVOS METODOS LOGIN
   Future<void> checkEmailVerified(UserModel userModel, NewAuthService newAuthService) async {
@@ -344,13 +393,19 @@ class HomePageState extends State<HomePage> {
 
         moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
 
+        //WidgetsConstructor().customPopUp('Hora de mudança', 'Você tinha uma mudança agendada mas que ainda não foi paga.', btnOk, btnCancel, widthPercent, heightPercent, () => null, () => null)
+
+        //setState(() {
+        //  showPayBtn=true;
+        //});
+
+      } else if(dif<=150 && dif>15){
+
+        //_displaySnackBar(context, "Você possui uma mudança agendada às "+moveClass.timeSelected);
+
         setState(() {
-          showPayBtn=true;
+          _showPayPopUp=true;
         });
-
-      } else if(dif<=60 && dif>15){
-
-        _displaySnackBar(context, "Você possui uma mudança agendada às "+moveClass.timeSelected);
 
       } else if(dif<=15){
 
@@ -376,6 +431,30 @@ class HomePageState extends State<HomePage> {
       }
 
     }
+  }
+
+  Future<void> _callbackPopupBtnPay(UserModel userModel) async {
+
+    setState(() {
+      isLoading=true;
+    });
+
+    _displaySnackBar(context, 'Carregando informações, aguarde');
+    await UserModel().getEmailFromFb();
+    print(userModel.Email);
+    moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
+
+    setState(() {
+      isLoading=false;
+    });
+
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => PaymentPage(moveClass)));
+  }
+
+  void _callbackPopupBtnCancel(){
+
   }
 
 

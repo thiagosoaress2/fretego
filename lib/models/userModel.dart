@@ -1,3 +1,4 @@
+import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class UserModel extends Model {
@@ -18,6 +19,11 @@ class UserModel extends Model {
   }
 
   get Uid=>_uid;
+
+  Future<void> getEmailFromFb() async {
+    String mail = await NewAuthService().loadUserMail();
+    updateEmail(mail);
+  }
 
   void updateEmail(String value) {
     _email = value;

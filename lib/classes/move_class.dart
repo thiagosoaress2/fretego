@@ -174,6 +174,8 @@ class MoveClass {
       newStr = 'Sem motorista escolhido';
     } else if(sit=='deny'){
       newStr = 'O profissional rejeitou o serviço';
+    } else if(sit=='pago'){
+      newStr = "Está tudo certo. Apenas aguarde o profissional. Se preciso, entre em contato com ele no botão abaixo.";
     }
 
     return newStr?? 'ERRO';

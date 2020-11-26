@@ -6,6 +6,7 @@ import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/trucker_movement_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/utils/date_utils.dart';
 
 
 class FirestoreServices {
@@ -413,15 +414,28 @@ class FirestoreServices {
 
   }
 
-  Future<void> updateOrderafterPayment(String id, String formaPgto, String tipoPgto){
+  Future<void> updateOrderafterPayment(String id, String formaPgto, String tipoPgto, String freteiroId){
 
     CollectionReference alert = FirebaseFirestore.instance.collection(ordersPath);
     return alert
         .doc(id)
         .update({
-      'status' : 'pago',
+      'situacao' : 'pago',
       'bandeira' : formaPgto,
       'tipo_pgto' : tipoPgto,
+      'freteiro' : freteiroId,
+    });
+
+  }
+
+  Future<void> updatescheduldMoveAfterPayment(String id){
+
+    CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
+    return alert
+        .doc(id)
+        .update({
+      'situacao' : 'pago',
+      'data_pgto' : DateTime.now().toString(),
     });
 
   }

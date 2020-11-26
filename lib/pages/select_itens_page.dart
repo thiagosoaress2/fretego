@@ -2749,7 +2749,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     //notificação com 2 horas de antecedencia (obs: o id da notificação é moveID (id do cliente+2)
     notifyDateTime = DateUtils().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
-    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId+'2', "Lembrete: Mudança em duas horas às "+moveClass.timeSelected , notifyDateTime);
+    NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId+'2', "Lembrete: Mudança em duas horas. Realize pagamento para confirmar." , notifyDateTime);
 
 
     _displaySnackBar(context, "agendado");

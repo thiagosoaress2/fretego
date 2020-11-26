@@ -239,6 +239,7 @@ class _MoveDayPageState extends State<MoveDayPage> {
   }
 
   void _loadInitialData(){
+    print('lat endereço origem'+moveClass.latEnderecoOrigem.toString());
     _initialcameraposition = LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
     _origemPos = LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
     _destinyPos = LatLng(moveClass.latEnderecoDestino, moveClass.longEnderecoDestino);
