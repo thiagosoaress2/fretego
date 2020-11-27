@@ -205,7 +205,78 @@ class WidgetsConstructor {
     );
   }
 
-  Widget customPopUp(String title, String text, String btnOk, String btnCancel, double widthPercent, double heightPercent, @required VoidCallback onPressBtn(), @required VoidCallback onPressCancel()){
+  Widget customPopUp1Btn(String title, String text, Color btnColor, double widthPercent, double heightPercent, @required VoidCallback onPressBtn(), [String btnOkText]){
+
+    //USE ASSIM
+    //CRIA FUNÇÕES DE CALLBACK PARA CANCEL E OK
+    //WidgetsConstructor().customPopUp('title', 'text', widthPercent,  () {_onPressPopup();}, () {_onPressPopupCancel();})
+
+    return Positioned(
+        top: heightPercent*0.15,
+        right: 0.5,
+        left: 0.5,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: widthPercent*0.05,),
+            Container(
+              width: widthPercent*0.85,
+              //decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                border: Border.all(
+                  color: Colors.blue,
+                  width: 2.0, //                   <--- border width here
+                ),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey[400],
+                    blurRadius: 4.0,
+                    spreadRadius: 1.0,
+                    offset: Offset(2.0, 2.0), // shadow direction: bottom right
+                  )
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Column(
+                  children: [
+
+                    WidgetsConstructor().makeText(title, Colors.blue, 20.0, 20.0, 20.0, 'center'),
+                    WidgetsConstructor().makeText(text, Colors.black, 16.0, 0.0, 30.0, 'center'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+
+                        Container(
+                          width: widthPercent*0.30,
+                          height: 60.0,
+                          child: RaisedButton(
+                            onPressed: (){
+                              onPressBtn();
+                            },
+                            color: btnColor,
+                            splashColor: Colors.grey[100], //onclick
+                            elevation: 4.0,
+                            child: makeText(btnOkText??'Ok', Colors.white, 16.0, 0.5, 0.5, 'center'),),
+
+                        ),
+
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: widthPercent*0.05,),
+          ],
+        )
+    );
+
+  }
+
+  Widget customPopUp(String title, String text, String btnOkText, String btnCancelText, double widthPercent, double heightPercent, @required VoidCallback onPressBtn(), @required VoidCallback onPressCancel()){
 
     //USE ASSIM
     //CRIA FUNÇÕES DE CALLBACK PARA CANCEL E OK
@@ -216,94 +287,181 @@ class WidgetsConstructor {
         right: 0.5,
         left: 0.5,
         child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(width: widthPercent*0.05,),
-        Container(
-          width: widthPercent*0.85,
-          //decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(4.0)),
-            border: Border.all(
-              color: Colors.blue,
-              width: 2.0, //                   <--- border width here
-            ),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey[400],
-                blurRadius: 4.0,
-                spreadRadius: 1.0,
-                offset: Offset(2.0, 2.0), // shadow direction: bottom right
-              )
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Column(
-              children: [
-
-                WidgetsConstructor().makeText(title, Colors.blue, 20.0, 20.0, 20.0, 'center'),
-                WidgetsConstructor().makeText(text, Colors.black, 16.0, 0.0, 30.0, 'center'),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: widthPercent*0.05,),
+            Container(
+              width: widthPercent*0.85,
+              //decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                border: Border.all(
+                  color: Colors.blue,
+                  width: 2.0, //                   <--- border width here
+                ),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey[400],
+                    blurRadius: 4.0,
+                    spreadRadius: 1.0,
+                    offset: Offset(2.0, 2.0), // shadow direction: bottom right
+                  )
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Column(
                   children: [
 
-                    Container(
-                      width: widthPercent*0.35,
-                      height: 60.0,
-                      child: RaisedButton(
-                        onPressed: (){
-                          onPressCancel();
-                        },
-                        color: Colors.red,
-                        splashColor: Colors.red[200], //onclick
-                        elevation: 4.0,
-                        child: makeText(btnCancel, Colors.white, 16.0, 0.5, 0.5, 'center'),),
+                    WidgetsConstructor().makeText(title, Colors.blue, 20.0, 20.0, 20.0, 'center'),
+                    WidgetsConstructor().makeText(text, Colors.black, 16.0, 0.0, 30.0, 'center'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
 
-                    ),
+                        Container(
+                          width: widthPercent*0.35,
+                          height: 60.0,
+                          child: RaisedButton(
+                            onPressed: (){
+                              onPressCancel();
+                            },
+                            color: Colors.red,
+                            splashColor: Colors.red[200], //onclick
+                            elevation: 4.0,
+                            child: makeText(btnCancelText, Colors.white, 16.0, 0.5, 0.5, 'center'),),
 
-                    Container(
-                      width: widthPercent*0.35,
-                      height: 60.0,
-                      child: RaisedButton(
-                          onPressed: (){
-                            onPressBtn();
-                          },
-                          elevation: 4.0,
-                          splashColor: Colors.blue[200],
-                          color: Colors.blue,
-                          child: makeText(btnOk, Colors.white, 16.0, 0.5, 0.5, 'center'))
-                      ,
-                    ),
+                        ),
+
+                        Container(
+                          width: widthPercent*0.35,
+                          height: 60.0,
+                          child: RaisedButton(
+                              onPressed: (){
+                                onPressBtn();
+                              },
+                              elevation: 4.0,
+                              splashColor: Colors.blue[200],
+                              color: Colors.blue,
+                              child: makeText(btnOkText, Colors.white, 16.0, 0.5, 0.5, 'center'))
+                          ,
+                        ),
 
 
+                      ],
+                    )
                   ],
-                )
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
-        SizedBox(width: widthPercent*0.05,),
-      ],
-    )
+            SizedBox(width: widthPercent*0.05,),
+          ],
+        )
     );
 
   }
 
-  //eexemplo de botao
-  /*
+  Widget customPopUp3buttons(String title, String text, String btn1Text, Color btn1Color, String btn2Text, Color btn2Color, String btn3Text, Color btn3Color, double widthPercent, double heightPercent, @required VoidCallback onPressBtn1(), @required VoidCallback onPressbtn2(), @required VoidCallback onPressbtn3()){
 
-                      new CupertinoButton (
-                        onPressed: ()=>{},
-                        color: Colors.orange,
-                        borderRadius: new BorderRadius.circular(30.0),
-                        child:
-                        new Text("Get Started",
-                          textAlign: TextAlign.center,
-                          style: new TextStyle(color: Colors.white),
+    //USE ASSIM
+    //CRIA FUNÇÕES DE CALLBACK PARA CANCEL E OK
+    //obs essas funcoes callback podem ficar dentro do proprio método p organizar melhor
+    //WidgetsConstructor().customPopUp('title', 'text', widthPercent,  () {_onPressPopup();}, () {_onPressPopupCancel();})
+
+    return Positioned(
+        top: heightPercent*0.25,
+        right: 0.5,
+        left: 0.5,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: widthPercent*0.05,),
+            Container(
+              width: widthPercent*0.95,
+              //decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                border: Border.all(
+                  color: Colors.blue,
+                  width: 2.0, //                   <--- border width here
+                ),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey[400],
+                    blurRadius: 4.0,
+                    spreadRadius: 1.0,
+                    offset: Offset(2.0, 2.0), // shadow direction: bottom right
+                  )
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Column(
+                  children: [
+
+                    WidgetsConstructor().makeText(title, Colors.blue, 20.0, 20.0, 20.0, 'center'),
+                    WidgetsConstructor().makeText(text, Colors.black, 16.0, 0.0, 30.0, 'center'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+
+                        Container(
+                          width: widthPercent*0.28,
+                          height: 60.0,
+                          child: RaisedButton(
+                            onPressed: (){
+                              onPressBtn1();
+                            },
+                            color: btn1Color,
+                            splashColor: Colors.grey[100], //onclick
+                            elevation: 4.0,
+                            child: makeText(btn1Text, Colors.white, 16.0, 0.5, 0.5, 'center'),),
+
                         ),
-                      ),
-   */
+
+                        Container(
+                          width: widthPercent*0.28,
+                          height: 60.0,
+                          child: RaisedButton(
+                              onPressed: (){
+                                onPressbtn2();
+                              },
+                              elevation: 4.0,
+                              splashColor: Colors.grey[100],
+                              color: btn2Color,
+                              child: makeText(btn2Text, Colors.white, 16.0, 0.5, 0.5, 'center'))
+                          ,
+                        ),
+
+                        Container(
+                          width: widthPercent*0.28,
+                          height: 60.0,
+                          child: RaisedButton(
+                              onPressed: (){
+                                onPressbtn3();
+                              },
+                              elevation: 4.0,
+                              splashColor: Colors.grey[100],
+                              color: btn3Color,
+                              child: makeText(btn3Text, Colors.white, 16.0, 0.5, 0.5, 'center'))
+                          ,
+                        ),
+
+
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: widthPercent*0.05,),
+          ],
+        )
+    );
+
+  }
+
 }
 

@@ -140,12 +140,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
         return ScopedModelDescendant<UserModel>(
           builder: (BuildContext context, Widget child, UserModel userModel){
 
-
-
-
+            
             if(initialLoad==false){
               initialLoad=true;
               checkIfExistsInShared(userModel); //it will also check if there is in firebase if there is no data in shared
+              
               loadItemsFromShared(selectedItemsChartModel);
             }
 
@@ -2109,7 +2108,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Future<bool> checkIfExistsAscheduledMoveInFb(UserModel userModel) async {
 
-    FirestoreServices().checkIfExistsAmoveScheduled(userModel.Uid, () {_onSucessScheduled(userModel);}, () {_onFailureScheduled();});
+    FirestoreServices().checkIfExistsAmoveScheduledForItensPage(userModel.Uid, () {_onSucessScheduled(userModel);}, () {_onFailureScheduled(userModel);});
 
   }
 
@@ -2117,10 +2116,21 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
     _displaySnackBar(context, "Opa. Parece que você já tem uma mudança agendada.");
 
-    moveClass = await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel);
+    void _onSucess(){
 
-    print(moveClass);
+      print(moveClass);
+      setState(() {
+        showFinalPage=true;
+        showSelectItemPage=false;
+        isLoading=false;
+      });
 
+    }
+
+    //moveClass = await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel);
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel,() {_onSucess();});
+
+    /*
     await SharedPrefsUtils().saveMoveClassToShared(moveClass);
 
     setState(() {
@@ -2128,14 +2138,14 @@ class _SelectItensPageState extends State<SelectItensPage> {
       showSelectItemPage=false;
       isLoading=false;
     });
-
+     */
 
   }
 
 
-  void _onFailureScheduled(){
+  void _onFailureScheduled(UserModel userModel){
     //do nothing, open normal next page
-    _checkIfNeedNewTrucker(); //verifica se precisa trocar o motorista
+    _checkIfNeedNewTrucker(userModel); //verifica se precisa trocar o motorista
     setState(() {
       //showChooseTruckerPage=true;
       //showAddressesPage=false;
@@ -2146,6 +2156,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   Future<Widget> checkIfExistsInShared(UserModel userModel) async {
 
+    checkIfExistsAscheduledMoveInFb(userModel); //se quiser voltar com o shared, apagar esta linha. Ela fica no else abaixo
+
+    //disabled. Agora n pega mais no shared
+    /*
     if(await SharedPrefsUtils().checkIfThereIsScheduledMove()==true){
 
       moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
@@ -2162,6 +2176,8 @@ class _SelectItensPageState extends State<SelectItensPage> {
       //if there is no data in shared, check in firebase
       checkIfExistsAscheduledMoveInFb(userModel);
     }
+
+     */
 
   }
 
@@ -2836,21 +2852,41 @@ class _SelectItensPageState extends State<SelectItensPage> {
 
   }
 
-  void _checkIfNeedNewTrucker() async {
+  void _checkIfNeedNewTrucker(UserModel userModel) async {
 
-    if(moveClass.situacao=="sem motorista"){
-      setState(() {
-        isLoading=true;
-      });
+    setState(() {
+      isLoading=true;
+    });
 
-      //await _makeAddressConfig();
+    Future<void> _loadMoveClassCallBack() async {
 
-      setState(() {
-        showChooseTruckerPage=true;
-        showFinalPage=false;
-        isLoading=false;
-      });
+      if(moveClass.situacao=="sem motorista" || moveClass.situacao == 'trucker_quit_after_payment'){
+
+        moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+          _displaySnackBar(context, 'Selecione um novo motorista e horário');
+
+          //await _makeAddressConfig();
+
+          showChooseTruckerPage=true;
+          showSelectItemPage=false;
+          showFinalPage=false;
+
+          setState(() {
+            isLoading=false;
+          });
+
+        });
+
+
+
+      }
+
     }
+
+    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, () { _loadMoveClassCallBack();} );
+
+
   }
 
 

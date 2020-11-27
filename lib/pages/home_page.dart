@@ -44,6 +44,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
   UserModel userModelGLobal;
   NewAuthService _newAuthService;
 
+  String popupCode='no';
+
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // isto é exercutado após todo o layout ser renderizado
@@ -70,9 +72,16 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     return ScopedModelDescendant<UserModel>(
       builder: (BuildContext context, Widget child, UserModel userModel) {
         //isLoggedIn(userModel);
+
+        userModelGLobal = userModel;
+
+
         return ScopedModelDescendant<NewAuthService>(
           builder: (BuildContext context, Widget child, NewAuthService newAuthService) {
 
+            _newAuthService = newAuthService;
+
+            /*
             if(needCheck==true){
               needCheck=false;
               //se nao está logado n precisa verificar nada. Pois ele pode fazer login quando quiser
@@ -81,9 +90,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
               }
             }
 
+             */
+
               return Scaffold(
                 key: _scaffoldKey,
-                  floatingActionButton: FloatingActionButton(backgroundColor: Colors.blue, child: Icon(Icons.add_circle, size: 50.0,), onPressed: goToRegEntrepeneurPage,),
+                  floatingActionButton: FloatingActionButton(backgroundColor: Colors.blue, child: Icon(Icons.add_circle, size: 50.0,), onPressed: (){print('click');},),
                   appBar: AppBar(title: WidgetsConstructor().makeSimpleText("Página principal", Colors.white, 15.0),
                     backgroundColor: Colors.blue,
                     centerTitle: true,
@@ -158,7 +169,29 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
                         ? WidgetsConstructor().customPopUp('Chegou a hora', 'Você têm uma mudança agendada para às '+moveClass.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_callbackPopupBtnPay(userModel);}, () {_callbackPopupBtnCancel();})
                             : Container(),
 
-
+                        popupCode=='no'
+                        ? Container()
+                        : popupCode=='accepted_little_negative'
+                          ? WidgetsConstructor().customPopUp('Atenção!', 'Você ainda pagou pela mudança. O profissional ainda não cancelou o serviço e caso decida pagar, ainda pode ocorrer.', 'Pagar', 'Depois', widthPercent, heightPercent,
+                                  () {_aceppted_little_lateCallback_Pagar(userModel);}, () {_aceppted_little_lateCallback_Depois();})
+                            : popupCode=='accepted_much_negative'
+                            ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você possuia uma mudança agendada às'+moveClass.timeSelected+' na data '+moveClass.dateSelected+', no entanto não efetuou pagamento. Esta mudança foi cancelada pela falta de pagamento.', Colors.red, widthPercent, heightPercent,
+                                  () {_aceppted_toMuch_lateCallback_Delete();})
+                              : popupCode=='accepted_timeToMove'
+                              ? WidgetsConstructor().customPopUp("Atenção", "Você tem uma mudança agendada para daqui a pouco. No entanto você ainda não efetuou o pagamento. Nesta situação o profissional não começa a se deslocar enquanto não houver pagamento.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_acepted_almostTime(userModel);}, () {_setPopuoCodeToDefault();})
+                                : popupCode=='pago_little_negative'
+                                ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClass.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_little_lateCallback_IrParaMudanca(userModel);} , () {_setPopuoCodeToDefault();})
+                                : popupCode == 'pago_much_negative'
+                                  ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClass.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_toMuch_lateCallback_Finalizar(userModel);} , () {_setPopuoCodeToDefault();})
+                                  : popupCode == 'pago_almost_time'
+                                    ? WidgetsConstructor().customPopUp('Quase na hora', 'Você tem uma mudança agendada para daqui a pouco.', 'Ir para mudança', 'Fechar', widthPercent, heightPercent, () {_pago_almost_time(userModel);} , () {_setPopuoCodeToDefault();} )
+                                    : popupCode=='pago_timeToMove'
+                                      ? WidgetsConstructor().customPopUp('Hora da mudança', 'Você tem uma mudança agora.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_almost_time(userModel);} , () {_setPopuoCodeToDefault();} )
+                                      : popupCode=='sistem_canceled'
+                                        ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você não efetuou o pagamento para uma mudança que estava agendada. Nós cancelamos este serviço.', Colors.red, widthPercent, heightPercent, () {_quit_systemQuitMove(userModel);})
+                                        : popupCode=='trucker_quited_after_payment'
+                                          ? WidgetsConstructor().customPopUp('Pedimos perdão', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções:', 'Escolher outro', 'Reaver dinheiro', widthPercent, heightPercent, () { _trucker_quitedAfterPayment_getNewTrucker();}, () { _trucker_quitedAfterPayment_cancel();})
+                                          : Container(),
                       ],
                     ),
                   )
@@ -168,6 +201,138 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       },
     );
   }
+
+  /*
+  CALBACKS DOS POPUPS
+   */
+  void _aceppted_little_lateCallback_Pagar(UserModel userModel){
+    //levar pra página de pagar
+
+    _openPaymentPageFromCallBacks(userModel);
+
+  }
+
+  void _aceppted_little_lateCallback_Depois(){
+    //fechar popup
+    _setPopuoCodeToDefault();
+  }
+
+  void _aceppted_toMuch_lateCallback_Delete(){
+    //deletar do bd
+
+    void _onSucess(){
+      _displaySnackBar(context, 'A mudança foi cancelada');
+      FirestoreServices().createTruckerAlertToInformMoveDeleted(moveClass, 'pagamento');
+      _setPopuoCodeToDefault();
+      moveClass = MoveClass();
+
+    }
+
+    void _onFail(){
+      _displaySnackBar(context, 'Ocorreu um erro');
+    }
+
+    FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucess();}, () {_onFail();});
+  }
+
+  void _acepted_almostTime(UserModel userModel){
+
+    _openPaymentPageFromCallBacks(userModel);
+  }
+
+  void _openPaymentPageFromCallBacks(UserModel userModel){
+
+    void _callback(){
+      Navigator.of(context).pop();
+      Navigator.push(context, MaterialPageRoute(
+          builder: (context) => PaymentPage(moveClass)));
+      _setPopuoCodeToDefault();
+    }
+
+    setState(() {
+      isLoading=true;
+    });
+    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, () {_callback();} );
+
+  }
+
+  void _pago_little_lateCallback_IrParaMudanca(UserModel userModel){
+    //ir para pagina de mudança
+    _goToMovePage(userModel);
+
+  }
+
+  void _pago_toMuch_lateCallback_Finalizar(UserModel userModel){
+    //deletar do bd
+
+    _goToMovePage(userModel);
+  }
+
+  void _pago_almost_time(UserModel userModel){
+      _goToMovePage(userModel);
+  }
+
+  void _quit_systemQuitMove(UserModel userModel){
+    //notificar e apagar
+    void _onSucess(){
+      moveClass = MoveClass();
+    }
+
+    FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucess();});
+    _setPopuoCodeToDefault();
+
+  }
+
+  void _trucker_quitedAfterPayment_getNewTrucker(){
+    //escolher novo trucker
+    //a gerencia de saber em qual página abrir vai ser feita na página. Neste ponto já está atualizado no bd
+    Navigator.of(context).pop();
+    Navigator.push(context, MaterialPageRoute(
+        builder: (context) => SelectItensPage()));
+  }
+
+  void _trucker_quitedAfterPayment_cancel(){
+    //aqui vai abrir uma pagina para informar dados bancários para ressarcir
+  }
+
+
+
+  Future<void> _goToMovePage(UserModel userModel) async {
+    //codigo para abrir a mudança
+    setState(() {
+      isLoading=true;
+    });
+
+    Future<void> _onSucessLoadScheduledMoveInFb(UserModel userModel) async {
+
+      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+        Navigator.of(context).pop();
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => MoveDayPage(moveClass)));
+
+        setState(() {
+          isLoading=false;
+        });
+
+      });
+    }
+
+    //ta na hora da mudança. Abrir a pagina de mudança
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
+
+  }
+
+  void _setPopuoCodeToDefault(){
+    setState(() {
+      isLoading=false;
+      popupCode='no';
+    });
+  }
+
+  /*
+  FIM DOS CALLBACKS DOS POPUPS
+   */
 
   void _onPressPopup(){
 
@@ -183,12 +348,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
         setState(() {
           showPayBtn=false;
         });
-  }
-
-  goToRegEntrepeneurPage(){
-
-
-
   }
 
   void isLoggedIn(UserModel userModel) async {
@@ -218,7 +377,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
   @override
   void initState() {
     super.initState();
-    checkFBconnection();
+    //checkFBconnection();
 
     /*
     Navigator.of(context).pop();
@@ -370,6 +529,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   Future<void> checkIfExistMovegoingNow(UserModel userModel) async {
 
+    await FirestoreServices().loadScheduledMoveSituationAndDateTime(moveClass, userModel, () { _ExistAmovegoinOnNow(userModel, moveClass);});
+
+    /*
     bool shouldCheckMove = await SharedPrefsUtils().checkIfThereIsScheduledMove();
     if(shouldCheckMove==true){
 
@@ -377,22 +539,44 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     }
 
+     */
+
   }
 
   Future<void> _ExistAmovegoinOnNow(UserModel userModel, MoveClass moveClass) async {
 
+    DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
+    DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
+    final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
 
-    if(moveClass.situacao == 'accepted'){
+    if(moveClass.situacao == "trucker_quit_after_payment"){
 
-      DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
-      DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
-      final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
+      setState(() {
+        popupCode='trucker_quited_after_payment';
+      });
+
+    } else if(moveClass.situacao == 'accepted'){
 
       if(dif.isNegative) {
         //a data já expirou
 
-        moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
+        if (dif > -300) {  //5 horas
+          setState(() {
+            popupCode = 'accepted_little_negative';
+          });
 
+          //neste caso o user fechou o app e abriu novamente
+
+        } else {
+          //a mudança já se encerrou há tempos
+          setState(() {
+            popupCode = 'accepted_much_negative';
+          });
+        }
+
+        /*
+        moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
+         */
         //WidgetsConstructor().customPopUp('Hora de mudança', 'Você tinha uma mudança agendada mas que ainda não foi paga.', btnOk, btnCancel, widthPercent, heightPercent, () => null, () => null)
 
         //setState(() {
@@ -409,6 +593,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
       } else if(dif<=15){
 
+        setState(() {
+          popupCode='accepted_timeToMove';
+        });
+
+        /*
         Future<void> _onSucessLoadScheduledMoveInFb() async {
 
           moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
@@ -422,7 +611,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
         //ta na hora da mudança. Abrir a pagina de mudança
         await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
-
+         */
 
       } else {
 
@@ -430,7 +619,77 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
       }
 
+    } else if(moveClass.situacao == 'pago'){
+
+      if(dif.isNegative) {
+        //a data já expirou
+
+        if (dif > -300) {  //5 horas
+          setState(() {
+            popupCode = 'pago_little_negative';
+          });
+
+          //neste caso o user fechou o app e abriu novamente
+
+        } else {
+          //a mudança já se encerrou há tempos
+          setState(() {
+            popupCode = 'pago_much_negative';
+          });
+        }
+
+      } else if(dif<=150 && dif>15){
+
+        setState(() {
+          popupCode = 'pago_almost_time';
+        });
+
+
+        /*
+        //_displaySnackBar(context, "Você possui uma mudança agendada às "+moveClass.timeSelected);
+        setState(() {
+          _showPayPopUp=true;
+        });
+
+         */
+
+      } else if(dif<=15){
+
+        setState(() {
+          popupCode='pago_timeToMove';
+        });
+
+        /*
+        Future<void> _onSucessLoadScheduledMoveInFb() async {
+
+          moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => MoveDayPage(moveClass)));
+
+          });
+        }
+
+        //ta na hora da mudança. Abrir a pagina de mudança
+        await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
+         */
+
+      } else {
+
+        //do nothing, falta mt ainda
+
+      }
+
+
+    } else if(moveClass.situacao=='quit'){
+      //significa que o sistema cancelou - agora vamso cancelar essa mudança
+      setState(() {
+        popupCode='sistem_canceled';
+      });
     }
+
+
   }
 
   Future<void> _callbackPopupBtnPay(UserModel userModel) async {
@@ -455,6 +714,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   void _callbackPopupBtnCancel(){
 
+    setState(() {
+      _showPayPopUp=false;
+    });
   }
 
 

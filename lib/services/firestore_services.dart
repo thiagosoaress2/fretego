@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:fretego/classes/avaliation_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/trucker_movement_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
@@ -15,9 +16,12 @@ class FirestoreServices {
 
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  final String agendamentosPath = "agendamentos_aguardando";
-  final String truckerCancelmentNotify = 'notificacoes_cancelamento';
-  final String ordersPath = 'orders';
+  static final String agendamentosPath = "agendamentos_aguardando";
+  static final String truckerCancelmentNotify = 'notificacoes_cancelamento';
+  static final String ordersPath = 'orders';
+  static final String truckerAdvice = 'truckers_advice';
+  static final String avaliationPath = 'truckers';
+  static final String userMoveHistory = 'historico';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -27,7 +31,9 @@ class FirestoreServices {
           .doc(uid)
           .set({
         'name': name,
-        'email': email
+        'email': email,
+        'aval' : 0,
+        'rate' : 0.0,
       })
           .then((value) {
             userModel.updateFullName(name);
@@ -36,21 +42,6 @@ class FirestoreServices {
           .catchError((error) => print("Failed to add user: $error"));
 
   }
-
-    /*
-        .add({
-      'name' : name,
-      'email' : email
-    })
-        .then((value) {
-          UserModel().updateFullName(name);
-          print("user Added");
-    })
-        .catchError((error) => print("Failed to add user: $error"));
-  }
-
-     */
-
 
   void getUserInfoFromCloudFirestore(UserModel userModel){
 
@@ -274,6 +265,8 @@ class FirestoreServices {
     //String situacao;
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
 
+      moveClass.freteiroId = querySnapshot['id_freteiro'];
+      moveClass.moveId = querySnapshot['moveId'];
       moveClass.situacao = querySnapshot['situacao'];
       moveClass.dateSelected = querySnapshot['selectedDate'];
       moveClass.timeSelected = querySnapshot['selectedTime'];
@@ -285,9 +278,63 @@ class FirestoreServices {
 
   Future<void> deleteAscheduledMove(MoveClass moveClass, [@required VoidCallback onSuccess, @required VoidCallback onFailure]){
     CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
-    move.doc(moveClass.userId)
+    move.doc(moveClass.moveId)
     .delete()
     .then((value) => onSuccess()).catchError((onError)=> onFailure());
+  }
+
+  Future<void> FinishAmove(MoveClass moveClass, [@required VoidCallback onSuccess, @required VoidCallback onFailure]){
+    CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
+    move.doc(moveClass.moveId)
+        .delete()
+        .then((value) => createHistoricOfMoves(moveClass)).catchError((onError)=> onFailure());
+  }
+
+  Future<void> createHistoricOfMoves(MoveClass moveClass){
+
+    CollectionReference history = FirebaseFirestore.instance.collection(agendamentosPath);
+
+    history.doc(moveClass.moveId).set({
+      'user' : moveClass.moveId,
+      'freteiro' : moveClass.freteiroId,
+      'preco' : moveClass.preco,
+      'origem' : moveClass.enderecoOrigem,
+      'destino' : moveClass.enderecoDestino,
+
+    });
+
+  }
+
+  Future<void> createTruckerAlertToInformMoveDeleted(MoveClass moveClass, String motivo) {
+    // Call the user's CollectionReference to add a new user
+    CollectionReference users = FirebaseFirestore.instance.collection(truckerAdvice);
+
+    return users
+        .doc(moveClass.moveId)
+        .set({
+      'hora': moveClass.timeSelected,
+      'data': moveClass.dateSelected,
+      'motivo' : motivo,
+      'trucker' : moveClass.freteiroId,
+    });
+
+  }
+
+
+
+  Future<void> updateMoveSituation(String newSituationString, truckerId, MoveClass moveClass, [VoidCallback onSucess(), VoidCallback onFail()]){
+
+
+    CollectionReference update = FirebaseFirestore.instance.collection(agendamentosPath);
+    return update
+        .doc(moveClass.moveId)
+        .update({
+      'situacao' : newSituationString,
+
+    }).then((value) {
+      onSucess();
+    }).catchError((e) => onFail());
+
   }
 
   Future<void> checkIfExistsAmoveScheduled(String id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
@@ -295,7 +342,27 @@ class FirestoreServices {
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
       if(querySnapshot.data() != null) {
+
         onSuccess();
+
+      } else {
+        onFailure();
+      }
+    });
+  }
+
+  Future<void> checkIfExistsAmoveScheduledForItensPage(String id, @required VoidCallback onSuccess, @required VoidCallback onFailure) async {
+
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
+
+      if(querySnapshot.data() != null) {
+
+        if(querySnapshot['situacao']=='trucker_quit_after_payment'){
+          onFailure();
+        } else {
+          onSuccess();
+        }
+
       } else {
         onFailure();
       }
@@ -436,6 +503,45 @@ class FirestoreServices {
         .update({
       'situacao' : 'pago',
       'data_pgto' : DateTime.now().toString(),
+    });
+
+  }
+
+  Future<void> loadAvaliationClass(AvaliationClass avaliationClass, @required VoidCallback onSucess()){
+
+    //AvaliationClass avaliationClassHere = avaliationClass;
+
+    FirebaseFirestore.instance
+        .collection(avaliationPath)
+        .doc(avaliationClass.avaliationTargetId)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+
+        avaliationClass.avaliationTargetName = documentSnapshot['apelido'];
+        avaliationClass.avaliations = documentSnapshot['aval'].toInt();
+        avaliationClass.avaliationTargetRate = documentSnapshot['rate'].toDouble();
+
+        onSucess();
+
+      } else {
+
+        return avaliationClass;
+      }
+    });
+
+
+
+  }
+
+  Future<void> saveUserAvaliation(AvaliationClass avaliationClass){
+
+    CollectionReference userLocation = FirebaseFirestore.instance.collection(avaliationPath);
+    return userLocation
+        .doc(avaliationClass.avaliationTargetId)
+        .update({
+      'rate' : avaliationClass.newRate,
+      'aval' : avaliationClass.avaliations+1,
     });
 
   }

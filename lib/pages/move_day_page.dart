@@ -373,10 +373,31 @@ class _MoveDayPageState extends State<MoveDayPage> {
                   ],
                 ),
                 SizedBox(height: 80.0,),
-                WidgetsConstructor().makeText("Você tem certeza que deseja encerrar esta mudança e realizar o pagamento?", Colors.blue, 18.0, 0.0, 20.0, 'center'),
+                WidgetsConstructor().makeText("Você tem certeza que deseja encerrar esta mudança e avaliar o profissional?", Colors.blue, 18.0, 0.0, 20.0, 'center'),
                 GestureDetector(
-                  onTap: (){
+                  onTap: () async {
 
+
+                    setState(() {
+                      isLoading=true;
+                    });
+
+
+                    void _onFail(){
+                      print('fail');
+                    }
+
+                    Navigator.of(context).pop();
+                    Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => AvaliationPage(moveClass)));
+
+
+
+                    //await FirestoreServices().loadMoveClassForTests(moveIdSomenteParaTestarAvaliationPage, moveClass, () {_onFail();}, () {_onSucess();});
+
+
+
+                    /*
                     AvaliationClass _avaliationClass = AvaliationClass();
                     _avaliationClass.enderecoOrigem = moveClass.enderecoOrigem;
                     _avaliationClass.enderecoDestino = moveClass.enderecoDestino;
@@ -389,6 +410,8 @@ class _MoveDayPageState extends State<MoveDayPage> {
                     Navigator.of(context).pop();
                     Navigator.push(context, MaterialPageRoute(
                         builder: (context) => AvaliationPage(_avaliationClass)));
+
+                     */
 
                   },
                   child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.5, 60.0, 2.0, 4.0, 'Finalizar', Colors.white, 18.0),
