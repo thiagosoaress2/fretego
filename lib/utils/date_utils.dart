@@ -1,4 +1,5 @@
 import 'package:date_format/date_format.dart';
+import 'package:intl/intl.dart';
 
 //needs to add date_format: ^1.0.8 to pubspec.yaml
 
@@ -71,6 +72,12 @@ class DateUtils {
   String giveMeTheDateToday(){
     var today = DateTime.now();
     return convertStringFromDate(today);
+  }
+
+  String giveMeTheTimeNow(){
+    var now = DateTime.now();
+    String formattedTime = DateFormat.Hm().format(now);
+    return formattedTime;
   }
 
   DateTime addDaysToDate(DateTime originalDate, int daysToAdd){

@@ -43,6 +43,41 @@ class SharedPrefsUtils {
 
   }
 
+  Future<bool> checkIfExistsMoreInfos() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String name = 'nao';
+    name = (prefs.getString('name'));
+    if(name==null){
+      return false;
+    } else {
+      return true;
+    }
+
+  }
+
+  Future<void> saveMoreInfos(UserModel userModel) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('name', userModel.FullName);
+  }
+
+  Future<String> loadMoreInfoInSharedPrefs() async {
+    //MoveClass moveClass = MoveClass.empty();
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    //UserModel userModel;
+
+    String value = (prefs.getString('name').toString());
+    //userModel.updateFullName(value);
+    return value;
+
+    //return userModel;
+
+  }
+
+
 
   Future<void> saveMoveClassToShared(MoveClass moveClass) async {
 

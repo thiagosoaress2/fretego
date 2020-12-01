@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/avaliation_class.dart';
+import 'package:fretego/classes/bank_data_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/trucker_movement_class.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
@@ -22,6 +23,8 @@ class FirestoreServices {
   static final String truckerAdvice = 'truckers_advice';
   static final String avaliationPath = 'truckers';
   static final String userMoveHistory = 'historico';
+  static final String reembolsoPath = 'reembolso';
+  static final String punishmentPath = 'freteiros_em_punicao';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -43,7 +46,7 @@ class FirestoreServices {
 
   }
 
-  void getUserInfoFromCloudFirestore(UserModel userModel){
+  void getUserInfoFromCloudFirestore(UserModel userModel, [VoidCallback onSucess()]){
 
     FirebaseFirestore.instance
         .collection('users')
@@ -52,6 +55,7 @@ class FirestoreServices {
         .then((DocumentSnapshot documentSnapshot) {
       if (documentSnapshot.exists) {
         userModel.updateFullName(documentSnapshot['name']);
+        onSucess();
       }
     });
 
@@ -133,6 +137,8 @@ class FirestoreServices {
 
   }
 
+
+  //funções de mudanças
   Future<void> scheduleAmoveInBd(MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure){
 
     CollectionReference schedule = FirebaseFirestore.instance.collection(agendamentosPath);
@@ -320,8 +326,6 @@ class FirestoreServices {
 
   }
 
-
-
   Future<void> updateMoveSituation(String newSituationString, truckerId, MoveClass moveClass, [VoidCallback onSucess(), VoidCallback onFail()]){
 
 
@@ -368,6 +372,23 @@ class FirestoreServices {
       }
     });
   }
+
+  Future<String> situationListener(MoveClass moveClass){
+
+    final docRef = FirebaseFirestore.instance.collection(agendamentosPath).doc(moveClass.moveId);
+
+    docRef.snapshots().listen((DocumentSnapshot event) async {
+
+      print(event.data()['situacao']);
+      if(event.data()['situacao'] !=  'trucker_quited_after_payment'){   //trocar para pago
+        return event.data()['situacao'];
+      }
+    });
+
+  }
+
+
+
 
   Future<void> checkIfThereIsAlert(String id, @required VoidCallback onSuccess) async {
 
@@ -460,6 +481,21 @@ class FirestoreServices {
 
 
 
+  //punishiments functions
+  Future<void> createPunishmentEntryToTrucker(String truckerId, String motivo){
+
+    CollectionReference path = FirebaseFirestore.instance.collection(punishmentPath);
+
+    path.doc(truckerId).set({
+      'trucker' : truckerId,
+      'motivo' : motivo,
+      'data' : DateUtils().giveMeTheDateToday(),
+      'hora' : DateUtils().giveMeTheTimeNow(),
+
+    });
+
+  }
+
   //payments functions
   Future<void> deleteCode(String id){
 
@@ -507,6 +543,9 @@ class FirestoreServices {
 
   }
 
+
+
+  //user avalation funcions
   Future<void> loadAvaliationClass(AvaliationClass avaliationClass, @required VoidCallback onSucess()){
 
     //AvaliationClass avaliationClassHere = avaliationClass;
@@ -546,5 +585,37 @@ class FirestoreServices {
 
   }
 
+
+
+  //bank save to
+  Future<void> saveBankDataToDevolution(BankData bankData, VoidCallback onSucess(), VoidCallback onFail()){
+
+    CollectionReference path = FirebaseFirestore.instance.collection(reembolsoPath);
+    return path
+        .doc(bankData.userId)
+        .set({
+      'userId' : bankData.userId,
+      'userName' : bankData.userName??'noName',
+      'userMail' : bankData.userMail,
+      'accountName' : bankData.nameOfAccountOwner,
+      'agency' : bankData.agency,
+      'account' : bankData.account,
+      'digit' : bankData.accountDigit,
+      'bank' : bankData.bank,
+      'cpf' : bankData.cpfOfAccountOwner,
+      'problema' : bankData.problem,
+      'tipoConta' : bankData.accountType,
+      'data_requisicao' : DateUtils().giveMeTheDateToday(),
+    }).then((value) {
+
+      onSucess();
+
+    })
+
+        .catchError((e) => onFail())
+
+    ;
+
+  }
 }
 

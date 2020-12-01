@@ -1,4 +1,5 @@
 import 'package:after_layout/after_layout.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
@@ -12,6 +13,7 @@ import 'package:fretego/pages/payment_page.dart';
 import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
 import 'package:fretego/pages/select_itens_page.dart';
+import 'package:fretego/pages/user_informs_bank_data_page.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
@@ -46,6 +48,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   String popupCode='no';
 
+  bool isLoading=false;
+
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // isto é exercutado após todo o layout ser renderizado
@@ -54,10 +58,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     if(userIsLoggedIn==true){
       checkEmailVerified(userModelGLobal, _newAuthService);
     }
-
-
-
-
 
 
   }
@@ -190,7 +190,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
                                       : popupCode=='sistem_canceled'
                                         ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você não efetuou o pagamento para uma mudança que estava agendada. Nós cancelamos este serviço.', Colors.red, widthPercent, heightPercent, () {_quit_systemQuitMove(userModel);})
                                         : popupCode=='trucker_quited_after_payment'
-                                          ? WidgetsConstructor().customPopUp('Pedimos perdão', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções:', 'Escolher outro', 'Reaver dinheiro', widthPercent, heightPercent, () { _trucker_quitedAfterPayment_getNewTrucker();}, () { _trucker_quitedAfterPayment_cancel();})
+                                          ? WidgetsConstructor().customPopUp('Pedimos perdão', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções:', 'Escolher outro', 'Reaver dinheiro', widthPercent, heightPercent, () { _trucker_quitedAfterPayment_getNewTrucker();}, () { _trucker_quitedAfterPayment_cancel(userModel);})
                                           : Container(),
                       ],
                     ),
@@ -291,8 +291,35 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
         builder: (context) => SelectItensPage()));
   }
 
-  void _trucker_quitedAfterPayment_cancel(){
+  //aqui foi o trucker que informou que n fez a mudança, n precisa verificar e pode cancelar direto.
+  Future<void> _trucker_quitedAfterPayment_cancel(UserModel userModel) async {
     //aqui vai abrir uma pagina para informar dados bancários para ressarcir
+
+    //codigo para abrir a mudança
+    setState(() {
+      isLoading=true;
+    });
+
+    Future<void> _onSucessLoadScheduledMoveInFb(UserModel userModel) async {
+
+      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+        Navigator.of(context).pop();
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => UserInformsBankDataPage(moveClass)));
+
+
+        setState(() {
+          isLoading=false;
+        });
+
+      });
+    }
+
+    //ta na hora da mudança. Abrir a pagina de mudança
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
+
+
   }
 
 
@@ -328,6 +355,26 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       isLoading=false;
       popupCode='no';
     });
+  }
+
+  Future<void> _solvingProblems(UserModel userModel) async {
+    //esta função é para o caso do user relatar que o trucker encerrou ou nao apareceu na mudança e fechou o app. Então vai abrir
+    //direto a pagina de mudança aguardando o trucker resonder
+    _displaySnackBar(context, "Ainda estamos buscando a solução do seu problema, aguarde.");
+
+    Future<void> _onSucessLoadScheduledMoveInFb() async {
+
+      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+        Navigator.of(context).pop();
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => MoveDayPage(moveClass)));
+
+      });
+    }
+
+    //ta na hora da mudança. Abrir a pagina de mudança
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
   }
 
   /*
@@ -458,6 +505,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     await newAuthService.loadUserBasicDataInSharedPrefs(userModel);
 
+    //carregar mais infos - at this time the name
+    _loadMoreInfos(userModel);
+
     //check if email is verified
     bool isUserEmailVerified = false;
     isUserEmailVerified = await newAuthService.isUserEmailVerified();
@@ -481,11 +531,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
       }
 
-      //verifica se tem alerta
-      FirestoreServices().checkIfThereIsAlert(userModel.Uid, () { _AlertExists(userModel);});
 
-      //verifica se tem uma mudança acontecendo agora
-      checkIfExistMovegoingNow(userModel);
+      _everyProcedureAfterUserHasInfosLoaded(userModel);
+
 
     } else{
 
@@ -493,6 +541,31 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       Navigator.push(context, MaterialPageRoute(
           builder: (context) => EmailVerify()));
 
+    }
+  }
+
+  void _everyProcedureAfterUserHasInfosLoaded(UserModel userModel){
+
+
+    //verifica se tem alerta
+    FirestoreServices().checkIfThereIsAlert(userModel.Uid, () { _AlertExists(userModel);});
+
+    //verifica se tem uma mudança acontecendo agora
+    checkIfExistMovegoingNow(userModel);
+
+  }
+
+  Future<void> _loadMoreInfos(UserModel userModel) async {
+    if(await SharedPrefsUtils().checkIfExistsMoreInfos()==true){
+      String name = await SharedPrefsUtils().loadMoreInfoInSharedPrefs(); //update userModel with extra info (ps: At this time only the name)
+      userModel.updateFullName(name);
+    } else {
+
+      void _onSucess(){
+        SharedPrefsUtils().saveMoreInfos(userModel);
+      }
+
+      FirestoreServices().getUserInfoFromCloudFirestore(userModel, () {_onSucess();});
     }
   }
 
@@ -549,11 +622,15 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
     final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
 
-    if(moveClass.situacao == "trucker_quit_after_payment"){
+    if(moveClass.situacao == 'trucker_quited_after_payment'){
 
       setState(() {
         popupCode='trucker_quited_after_payment';
       });
+
+    } else if(moveClass.situacao == 'user_informs_trucker_didnt_make_move' || moveClass.situacao == 'user_informs_trucker_didnt_finished_move'){
+      //user relatou problrema como: Mudança nao feita ou finalizada pelo trucker sem ter concluido
+      _solvingProblems(userModel);
 
     } else if(moveClass.situacao == 'accepted'){
 
@@ -718,6 +795,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       _showPayPopUp=false;
     });
   }
+
+
 
 
   _displaySnackBar(BuildContext context, String msg) {

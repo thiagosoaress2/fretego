@@ -51,6 +51,7 @@ dependencies:
   location: ^3.0.2
   mercadopago_sdk: ^1.2.0
   after_layout: ^1.0.7+2
+  group_radio_button: ^1.0.1
 
 
 dev_dependencies:

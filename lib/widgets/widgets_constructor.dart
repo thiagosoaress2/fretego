@@ -6,6 +6,9 @@ class WidgetsConstructor {
 
   Widget makeEditText(TextEditingController controller, String labelTxt, FocusNode focusNode){
 
+    //obs para usar o editext precisa declarar um controler assim:
+    //TextEditingController problemController = TextEditingController();
+
     //passe null em focusnode caso não tenha. Isto serve para dar focus.
 
     return TextField(
@@ -45,6 +48,29 @@ class WidgetsConstructor {
         controller: controller,
         decoration: InputDecoration(labelText: labelTxt),
         keyboardType: TextInputType.number
+    );
+
+  }
+
+  Widget makeEditTextForPhoneFormat(TextEditingController controller, String labelTxt, MaskTextInputFormatter maskFormatter){
+
+    //instrução: Para usar você declara um controller tradicional.
+    //adicione esta biblioteca: mask_text_input_formatter: ^1.0.7
+    //Mas você precisa de um maskformatter assim> var _maskFormatterPhone = new MaskTextInputFormatter(mask: '(##) ####-#####)', filter: { "#": RegExp(r'[0-9]') });
+    //também precisa de um controller. ex: final TextEditingController _phoneController = TextEditingController();
+    //obs: Você pode editar este elemento de várias formas e não apenas para máscara
+    //exemplo
+    /*
+    var _maskFormatterPhone = new MaskTextInputFormatter(mask: '(##) ####-#####)', filter: { "#": RegExp(r'[0-9]') });
+    final TextEditingController _phoneController = TextEditingController();
+     */
+
+    return TextField(
+      controller: controller,
+      inputFormatters: [maskFormatter],
+      autocorrect: false,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(labelText: labelTxt),
     );
 
   }

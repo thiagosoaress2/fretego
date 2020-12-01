@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:after_layout/after_layout.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_open_whatsapp/flutter_open_whatsapp.dart';
 import 'package:fretego/classes/avaliation_class.dart';
@@ -11,11 +13,14 @@ import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:group_radio_button/group_radio_button.dart';
 import 'package:location/location.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 
 bool isFirstLoad=true;
+
+final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
 class MoveDayPage extends StatefulWidget {
   MoveClass _moveClass = MoveClass();
@@ -26,10 +31,7 @@ class MoveDayPage extends StatefulWidget {
   _MoveDayPageState createState() => _MoveDayPageState();
 }
 
-
-final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
-
-class _MoveDayPageState extends State<MoveDayPage> {
+class _MoveDayPageState extends State<MoveDayPage>{
 
 
   double heightPercent;
@@ -56,6 +58,10 @@ class _MoveDayPageState extends State<MoveDayPage> {
   Completer<GoogleMapController> _controller = Completer();
 
   bool _showAlertFinishMove=false;
+  bool _showMessageThatTruckerFinishedTheMove=false;
+  bool _showMessageThatTruckerIsCommingBack=false;
+
+  bool _showProblemInformPage=false;
 
   Location location = new Location();
 
@@ -63,6 +69,22 @@ class _MoveDayPageState extends State<MoveDayPage> {
 
   String phone;
 
+  bool _initialDataIsOk=false;
+  String problem;
+
+  /*
+  @override
+  Future<void> afterFirstLayout(BuildContext context) {
+    // isto é exercutado após todo o layout ser renderizado
+
+    _loadInitialData();
+    _loadTruckerPhone();
+    _loadFirst();
+    _placeListenerToFinish();
+
+  }
+
+   */
 
   @override
   void initState() {
@@ -89,15 +111,19 @@ class _MoveDayPageState extends State<MoveDayPage> {
   Widget build(BuildContext context) {
 
     moveClass = widget._moveClass;
+
     if(isFirstLoad==true){
       isFirstLoad=false;
       _loadInitialData();
       _loadTruckerPhone();
       _loadFirst();
+      _placeListenerToFinish();
     }
+
 
     return ScopedModelDescendant<UserModel>(
       builder: (BuildContext context, Widget widget, UserModel userModel){
+
 
         heightPercent = MediaQuery
             .of(context)
@@ -107,6 +133,7 @@ class _MoveDayPageState extends State<MoveDayPage> {
             .of(context)
             .size
             .width;
+
 
         return Scaffold(
           key: _scaffoldKey,
@@ -120,7 +147,7 @@ class _MoveDayPageState extends State<MoveDayPage> {
               },
             ),
 
-            title: Text('Mapa'), centerTitle: true,
+            title: Text('Acompanhe sua mudança'), centerTitle: true,
           ),
 
           body: Stack(
@@ -129,22 +156,46 @@ class _MoveDayPageState extends State<MoveDayPage> {
               Column(
                 children: [
 
-                  _googleMap(heightPercent*0.55),
+                  _initialDataIsOk==true && _showProblemInformPage==false
+                  ? _googleMap(heightPercent*0.55)
+                  : Container(), //no futuro colocar uma animação aqui referente a mapa
 
-                  _bottomBar(),
+                  _showProblemInformPage==false
+                  ? _bottomBar()
+                  : Container(),
 
                 ],
               ),
 
-              showWhatsappBtn == true
+              showWhatsappBtn == true && _showProblemInformPage==false
               ? Positioned(
                   top: heightPercent*0.2,
                   right: 10.0,
                   child: _whatsappBtn())
               : Container(),
 
+              _showProblemInformPage==false
+              ? Positioned(
+                top: heightPercent*0.4,
+                right: 10.0,
+                child: _problemBtn(),
+              )
+              : Container(),
+
               _showAlertFinishMove==true
                   ? _confirmFinishMovePopup()
+                  : Container(),
+
+              _showProblemInformPage==true
+                  ? ProblemPage()
+                  : Container(),
+
+              _showMessageThatTruckerFinishedTheMove==true
+                ? _popUpInformingTruckerFinishedMove()
+                  : Container(),
+
+              _showMessageThatTruckerIsCommingBack==true
+                  ? _popUpInformingTruckerIsCommingBack()
                   : Container(),
 
             ],
@@ -153,6 +204,104 @@ class _MoveDayPageState extends State<MoveDayPage> {
         );
       },
     );
+  }
+
+  //Pages
+  Widget ProblemPage(){
+
+    Widget _buildRadioSelectProblem(BuildContext context) {
+      return Column(
+        children: [
+
+            RadioButton(
+            description: "O profissional não fez a mudança.",
+              value: "freteiro não fez a mudança",
+              groupValue: problem,
+              onChanged: (value) => setState(
+                    () => problem = value,
+              ),
+            ),
+
+          RadioButton(
+            description: "O profissional encerrou a mudança no aplicativo sem concluir.",
+            value: "freteiro encerrou antes da hora",
+            groupValue: problem,
+            onChanged: (value) => setState(
+                  () => problem = value,
+            ),
+          ),
+
+
+        ],
+      );
+    }
+
+    return ListView(
+      children: [
+        Padding(
+            child: Column(
+              children: [
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(icon: Icon(Icons.arrow_back, size: 45.0, color: Colors.blue,), onPressed:() {
+
+                      setState(() {
+                        _showProblemInformPage=false;
+                      });
+
+                    }),
+
+                  ],
+                ),
+
+                WidgetsConstructor().makeText('Relatando um problema', Colors.blue, 16.0, 25.0, 20.0, 'center'),
+
+                _buildRadioSelectProblem(context),
+
+                SizedBox(height: 25.0,),
+
+                Container(
+                  width: widthPercent*0.85,
+                  height: 60.0,
+                  child: RaisedButton(
+                      splashColor: Colors.lightBlue,
+                      color: Colors.blue,
+                      child: WidgetsConstructor().makeText('Relatar problema', Colors.white, 17.0, 5.0, 5.0, 'center'),
+                      onPressed:(){
+
+                        String msg;
+                        if(problem!= null){
+
+                          if(problem=='freteiro não fez a mudança'){
+                            msg = 'user_informs_trucker_didnt_make_move';
+                          } else {
+                            msg = 'user_informs_trucker_didnt_finished_move';
+                          }
+                          FirestoreServices().updateMoveSituation(msg, moveClass.freteiroId, moveClass);
+                          _displaySnackBar(context, 'Estamos trabalhando para resolver seu problema, por favor aguarde e não finalize a mudança.');
+                          setState(() {
+                            _showProblemInformPage=false;
+                          });
+                        } else {
+                          _displaySnackBar(context, 'Informe o problema');
+                        }
+
+                      }),
+                ),
+
+                SizedBox(height: 25.0,),
+
+
+              ],
+            ),
+            padding: EdgeInsets.all(10.0)),
+      ],
+    );
+
+
+
   }
 
 
@@ -238,11 +387,14 @@ class _MoveDayPageState extends State<MoveDayPage> {
 
   }
 
-  void _loadInitialData(){
-    print('lat endereço origem'+moveClass.latEnderecoOrigem.toString());
-    _initialcameraposition = LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
-    _origemPos = LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
-    _destinyPos = LatLng(moveClass.latEnderecoDestino, moveClass.longEnderecoDestino);
+  Future<void> _loadInitialData() async {
+
+    _initialcameraposition = await LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
+    _origemPos = await LatLng(moveClass.latEnderecoOrigem, moveClass.longEnderecoOrigem);
+    _destinyPos = await LatLng(moveClass.latEnderecoDestino, moveClass.longEnderecoDestino);
+    setState(() {
+      _initialDataIsOk=true;
+    });
   }
 
   _goBack(BuildContext context) {
@@ -262,6 +414,47 @@ class _MoveDayPageState extends State<MoveDayPage> {
 
   }
 
+  Future<String> _placeListenerToFinish(){
+
+    final docRef = FirebaseFirestore.instance.collection(FirestoreServices.agendamentosPath).doc(moveClass.moveId);
+
+    docRef.snapshots().listen((DocumentSnapshot event) async {
+
+      print(event.data()['situacao']);
+      if(event.data()['situacao'] ==  'trucker_finished'){   //trocar para pago
+        setState(() {
+          _showMessageThatTruckerFinishedTheMove=true;
+        });
+      } else if(event.data()['situacao'] == 'user_informs_trucker_didnt_finished_move_goingback'){
+        setState(() {
+
+        });
+      }
+    });
+
+
+    /*
+    Future<void> _onFinish() async {
+
+      final docRef = FirebaseFirestore.instance.collection(FirestoreServices.agendamentosPath).doc(moveClass.moveId);
+
+      docRef.snapshots().listen((DocumentSnapshot event) async {
+
+        print(event.data()['situacao']);
+        if(event.data()['situacao'] !=  'trucker_quited_after_payment'){   //trocar para pago
+          print('foi em '+DateTime.now().toString());
+        }
+      });
+
+    }
+
+    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, () { _onFinish();});
+
+
+     */
+
+
+  }
 
 
 
@@ -437,6 +630,48 @@ class _MoveDayPageState extends State<MoveDayPage> {
       )
     );
   }
+
+  Widget _problemBtn(){
+
+    return Container(
+        child: GestureDetector(
+          onTap: (){
+            setState(() {
+              _showProblemInformPage=true;
+            });
+          },
+          child: WidgetsConstructor().makeButton(Colors.red, Colors.white, 100.0, 60.0, 2.0, 5.0, "Relatar problema", Colors.white, 18.0),
+        )
+    );
+  }
+
+  Widget _popUpInformingTruckerFinishedMove(){
+
+    void _onSucess(){
+      setState(() {
+        _showMessageThatTruckerFinishedTheMove=false;
+      });
+    }
+
+    return WidgetsConstructor().customPopUp1Btn('Atenção', 'O profissional acaba de indicar que a mudança acabou. Finalize também para registrar que está tudo ok e encerrar o procedimento. Caso a mudança não tenha finalizado, não encerre, relate como problema..', Colors.blue, widthPercent, heightPercent, () { _onSucess();});
+
+
+  }
+
+  Widget _popUpInformingTruckerIsCommingBack(){
+
+    void _onSucess(){
+      setState(() {
+        _showMessageThatTruckerIsCommingBack=false;
+      });
+    }
+
+    return WidgetsConstructor().customPopUp1Btn('Atenção', 'O profissional voltando para finalizar a mudança.', Colors.blue, widthPercent, heightPercent, () { _onSucess();});
+
+
+  }
+
+
 
 
 

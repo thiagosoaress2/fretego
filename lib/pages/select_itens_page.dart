@@ -1430,9 +1430,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
                   final double dif = -0.07576889999999992;
                   startAtval = (dif+startAtval); //ajusta erro que percebi testando
 
+                  
                   Query query =
                   FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
-                      .where('latlong', isLessThan: endAtval);
+                      .where('latlong', isLessThan: endAtval).where('banido', isEqualTo: false);
 
 
                   /*  funciona mas retorna resultaod fora de uma lista
