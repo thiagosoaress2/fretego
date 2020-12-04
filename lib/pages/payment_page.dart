@@ -44,7 +44,7 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
 
 
-  createOrder () async {
+  createOrder (String uid) async {
 
     var orderRef = FirebaseFirestore.instance.collection('orders').doc();
     await orderRef.set(
@@ -54,6 +54,7 @@ class _PaymentPageState extends State<PaymentPage> {
           'price' : _moveClass.preco,
           'quantity' : 1,
           'name' : _name,
+          'user' : uid,
           'statement_descriptor' : GlobalsStrings.appName,
           'data_pgto' : DateUtils().giveMeTheDateToday(),
         }
@@ -117,7 +118,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
           } else {
 
-            _displaySnackBar(context, 'Ops, o pagamento não foi efetuado. Motivo: Sua operadora recusou o pagamento. Tente outro cartão.', 15);
+            _displaySnackBar(context, 'Ops, o pagamento não foi efetuado.', 15);
 
           }
 
@@ -205,7 +206,7 @@ class _PaymentPageState extends State<PaymentPage> {
                               isLoading=true;
                             });
                             _displaySnackBar(context, 'aguarde, iniciando pagamento. Isto pode demorar um pouco.', 10);
-                            createOrder();
+                            createOrder(userModel.Uid);
 
                           } else {
                             //do nothing

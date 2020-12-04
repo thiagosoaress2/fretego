@@ -181,6 +181,27 @@ class MoveClass {
     return newStr?? 'ERRO';
   }
 
+  String returnSituationWithNextAction(String sit){
+
+    String newStr;
+    if(sit=='aguardando confirmação do profissional'){
+      newStr = sit;
+    } else if(sit=='aguardando'){
+      newStr = 'aguardando confirmação do profissional';
+    } else if(sit=='accepted'){
+      newStr = "O profissional aceitou o serviço. Você pode realizar o pagamento.";
+    } else if(sit=='sem motorista'){
+      newStr = 'Sem motorista definido. Vamos escolher?';
+    } else if(sit=='deny'){
+      newStr = 'O profissional rejeitou o serviço. Vamos escolher outro?';
+    } else if(sit=='pago'){
+      newStr = "Está tudo certo. Apenas aguarde o profissional no momento agendado. Se preciso, entre em contato com ele.";
+    }
+
+    return newStr?? 'ERRO';
+
+  }
+
   DateTime formatMyDateToNotify(String originalDate, String time){
 
     DateTime moveDate = DateUtils().convertDateFromString(originalDate);

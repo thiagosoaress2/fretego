@@ -76,63 +76,6 @@ class _MercadoPagoState extends State<MercadoPago> {
     return result;
   }
 
-  Future<Map<String, dynamic>> index2() async {
-    var preference = {
-      "items":
-        {
-          "title": "Test",
-          "quantity": 1,
-          "currency_id": "BRL",
-          "unit_price": 10.4
-        },
-
-      "payer":
-        {
-          "name": "Joana",
-          "surname": "Albuquerque",
-          "email": "hazle.dach@gmail.com",
-          "date_created": "2015-06-02T12:58:41.425-04:00",
-          "phone": {
-            "area_code": "",
-            "number": "(966) 173-3677"
-          },
-
-          "identification": {
-            "type": "DNI",
-            "number": "123456789"
-          },
-
-          "address": {
-            "street_name": "Alessandro Alameda",
-            "street_number": 450,
-            "zip_code": "7409"
-          }
-        },
-
-    };
-
-    var result = await mp2.createPreference(preference);
-
-    return result;
-  }
-
-  Future<Map<String, dynamic>> index3() async {
-    var preference = {
-      "items": [
-        {
-          "id" : '1234',
-          "title": "Test",
-          "quantity": 1,
-          "currency_id": "BRL",
-          "unit_price": 10.4
-        }
-      ]
-    };
-
-    var result = await mp2.createPreference(preference);
-
-    return result;
-  }
 
   Future<void> makePayment() async {
 
@@ -157,30 +100,6 @@ class _MercadoPagoState extends State<MercadoPago> {
     });
     
      */
-
-  }
-
-  Future<void> makePayment2() async {
-
-
-
-    PaymentResult result;
-    
-    index2().then((value) async => {
-      
-      if(value!=null){
-
-
-        print('resultado de value '+value.toString()),
-        //await mp2.post(value['response']['init_point']),  //tentando simular o post que o cara fez no server
-        result = await MercadoPagoMobileCheckout.startCheckout(
-          MpGlobals.mpPublicKey,
-          value['response']['id'],).whenComplete(() => print(result)).whenComplete(() => print('resultado de checkout '+result.toString()))
-      }
-      
-    });
-    
-     
 
   }
 
@@ -218,37 +137,6 @@ class _MercadoPagoState extends State<MercadoPago> {
     return result;
   }
 
-  Future<void> makePayment3() async {
-
-    PaymentResult result;
-
-    index3().then((value) async => {
-
-      if(value!=null){
-
-
-        print('resultado de value '+value.toString()),
-
-        getPayer().then((value2) async => {
-
-          if(value2 != null){
-
-            print('resultado de getpayer'+value2.toString())
-          }
-        })
-
-
-        //await mp2.post(value['response']['init_point']),  //tentando simular o post que o cara fez no server
-        //result = await MercadoPagoMobileCheckout.startCheckout(
-          //MpGlobals.mpPublicKey,
-          //value['response']['id'],).whenComplete(() => print(result)).whenComplete(() => print('resultado de checkout '+result.toString()))
-      }
-
-    });
-
-
-
-  }
 
   @override
   void initState() {

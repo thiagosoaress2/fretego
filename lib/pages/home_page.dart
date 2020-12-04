@@ -35,13 +35,16 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
-  MoveClass moveClass = MoveClass();
+  MoveClass moveClassGlobal = MoveClass();
 
   double heightPercent;
   double widthPercent;
 
   bool showPayBtn=false;
   bool _showPayPopUp=false;
+
+  bool _showMoveShortCutBtn=false;
+  bool _showPayBtn=false; //somente se a situação for accepted
 
   UserModel userModelGLobal;
   NewAuthService _newAuthService;
@@ -155,6 +158,21 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
                                       ),
                                     )
                                 ),
+                                SizedBox(height: 25.0,),
+
+                                //botao com link pra mudança
+                                Center(
+                                  child: _showMoveShortCutBtn == true
+                                  ? showShortCutToMove()
+                                  : Container(),
+                                ),
+
+                                Center(
+                                  child: _showPayBtn==true
+                                  ?  showPayButtonInShortCutMode(userModel)
+                                      : Container(),
+                                ),
+
 
                               ],
                             ),
@@ -166,7 +184,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
                             : Container(),
 
                         _showPayPopUp==true
-                        ? WidgetsConstructor().customPopUp('Chegou a hora', 'Você têm uma mudança agendada para às '+moveClass.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_callbackPopupBtnPay(userModel);}, () {_callbackPopupBtnCancel();})
+                        ? WidgetsConstructor().customPopUp('Chegou a hora', 'Você têm uma mudança agendada para às '+moveClassGlobal.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_callbackPopupBtnPay(userModel);}, () {_callbackPopupBtnCancel();})
                             : Container(),
 
                         popupCode=='no'
@@ -175,14 +193,14 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
                           ? WidgetsConstructor().customPopUp('Atenção!', 'Você ainda pagou pela mudança. O profissional ainda não cancelou o serviço e caso decida pagar, ainda pode ocorrer.', 'Pagar', 'Depois', widthPercent, heightPercent,
                                   () {_aceppted_little_lateCallback_Pagar(userModel);}, () {_aceppted_little_lateCallback_Depois();})
                             : popupCode=='accepted_much_negative'
-                            ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você possuia uma mudança agendada às'+moveClass.timeSelected+' na data '+moveClass.dateSelected+', no entanto não efetuou pagamento. Esta mudança foi cancelada pela falta de pagamento.', Colors.red, widthPercent, heightPercent,
+                            ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você possuia uma mudança agendada às'+moveClassGlobal.timeSelected+' na data '+moveClassGlobal.dateSelected+', no entanto não efetuou pagamento. Esta mudança foi cancelada pela falta de pagamento.', Colors.red, widthPercent, heightPercent,
                                   () {_aceppted_toMuch_lateCallback_Delete();})
                               : popupCode=='accepted_timeToMove'
                               ? WidgetsConstructor().customPopUp("Atenção", "Você tem uma mudança agendada para daqui a pouco. No entanto você ainda não efetuou o pagamento. Nesta situação o profissional não começa a se deslocar enquanto não houver pagamento.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_acepted_almostTime(userModel);}, () {_setPopuoCodeToDefault();})
                                 : popupCode=='pago_little_negative'
-                                ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClass.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_little_lateCallback_IrParaMudanca(userModel);} , () {_setPopuoCodeToDefault();})
+                                ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_little_lateCallback_IrParaMudanca(userModel);} , () {_setPopuoCodeToDefault();})
                                 : popupCode == 'pago_much_negative'
-                                  ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClass.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_toMuch_lateCallback_Finalizar(userModel);} , () {_setPopuoCodeToDefault();})
+                                  ? WidgetsConstructor().customPopUp('Sua mudança', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_toMuch_lateCallback_Finalizar(userModel);} , () {_setPopuoCodeToDefault();})
                                   : popupCode == 'pago_almost_time'
                                     ? WidgetsConstructor().customPopUp('Quase na hora', 'Você tem uma mudança agendada para daqui a pouco.', 'Ir para mudança', 'Fechar', widthPercent, heightPercent, () {_pago_almost_time(userModel);} , () {_setPopuoCodeToDefault();} )
                                     : popupCode=='pago_timeToMove'
@@ -222,9 +240,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     void _onSucess(){
       _displaySnackBar(context, 'A mudança foi cancelada');
-      FirestoreServices().createTruckerAlertToInformMoveDeleted(moveClass, 'pagamento');
+      FirestoreServices().createTruckerAlertToInformMoveDeleted(moveClassGlobal, 'pagamento');
       _setPopuoCodeToDefault();
-      moveClass = MoveClass();
+      moveClassGlobal = MoveClass();
 
     }
 
@@ -232,7 +250,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       _displaySnackBar(context, 'Ocorreu um erro');
     }
 
-    FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucess();}, () {_onFail();});
+    FirestoreServices().deleteAscheduledMove(moveClassGlobal, () {_onSucess();}, () {_onFail();});
   }
 
   void _acepted_almostTime(UserModel userModel){
@@ -245,14 +263,14 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     void _callback(){
       Navigator.of(context).pop();
       Navigator.push(context, MaterialPageRoute(
-          builder: (context) => PaymentPage(moveClass)));
+          builder: (context) => PaymentPage(moveClassGlobal)));
       _setPopuoCodeToDefault();
     }
 
     setState(() {
       isLoading=true;
     });
-    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, () {_callback();} );
+    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClassGlobal, userModel, () {_callback();} );
 
   }
 
@@ -275,10 +293,10 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
   void _quit_systemQuitMove(UserModel userModel){
     //notificar e apagar
     void _onSucess(){
-      moveClass = MoveClass();
+      moveClassGlobal = MoveClass();
     }
 
-    FirestoreServices().deleteAscheduledMove(moveClass, () {_onSucess();});
+    FirestoreServices().deleteAscheduledMove(moveClassGlobal, () {_onSucess();});
     _setPopuoCodeToDefault();
 
   }
@@ -302,11 +320,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     Future<void> _onSucessLoadScheduledMoveInFb(UserModel userModel) async {
 
-      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+      moveClassGlobal = await MoveClass().getTheCoordinates(moveClassGlobal, moveClassGlobal.enderecoOrigem, moveClassGlobal.enderecoDestino).whenComplete(() {
 
         Navigator.of(context).pop();
         Navigator.push(context, MaterialPageRoute(
-            builder: (context) => UserInformsBankDataPage(moveClass)));
+            builder: (context) => UserInformsBankDataPage(moveClassGlobal)));
 
 
         setState(() {
@@ -317,7 +335,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     }
 
     //ta na hora da mudança. Abrir a pagina de mudança
-    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClassGlobal, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
 
 
   }
@@ -332,11 +350,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     Future<void> _onSucessLoadScheduledMoveInFb(UserModel userModel) async {
 
-      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+      moveClassGlobal = await MoveClass().getTheCoordinates(moveClassGlobal, moveClassGlobal.enderecoOrigem, moveClassGlobal.enderecoDestino).whenComplete(() {
 
         Navigator.of(context).pop();
         Navigator.push(context, MaterialPageRoute(
-            builder: (context) => MoveDayPage(moveClass)));
+            builder: (context) => MoveDayPage(moveClassGlobal)));
 
         setState(() {
           isLoading=false;
@@ -346,7 +364,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     }
 
     //ta na hora da mudança. Abrir a pagina de mudança
-    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClassGlobal, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
 
   }
 
@@ -364,17 +382,17 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     Future<void> _onSucessLoadScheduledMoveInFb() async {
 
-      moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+      moveClassGlobal = await MoveClass().getTheCoordinates(moveClassGlobal, moveClassGlobal.enderecoOrigem, moveClassGlobal.enderecoDestino).whenComplete(() {
 
         Navigator.of(context).pop();
         Navigator.push(context, MaterialPageRoute(
-            builder: (context) => MoveDayPage(moveClass)));
+            builder: (context) => MoveDayPage(moveClassGlobal)));
 
       });
     }
 
     //ta na hora da mudança. Abrir a pagina de mudança
-    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClassGlobal, userModel, (){ _onSucessLoadScheduledMoveInFb();});
   }
 
   /*
@@ -383,11 +401,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   void _onPressPopup(){
 
-    print(moveClass);
-    print('preco'+moveClass.preco.toString());
+    print(moveClassGlobal);
+    print('preco'+moveClassGlobal.preco.toString());
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(
-        builder: (context) => PaymentPage(moveClass)));
+        builder: (context) => PaymentPage(moveClassGlobal)));
 
   }
 
@@ -489,7 +507,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
           Navigator.of(context).pop();
           Navigator.push(context, MaterialPageRoute(
-              builder: (context) => PaymentPage(moveClass)));
+              builder: (context) => PaymentPage(moveClassGlobal)));
 
         },
         child: WidgetsConstructor().makeButton(Colors.blue, Colors.white, widthPercent*0.5, 60.0, 2.0, 4.0, "Realizar pagamento pendente", Colors.white, 17.0),
@@ -602,7 +620,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
   Future<void> checkIfExistMovegoingNow(UserModel userModel) async {
 
-    await FirestoreServices().loadScheduledMoveSituationAndDateTime(moveClass, userModel, () { _ExistAmovegoinOnNow(userModel, moveClass);});
+    await FirestoreServices().loadScheduledMoveSituationAndDateTime(moveClassGlobal, userModel, () { _ExistAmovegoinOnNow(userModel, moveClassGlobal);});
 
     /*
     bool shouldCheckMove = await SharedPrefsUtils().checkIfThereIsScheduledMove();
@@ -766,6 +784,20 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
       });
     }
 
+    moveClassGlobal = moveClass; //used in showShortCutToMove
+
+
+    //exibe o botao para pagar
+    if(moveClass.situacao=='accepted'){
+      _showPayBtn=true;
+    } else {
+      _showPayBtn=false;
+    }
+
+    //exibe o botao de ir pra mudança
+    setState(() {
+      _showMoveShortCutBtn=true;
+    });
 
   }
 
@@ -778,7 +810,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     _displaySnackBar(context, 'Carregando informações, aguarde');
     await UserModel().getEmailFromFb();
     print(userModel.Email);
-    moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
+    moveClassGlobal = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClassGlobal, userModel);
 
     setState(() {
       isLoading=false;
@@ -786,7 +818,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
 
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(
-        builder: (context) => PaymentPage(moveClass)));
+        builder: (context) => PaymentPage(moveClassGlobal)));
   }
 
   void _callbackPopupBtnCancel(){
@@ -796,6 +828,57 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage> {
     });
   }
 
+
+  Widget showShortCutToMove(){
+
+    return Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+
+          Container(
+            width: widthPercent*0.75,
+            height: 65.0,
+            child: RaisedButton(
+                textColor: Colors.white,
+                child: WidgetsConstructor().makeText('Você tem uma mudança', Colors.white, 17.0, 0.0, 0.0, 'center'),
+                color: Colors.blue,
+                splashColor: Colors.blueGrey,
+                onPressed: (){
+
+                  Navigator.of(context).pop();
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => MyMoves()));
+
+                }),
+          ),
+
+          WidgetsConstructor().makeText(MoveClass().returnSituationWithNextAction(moveClassGlobal.situacao), Colors.blue, 18.0, 20.0, 10.0, 'center'),
+
+
+
+        ],
+      ),
+    );
+  }
+
+  Widget showPayButtonInShortCutMode(UserModel userModel){
+
+    return Container(
+      width: widthPercent*0.75,
+      height: 65.0,
+      child: RaisedButton(
+        color: Colors.blueAccent,
+        textColor: Colors.white,
+        splashColor: Colors.blueGrey,
+        child: WidgetsConstructor().makeText('Pagar adiantado', Colors.white, 18.0, 0.0, 0.0, 'center'),
+        onPressed: (){
+          _openPaymentPageFromCallBacks(userModel);
+        },
+      ),
+    );
+
+  }
 
 
 

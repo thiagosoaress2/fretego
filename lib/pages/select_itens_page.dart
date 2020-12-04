@@ -1431,20 +1431,16 @@ class _SelectItensPageState extends State<SelectItensPage> {
                   startAtval = (dif+startAtval); //ajusta erro que percebi testando
 
                   
+                  /*
                   Query query =
                   FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
                       .where('latlong', isLessThan: endAtval).where('banido', isEqualTo: false);
-
-
-                  /*  funciona mas retorna resultaod fora de uma lista
-                  FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
-                      .where('latlong', isLessThan: endAtval).get().then((querySnapshot) {
-                    querySnapshot.docs.forEach((result) {
-                      print(result.data());
-                    });
-                  });
-
                    */
+                  
+                  Query query = FirebaseFirestore.instance.collection('truckers').where('latlong', isGreaterThanOrEqualTo: startAtval)
+                      .where('latlong', isLessThan: endAtval).where('banido', isEqualTo: false).where('listed', isEqualTo: true)
+                      .where('vehicle', isEqualTo: moveClass.carro);
+
 
 
 
@@ -1521,7 +1517,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                               //itemBuilder: (context, index) => Trucker(querySnapshot.docs[index]),
                                               itemBuilder: (context, index) {
 
-
                                                 Map<String, dynamic> map = querySnapshot.docs[index].data();
                                                 return GestureDetector(
                                                   onTap: (){
@@ -1533,14 +1528,14 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                                       //agendar
                                                       truckerClass.image=map['image'];
                                                       truckerClass.id=querySnapshot.docs[index].id;
-                                                      truckerClass.name=map['name'];
+                                                      truckerClass.name=map['apelido'];
                                                       truckerClass.aval=map['aval'].toDouble();
 
                                                       //print(documents[index].documentID); apareceu deprecated
                                                       //moveClass.freteiroId = documents[index].documentID; apareceu deprecated;
                                                       moveClass.freteiroId = querySnapshot.docs[index].id;
                                                       moveClass.userId = UserModel().Uid;
-                                                      moveClass.nomeFreteiro = map['name'];
+                                                      moveClass.nomeFreteiro = map['apelido']; //antigamente pegava de 'name'.
                                                       moveClass.freteiroImage = map['image'];
                                                       SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
 
@@ -1563,185 +1558,6 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                     },
                                 ),
 
-
-
-
-
-
-                                //nesse eu consegui pegar o tamanho do resultado mas n cosnigo exibir
-                                /*
-                                StreamBuilder<QuerySnapshot>(
-                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval)
-                                      .where('latlong', isLessThan: endAtval).snapshots(),
-                                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                                    if (snapshot.hasError) {
-                                      return Text('Something went wrong');
-                                    }
-
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return Text("Loading");
-                                    }
-
-                                    QuerySnapshot querySnapshot = snapshot.data;
-
-                                    return ListView.builder(
-                                      itemCount: querySnapshot.size,
-                                      itemBuilder: (BuildContext context, int index){
-                                        print('teste');
-                                          print(querySnapshot.docs[index].data()['name']);
-
-                                      },
-
-                                      //children: snapshot.data.docs.map((DocumentSnapshot document) {
-
-                                    );
-                                  },
-                                ),
-                                 */
-
-
-
-                                /* funciona mas n sei como exibir os resultados. Base no site do pling do firestore para flutter mas está mt confuso
-                                StreamBuilder<QuerySnapshot>(
-                                    stream: query.snapshots(),
-                                    builder: (context, stream){
-                                      if (stream.connectionState == ConnectionState.waiting) {
-                                        return Center(child: CircularProgressIndicator());
-                                      }
-
-                                      if (stream.hasError) {
-                                        return Center(child: Text(stream.error.toString()));
-                                      }
-                                      QuerySnapshot querySnapshot = stream.data;
-                                      return ListView.builder(
-                                        itemCount: querySnapshot.size,
-                                        itemBuilder: (context, index) =>
-                                            Text(querySnapshot.docs[index]['name']),
-                                      );
-                                    }
-                                ),
-
-                                 */
-
-                                /* ORIGINAL
-                                StreamBuilder<QuerySnapshot>(
-                                  //stream: Firestore.instance.collection("truckers").where('latlong', isGreaterThanOrEqualTo: -69.011483).where('latlong', isLessThan: -63.011483).limit(25).snapshots(),
-                                  stream: FirebaseFirestore.instance.collection(moveClass.carro).where('latlong', isGreaterThanOrEqualTo: startAtval).where('latlong', isLessThan: endAtval).limit(25).snapshots(),
-                                  builder: (context, snapshot) {
-                                    switch (snapshot.connectionState) {
-                                      case ConnectionState.waiting:
-                                      case ConnectionState.none:
-                                        return Center( //caso esteja vazio ou esperando exibir um circular progressbar no meio da tela
-                                          child: CircularProgressIndicator(),
-                                        );
-                                      default:
-                                        List<DocumentSnapshot> documents = snapshot
-                                            .data.documents.toList();
-                                        //return Text(snapshot.data.documents[0]['name']);
-                                        return ScopedModelDescendant<UserModel>(
-                                            builder: (BuildContext context, Widget child, UserModel userModel) {
-
-                                              return ListView.builder(
-                                                shrinkWrap: true,
-                                                itemBuilder: (BuildContext context, int index) {
-
-                                                  return InkWell(
-                                                    onTap: (){
-                                                      setState(() {
-
-                                                        //agendar
-                                                        truckerClass.image=documents[index]['image'];
-                                                        truckerClass.id=documents[index].id;
-                                                        truckerClass.name=documents[index]['name'];
-                                                        truckerClass.aval=documents[index]['aval'].toDouble();
-
-                                                        //print(documents[index].documentID); apareceu deprecated
-                                                        //moveClass.freteiroId = documents[index].documentID; apareceu deprecated
-                                                        print(documents[index].id);
-                                                        moveClass.freteiroId = documents[index].id;
-                                                        moveClass.userId = UserModel().Uid;
-                                                        moveClass.nomeFreteiro = documents[index]['name'];
-                                                        moveClass.freteiroImage = documents[index]['image'];
-                                                        SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
-
-
-                                                        showPopupFinal=true;
-                                                        //scheduleAmove();
-
-
-                                                      });
-
-                                                    },
-                                                    child: Padding(
-                                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 0.0),
-                                                      child: Container(
-                                                        child: Padding(
-                                                            padding: EdgeInsets.fromLTRB(
-                                                                0.0, 5.0, 0.0, 5.0),
-                                                            child: Column(
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child: Container(
-                                                                        width: 100.0,
-                                                                        height: 100.0,
-                                                                        child: CircleAvatar(
-                                                                          backgroundImage: NetworkImage(documents[index]['image']),
-                                                                        ),
-                                                                      ),
-                                                                      //child:Image.network(documents[index]['image'], height: 100.0, width: 100.0,),
-                                                                    ),
-                                                                    //Image.asset(myData[index]['image']),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.30,
-                                                                      child: Text(documents[index]["name"]),
-                                                                    ),
-                                                                    SizedBox(width: widthPercent * 0.03,),
-                                                                    Container(
-                                                                      width: widthPercent*0.20,
-                                                                      child: Text("nota: "+documents[index]['aval'].toString()),
-                                                                    )
-
-                                                                  ],
-                                                                ),
-
-                                                                documents[index]['vehicle'] == moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Este é o modelo que você escolheu", Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                                documents[index]['vehicle'] == moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null)
-                                                                    : WidgetsConstructor().makeText("Veículo: "+TruckClass.empty().formatCodeToHumanName(documents[index]['vehicle']), Colors.black, 15.0, 5.0, 5.0, null),
-
-                                                                documents[index]['vehicle'] != moveClass.carro ?
-                                                                WidgetsConstructor().makeText("Diferença: "+MoveClass().returnThePriceDiference(moveClass.carro, documents[index]['vehicle']), Colors.blue, 15.0, 5.0, 5.0, null) : Container(),
-
-                                                              ],
-                                                            )
-                                                        ),
-                                                        decoration: WidgetsConstructor()
-                                                            .myBoxDecoration(
-                                                            Colors.white, Colors.blue, 1.0, 5.0),
-                                                      ),
-                                                    ),
-                                                  ); //card com resultado se não tiver filtr
-
-                                                },
-                                                itemCount: documents == null ? 0 : documents.length,
-
-                                              );
-
-                                            }
-
-                                        );
-
-                                    };
-                                  },
-                                )
-                                 */
 
                               ],
                             ),
@@ -2197,8 +2013,48 @@ class _SelectItensPageState extends State<SelectItensPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(map['name']),
-                      Text(map['aval'].toString()),
+                      //Text(map['name']),
+                      Text(map['apelido']),
+                      //Text(map['aval'].toString()),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+
+                          map['aval']<0.4
+                          ? Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                              : map['aval']<1
+                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+                          map['aval']<=1.4
+                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                              : map['aval']<2
+                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+                          map['aval']<=2.4
+                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                              : map['aval']<3
+                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+
+                          map['aval']<=3.4
+                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                              : map['aval']<4
+                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+                          map['aval']<=4.4
+                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                              : map['aval']<5
+                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+
+                        ],
+                      ),
+
                       //metadata,
                       //genres,
                     ],
