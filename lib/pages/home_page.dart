@@ -56,7 +56,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   bool _showDarkerBackground=false;
   bool _bottomSheetIsOnScreen=false;
 
-  bool _showMoveShortCutBtn=false;
+  //bool _showMoveShortCutBtn=false;
   bool _showPayBtn=false; //somente se a situação for accepted
 
   UserModel userModelGLobal;
@@ -466,7 +466,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
                                           Container(
                                             alignment: Alignment.center,
-                                            width: userIsLoggedIn == true && _showMoveShortCutBtn==true ? widthPercent*0.40 : widthPercent*0.35,
+                                            //width: userIsLoggedIn == true && _showMoveShortCutBtn==true ? widthPercent*0.40 : widthPercent*0.35,
+                                            width: userIsLoggedIn == true && userModel.ThisUserHasAmove==true ? widthPercent*0.40 : widthPercent*0.35,
                                             child: RaisedButton(
                                               splashColor: Colors.grey[200],
                                               elevation: 10.0,
@@ -484,7 +485,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                                   } else {
 
                                                     //se já tiver agendado mudança abre a página myMoves
-                                                    if(_showMoveShortCutBtn==true){
+                                                    if(userModel.ThisUserHasAmove==true){
                                                       Navigator.of(context).push(_createRoute(MyMoves()));
                                                     } else {
                                                       //abre a página para seleconar itens e agendar mudança
@@ -501,7 +502,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                                 }
 
                                               },
-                                              child: WidgetsConstructor().makeText(userIsLoggedIn == true && _showMoveShortCutBtn==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && _showMoveShortCutBtn==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
+                                              //child: WidgetsConstructor().makeText(userIsLoggedIn == true && _showMoveShortCutBtn==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && _showMoveShortCutBtn==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
+                                              child: WidgetsConstructor().makeText(userIsLoggedIn == true && userModel.ThisUserHasAmove==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && userModel.ThisUserHasAmove==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
                                             ),
                                           ),
 
@@ -1323,6 +1325,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
     //carregar mais infos - at this time the name
     _loadMoreInfos(userModel);
+    userModel.updateThisUserHasAmove(false);
 
     //check if email is verified
     bool isUserEmailVerified = false;
@@ -1456,6 +1459,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
 
   void _handleSituation(UserModel userModel, MoveClass moveClass){
+
+    //update ui para informar que tem mudança
+    userModel.updateThisUserHasAmove(true);
 
     moveClassGlobal.situacao = moveClass.situacao;
     DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
@@ -1663,11 +1669,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     } else {
       _showPayBtn=false;
     }
-
-    //exibe o botao de ir pra mudança
-    setState(() {
-      _showMoveShortCutBtn=true;
-    });
 
   }
 

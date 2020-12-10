@@ -10,6 +10,8 @@ class UserModel extends Model {
 
   bool _alert=false;
 
+  bool _thisUserHasAMove;
+
   //UserModel({this.uid, this.fullName, this.email, this.userRole});
   //UserModel();
 
@@ -44,6 +46,7 @@ class UserModel extends Model {
     _fullName="";
     _email="";
     _userRole="";
+    _thisUserHasAMove=false;
   }
 
   void updateAlert(bool value) {
@@ -52,6 +55,13 @@ class UserModel extends Model {
   }
 
   get Alert=>_alert;
+
+  void updateThisUserHasAmove(bool value) {
+    _thisUserHasAMove = value;
+    notifyListeners();
+  }
+
+  get ThisUserHasAmove=>_thisUserHasAMove;
 
 
   //esta função é para fazer o upload pro firestore em formato json

@@ -380,7 +380,7 @@ class _MyMovesState extends State<MyMoves> {
                           isLoading=true;
                         });
                         SharedPrefsUtils().clearScheduledMove();
-                        FirestoreServices().deleteAscheduledMove(_moveClass, () {_onSucessDelete(); }, () { _onFailureDelete(); });
+                        FirestoreServices().deleteAscheduledMove(_moveClass, () {_onSucessDelete(userModel); }, () { _onFailureDelete(); });
 
                       },
                       child: WidgetsConstructor().makeButton(Colors.red, Colors.white, _moveClass.situacao == "aguardando" ? widthPercent*0.3 : widthPercent*0.7, 60.0, 2.0, 4.0, "Cancelar", Colors.white, 18.0),
@@ -419,7 +419,9 @@ class _MyMovesState extends State<MyMoves> {
 
   }
   
-  void _onSucessDelete(){
+  void _onSucessDelete(UserModel userModel){
+
+    userModel.updateThisUserHasAmove(false);
 
     FirestoreServices().notifyTruckerThatHeWasChanged(_moveClass.freteiroId, _moveClass.moveId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
 
