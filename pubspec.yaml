@@ -76,6 +76,19 @@ flutter:
     - images/carrinhobaby.jpg
     - images/carrinhoselecionado.png
     - markerico.png
+    - images/home_backwall.png
+    - images/home_boxes.png
+    - images/home_couple.png
+    - images/home_boxline.png
+    - images/home_tv.png
+    - images/home_sofaazul.png
+    - images/home_caminhao.png
+    - images/home_trucker.jpg
+    - images/home_trucker_anim.png
+    - images/home_mapa.png
+    - images/maps/markerdestino.png
+    - images/maps/markerorigem.png
+    - images/maps/truckerico.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

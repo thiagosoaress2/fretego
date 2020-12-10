@@ -63,7 +63,10 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
 
     print(widget.moveClass.userId);
     //AvaliationClass _avaliationClass = AvaliationClass('', widget.moveClass.idPedido, 0, 0);
-    _avaliationClass.avaliationTargetId = widget.moveClass.freteiroId;
+    String freteiroIdReal = widget.moveClass.freteiroId.replaceAll('not', '');
+    //_avaliationClass.avaliationTargetId = widget.moveClass.freteiroId;
+    print(freteiroIdReal);
+    _avaliationClass.avaliationTargetId = freteiroIdReal;
 
 
     return ScopedModelDescendant<UserModel>(

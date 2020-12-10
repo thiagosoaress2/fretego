@@ -33,6 +33,8 @@ class MoveClass {
   String alert;
   bool alertSaw;
 
+  String placa;
+
 
   static const double priceCarroca = 0.00;
   static const double pricePickupP = 20.0;
@@ -45,7 +47,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId, this.alert, this.alertSaw});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId, this.alert, this.alertSaw, this.placa});
 
   MoveClass.empty();
 
@@ -196,10 +198,41 @@ class MoveClass {
       newStr = 'O profissional rejeitou o serviço. Vamos escolher outro?';
     } else if(sit=='pago'){
       newStr = "Está tudo certo. Apenas aguarde o profissional no momento agendado. Se preciso, entre em contato com ele.";
+    } else if(sit == 'aguardando'){
+      sit = 'Aguardando resposta do profissional';
     }
 
     return newStr?? 'ERRO';
 
+  }
+
+  String returnResumeSituationToUser(String sit){
+    sit = '';
+    if(sit == 'accepted_little_negative'){
+      sit = 'Hora de pagar a mudança.';
+    } else if (sit == 'accepted_much_negative'){
+      sit = 'Mudança cancelada por falta e pagamento';
+    } else if (sit == 'accepted_timeToMove'){
+      sit = 'Profissional aguardando pagamento para iniciar. Pague agora.';
+    } else if (sit == 'pago_little_negative'){
+      sit = 'Mudança agendada para agora';
+    } else if (sit == 'pago_much_negative'){
+      sit = 'Mudança agendada para agora';
+    } else if (sit == 'pago_almost_time'){
+      sit = 'Mudança inicia logo';
+    } else if (sit == 'pago_timeToMove'){
+      sit = 'Mudança agendada para agora';
+    } else if (sit == 'sistem_canceled'){
+      sit = 'Cancelada por falta de pagamento';
+    } else if (sit == 'trucker_quited_after_payment'){
+      sit = 'Profissional desistiu';
+    } else if (sit == 'trucker_finished'){
+      sit = 'Mudança finalizada pelo profissional';
+    } else if(sit == 'aguardando'){
+      sit = 'Aguardando resposta do profissional';
+    }
+
+    return sit;
   }
 
   DateTime formatMyDateToNotify(String originalDate, String time){

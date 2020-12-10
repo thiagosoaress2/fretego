@@ -85,6 +85,7 @@ class _MyAppState extends State<MyApp> {
     SelectedItemsChartModel selectedItensChartModel = SelectedItemsChartModel();
     NewAuthService newAuthService = NewAuthService();
 
+    const blue = const Color(0xff247BA0);
 
     return ScopedModel<UserModel>(
       model: userModel,
@@ -98,6 +99,9 @@ class _MyAppState extends State<MyApp> {
             theme: ThemeData(
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
+              primaryColor: blue,
+
+
             ),
             //home: HomePage(),
             home: HomePage(),

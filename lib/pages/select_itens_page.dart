@@ -1537,6 +1537,7 @@ class _SelectItensPageState extends State<SelectItensPage> {
                                                       moveClass.userId = UserModel().Uid;
                                                       moveClass.nomeFreteiro = map['apelido']; //antigamente pegava de 'name'.
                                                       moveClass.freteiroImage = map['image'];
+                                                      moveClass.placa = map['placa'];
                                                       SharedPrefsUtils().saveDataFromSelectTruckERPage(moveClass);
 
 
@@ -1667,104 +1668,100 @@ class _SelectItensPageState extends State<SelectItensPage> {
           builder: (BuildContext context, Widget widget, UserModel userModel){
             return Scaffold(
                 key: _scaffoldKey,
-                body: ListView(
+                body: Stack(
                   children: [
-                    Stack(
-                      children: [
 
-                        Container(
-                          width: widthPercent,
-                          height: heightPercent,
-                          color: Colors.white,
-                          child: Column(
-                            children: [
+                    Container(
+                      width: widthPercent,
+                      height: heightPercent,
+                      color: Colors.white,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
 
-                              //barra superior
-                              topCustomBar(heightPercent, widthPercent, "Detalhamento", 5),
+                            //barra superior
+                            topCustomBar(heightPercent, widthPercent, "Detalhamento", 5),
 
-                              SizedBox(height: 60.0,),
+                            SizedBox(height: 60.0,),
 
-                              //botao que abre o seletor de data
-                              GestureDetector(
-                                child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
-                                onTap: (){
-                                  setState(() {
+                            //botao que abre o seletor de data
+                            GestureDetector(
+                              child: WidgetsConstructor().makeButton(Colors.blue, Colors.blue, widthPercent*0.75, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
+                              onTap: (){
+                                setState(() {
 
-                                    _selectDate(context);
+                                  _selectDate(context);
 
-                                  });
-
-
-                                },
-
-                              ),
-
-                              SizedBox(height: 35.0,),
-                              WidgetsConstructor().makeText("Data escolhida:", Colors.black, 20.0, 0.0, 10.0, "center"),
-                              WidgetsConstructor().makeText(DateServices().convertToStringFromDate(selectedDate), Colors.blue, 20.0, 10.0, 30.0, "center"),
-
-                              SizedBox(height: 60.0,),
-
-                              //botao que abre o seletor de horario
-                              GestureDetector(
-                                child: WidgetsConstructor().makeButton(Colors.blueAccent, Colors.blueAccent, widthPercent*0.5, 50.0, 2.0, 10.0, "Escolher data", Colors.white, 18.0),
-                                onTap: (){
-                                  setState(() {
-
-                                    _selectTime(context);
-
-                                  });
+                                });
 
 
-                                },
+                              },
 
-                              ),
-                              SizedBox(height: 35.0,),
+                            ),
 
-                              WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
-                              WidgetsConstructor().makeText(selectedtime.format(context), Colors.blue, 20.0, 10.0, 30.0, "center"),
+                            SizedBox(height: 35.0,),
+                            WidgetsConstructor().makeText("Data escolhida:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                            WidgetsConstructor().makeText(DateServices().convertToStringFromDate(selectedDate), Colors.blue, 20.0, 10.0, 30.0, "center"),
 
-                              SizedBox(height: 35.0,),
+                            SizedBox(height: 60.0,),
 
-                              //botao final
-                              GestureDetector(
-                                child: WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.9, 50.0, 2.0, 10.0, "Confirmar com freteiro", Colors.white, 18.0),
-                                onTap: (){
-                                  setState(() {
+                            //botao que abre o seletor de horario
+                            GestureDetector(
+                              child: WidgetsConstructor().makeButton(Colors.blueAccent, Colors.blueAccent, widthPercent*0.75, 50.0, 2.0, 10.0, "Escolher horário", Colors.white, 18.0),
+                              onTap: (){
+                                setState(() {
 
-                                    moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
-                                    moveClass.timeSelected = selectedtime.format(context);
+                                  _selectTime(context);
 
-                                    _displaySnackBar(context, "Contactando o freteiro...");
-
-                                    moveClass.situacao = "aguardando_freteiro";
-
-                                    moveClass.userId = userModel.Uid;
-                                    SharedPrefsUtils().saveMoveClassToShared(moveClass);
-                                    scheduleAmove();
-
-                                    waitAmoment(3);
-                                    showDatePage=false;
-                                    showFinalPage=true;
-                                    //agora salvar no bd (o metodo ja existe).
-                                    //precisa adicionar os campos do horario e data no salvamento.
-
-                                  });
+                                });
 
 
-                                },
+                              },
 
-                              ),
+                            ),
+                            SizedBox(height: 35.0,),
+
+                            WidgetsConstructor().makeText("Horário escolhido:", Colors.black, 20.0, 0.0, 10.0, "center"),
+                            WidgetsConstructor().makeText(selectedtime.format(context), Colors.blue, 20.0, 10.0, 30.0, "center"),
+
+                            SizedBox(height: 35.0,),
+
+                            //botao final
+                            GestureDetector(
+                              child: WidgetsConstructor().makeButton(Colors.redAccent, Colors.redAccent, widthPercent*0.9, 50.0, 2.0, 10.0, "Confirmar com freteiro", Colors.white, 18.0),
+                              onTap: (){
+                                setState(() {
+
+                                  moveClass.dateSelected = DateServices().convertToStringFromDate(selectedDate);
+                                  moveClass.timeSelected = selectedtime.format(context);
+
+                                  _displaySnackBar(context, "Contactando o freteiro...");
+
+                                  moveClass.situacao = "aguardando_freteiro";
+
+                                  moveClass.userId = userModel.Uid;
+                                  SharedPrefsUtils().saveMoveClassToShared(moveClass);
+                                  scheduleAmove();
+
+                                  waitAmoment(3);
+                                  showDatePage=false;
+                                  showFinalPage=true;
+                                  //agora salvar no bd (o metodo ja existe).
+                                  //precisa adicionar os campos do horario e data no salvamento.
+
+                                });
 
 
-                            ],
-                          ) ,
-                        )
+                              },
+
+                            ),
 
 
+                          ],
+                        ) ,
+                      ),
+                      ),
 
-                      ],
-                    )
                   ],
                 )
             );
@@ -2004,64 +2001,77 @@ class _SelectItensPageState extends State<SelectItensPage> {
         padding: EdgeInsets.only(bottom: 4, top: 4, right: 5, left: 5),
         child: Container(
             decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 3.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Column(
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
 
-              Padding(
-                  padding: EdgeInsets.only(left: 8, right: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //Text(map['name']),
-                      Text(map['apelido']),
-                      //Text(map['aval'].toString()),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  Padding(
+                      padding: EdgeInsets.only(left: 8, right: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          //Text(map['name']),
+                          Text(map['apelido']),
+                          //Text(map['aval'].toString()),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
 
-                          map['aval']<0.4
-                          ? Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
-                              : map['aval']<1
-                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
-                                : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+                              map['rate']<0.4
+                                  ? Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                                  : map['rate']<1
+                                  ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                  : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
 
-                          map['aval']<=1.4
-                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
-                              : map['aval']<2
-                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
-                                : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+                              map['rate']<=1.4
+                                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                                  : map['rate']<2
+                                  ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                  : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
 
-                          map['aval']<=2.4
-                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
-                              : map['aval']<3
-                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
-                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
-
-
-                          map['aval']<=3.4
-                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
-                              : map['aval']<4
-                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
-                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
-
-                          map['aval']<=4.4
-                              ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
-                              : map['aval']<5
-                              ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
-                              : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+                              map['rate']<=2.4
+                                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                                  : map['rate']<3
+                                  ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                  : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
 
 
+                              map['rate']<=3.4
+                                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                                  : map['rate']<4
+                                  ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                  : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+                              map['rate']<=4.4
+                                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 20.0,)
+                                  : map['rate']<5
+                                  ? Icon(Icons.star_half, color: Colors.yellow[600], size: 20.0,)
+                                  : Icon(Icons.star, color: Colors.yellow[600], size: 20.0,),
+
+
+                            ],
+                          ),
+
+                          //metadata,
+                          //genres,
                         ],
-                      ),
-
-                      //metadata,
-                      //genres,
-                    ],
-                  )),
-              Container(width: 100, child: Center(child: Image.network(map['image']))),
+                      )),
+                  Container(width: 100, child: Center(child: Image.network(map['image']))),
 
 
+                ],
+              ),
+              WidgetsConstructor().makeText('Corridas no app: '+map['aval'].toString(), Colors.black, 16.0, 15.0, 15.0, 'no'),
+              WidgetsConstructor().makeText('Placa do veículo: '+map['placa'].toString(), Colors.black, 16.0, 15.0, 15.0, 'no'),
+              //foto do carro
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(width: 75, child: Center(child: Image.network(map['vehicle_image']))),
+                ],
+              )
             ],
           )
         ));
@@ -2663,10 +2673,11 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   _selectDate(BuildContext context) async {
+
     final DateTime picked = await showDatePicker(
       context: context,
       initialDate: selectedDate, // Refer step 1
-      firstDate: selectedDate,
+      firstDate: DateTime.now(),
       lastDate: DateTime(DateTime.now().year+5),
       helpText: "Escolha data da mudança", //opcional
       //confirmText: "ok" //opcional
@@ -2682,9 +2693,10 @@ class _SelectItensPageState extends State<SelectItensPage> {
   }
 
   _selectTime(BuildContext context) async {
+
     final TimeOfDay picked = await showTimePicker(
       context: context,
-      initialTime: selectedtime,
+      initialTime: TimeOfDay.now(),
       helpText: "Escolha o horário", //opcional
     );
     setState(() {

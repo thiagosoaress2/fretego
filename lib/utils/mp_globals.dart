@@ -5,6 +5,10 @@ class MpGlobals {
   static String mpAccessToken = 'TEST-3634171158634259-111501-b8bb063597fd285249bc61663a076c64-227628354';
   static String mpClientSecret = 'nr0biUuWZAwy1JnZll2pQtcCzNpVFnuO';
 
+  static String appNamePart1 = 'Fretes';
+  static String appNamePart2 = 'GO';
+  static String appName = 'Fretes Go';
+
 
 }
 

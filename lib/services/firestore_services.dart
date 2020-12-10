@@ -25,6 +25,8 @@ class FirestoreServices {
   static final String userMoveHistory = 'historico';
   static final String reembolsoPath = 'reembolso';
   static final String punishmentPath = 'freteiros_em_punicao';
+  static final String historicPathUsers = 'historico_mudancas_users';
+  static final String historicPathTrucker = 'historico_mudancas_truckers';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -178,6 +180,7 @@ class FirestoreServices {
       'situacao' : "aguardando",
       'alert' : 'trucker',
       'alert_saw' : false,
+      'placa' : moveClass.placa,
     })
         .then((value) => onSuccess())
         .catchError((error) => onFailure());
@@ -229,6 +232,7 @@ class FirestoreServices {
       moveClass.moveId = querySnapshot['moveId'];
       moveClass.alert = querySnapshot['alert'];
       moveClass.alertSaw = querySnapshot['alert_saw'];
+      moveClass.placa = querySnapshot['placa'];
       moveClassUpdated = moveClass;
       onSucess();
     });
@@ -259,6 +263,7 @@ class FirestoreServices {
       moveClass.moveId = querySnapshot['moveId'];
       moveClass.alert = querySnapshot['alert'];
       moveClass.alertSaw = querySnapshot['alert_saw'];
+      moveClass.placa = querySnapshot['placa'];
       moveClassUpdated = moveClass;
     });
 
@@ -298,7 +303,7 @@ class FirestoreServices {
 
   Future<void> createHistoricOfMoves(MoveClass moveClass){
 
-    CollectionReference history = FirebaseFirestore.instance.collection(agendamentosPath);
+    CollectionReference history = FirebaseFirestore.instance.collection(historicPathUsers);
 
     history.doc(moveClass.moveId).set({
       'user' : moveClass.moveId,
@@ -306,6 +311,26 @@ class FirestoreServices {
       'preco' : moveClass.preco,
       'origem' : moveClass.enderecoOrigem,
       'destino' : moveClass.enderecoDestino,
+      'data' : DateUtils().giveMeTheDateToday(),
+      'hora' : DateUtils().giveMeTheTimeNow(),
+
+    }).then((value) => createHistoricOfMovesToTrucker(moveClass));
+
+  }
+
+  Future<void> createHistoricOfMovesToTrucker(MoveClass moveClass){
+
+    CollectionReference history = FirebaseFirestore.instance.collection(historicPathTrucker);
+
+    //cria historico do trucker
+    history.doc(moveClass.freteiroId).set({
+      'user' : moveClass.userId,
+      'freteiro' : moveClass.freteiroId,
+      'preco' : moveClass.preco,
+      'origem' : moveClass.enderecoOrigem,
+      'destino' : moveClass.enderecoDestino,
+      'data' : DateUtils().giveMeTheDateToday(),
+      'hora' : DateUtils().giveMeTheTimeNow(),
 
     });
 
@@ -386,6 +411,7 @@ class FirestoreServices {
     });
 
   }
+
 
 
 

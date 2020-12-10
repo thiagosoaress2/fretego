@@ -50,8 +50,9 @@ class _MoveDayPageState extends State<MoveDayPage>{
 
   Set<Marker> markers = {};
 
-  BitmapDescriptor pinLocationIcon; //somente para o icone customizado
-  BitmapDescriptor userLocationIcon; //imagem para o icone do user
+  BitmapDescriptor origemLocation; //somente para o icone customizado
+  BitmapDescriptor destinoLocation;
+  BitmapDescriptor truckerLocationIcon; //imagem para o icone do user
 
   LatLng userLocationLatLng;
 
@@ -94,15 +95,21 @@ class _MoveDayPageState extends State<MoveDayPage>{
 
     BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5),
-        'images/markerico.png').then((onValue) {
-      pinLocationIcon = onValue;
+        'images/maps/markerorigem.png').then((onValue) {
+      origemLocation = onValue;
+    });
+
+    BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5),
+        'images/maps/markerdestino.png').then((onValue) {
+      destinoLocation = onValue;
     });
 
     BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5),
         //'images/carrinhobaby.jpg').then((value) {  //usar a imagem correta
-        'images/markerico.png').then((value) {
-      userLocationIcon = value;
+        'images/maps/truckerico.png').then((value) {
+      truckerLocationIcon = value;
     });
 
   }
@@ -171,12 +178,19 @@ class _MoveDayPageState extends State<MoveDayPage>{
               ? Positioned(
                   top: heightPercent*0.2,
                   right: 10.0,
+                  child: _placa())
+                  : Container(),
+
+              showWhatsappBtn == true && _showProblemInformPage==false
+              ? Positioned(
+                  top: heightPercent*0.4,
+                  right: 10.0,
                   child: _whatsappBtn())
               : Container(),
 
               _showProblemInformPage==false
               ? Positioned(
-                top: heightPercent*0.4,
+                top: heightPercent*0.6,
                 right: 10.0,
                 child: _problemBtn(),
               )
@@ -330,6 +344,7 @@ class _MoveDayPageState extends State<MoveDayPage>{
     markers.removeWhere((item) => item.markerId.value == 'trucker');
     markers.removeWhere((item) => item.markerId.value == 'origem');
     markers.removeWhere((item) => item.markerId.value == 'destino');
+
     setState(() {
       _addMarkerTrucker();
       _addMarkerOrigem();
@@ -347,7 +362,7 @@ class _MoveDayPageState extends State<MoveDayPage>{
       Marker(
         markerId: MarkerId('trucker'),
         position: userLocationLatLng,
-        icon: userLocationIcon,
+        icon: truckerLocationIcon,
         infoWindow: InfoWindow(
             title: moveClass.nomeFreteiro),
       ),
@@ -365,7 +380,7 @@ class _MoveDayPageState extends State<MoveDayPage>{
       Marker(
         markerId: MarkerId('origem'),
         position: _origemPos,
-        icon: pinLocationIcon,
+        icon: origemLocation,
         infoWindow: InfoWindow(
             title: "Origem"),
       ),
@@ -379,7 +394,7 @@ class _MoveDayPageState extends State<MoveDayPage>{
       Marker(
         markerId: MarkerId('destino'),
         position: _destinyPos,
-        icon: pinLocationIcon,
+        icon: destinoLocation,
         infoWindow: InfoWindow(
             title: "Destino"),
       ),
@@ -613,6 +628,21 @@ class _MoveDayPageState extends State<MoveDayPage>{
             ),
           ),
         ),
+      ),
+
+    );
+
+  }
+
+  Widget _placa(){
+
+    return Container(
+        decoration: WidgetsConstructor().myBoxDecoration(Colors.grey, Colors.black, 2.0, 4.0),
+      child: Column(
+        children: [
+          WidgetsConstructor().makeText('Placa:', Colors.black, 17.0, 5.0, 10.0, 'no'),
+          WidgetsConstructor().makeText(moveClass.placa, Colors.black, 50.0, 0.0, 0.0, 'center')
+        ],
       ),
 
     );

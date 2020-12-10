@@ -22,11 +22,7 @@ class MenuDrawer extends StatefulWidget {
 
 class _MenuDrawerState extends State<MenuDrawer> {
 
-  //Future<User> user = AuthService().currentUser();
-  //FirebaseAuth mAuth = FirebaseAuth.instance;
-  //FirebaseUser firebaseUser;
 
-  //bool loggedIn = false;
   Map<String, dynamic> userData = Map();
 
 
@@ -38,7 +34,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
           builder: (BuildContext context, Widget child, NewAuthService newAuthService){
             return Drawer(
                 child: ListView(
-                    padding:EdgeInsets.only(top: 16.0),
+                  //padding:EdgeInsets.only(top: 16.0),
                     children: [
                       DrawerHeader(  //cabeçalho
                         child: Align(
@@ -53,14 +49,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       InkWell( //só exibir o botão de loggin se não estiver logado
                         onTap: (){ //click
 
-                      Navigator.of(context).pop();
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => LoginChooseView()));
+                          Navigator.of(context).pop();
+                          Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => LoginChooseView()));
 
 
                         },
                         child: Container(
-                          margin: EdgeInsets.only(left: 20.0),
+
                           child: _drawLine(Icons.person, "Login", Theme.of(context).primaryColor, context),
                         ),
                       ),
@@ -85,9 +81,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
                         onTap: (){ //click
 
 
-                      Navigator.of(context).pop();
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => MyMoves()));
+                          Navigator.of(context).pop();
+                          Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => MyMoves()));
 
 
                         },
@@ -126,7 +122,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
       },
     );
   }
-
 
   @override
   void initState() {
