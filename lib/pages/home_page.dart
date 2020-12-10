@@ -52,6 +52,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
   bool showPayBtn=false;
   bool _showPayPopUp=false;
+  
+  bool _showDarkerBackground=false;
+  bool _bottomSheetIsOnScreen=false;
 
   bool _showMoveShortCutBtn=false;
   bool _showPayBtn=false; //somente se a situação for accepted
@@ -462,7 +465,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                         children: [
 
                                           Container(
-                                            width: userIsLoggedIn == true && _showMoveShortCutBtn==true ? widthPercent*0.45 : widthPercent*0.35,
+                                            alignment: Alignment.center,
+                                            width: userIsLoggedIn == true && _showMoveShortCutBtn==true ? widthPercent*0.40 : widthPercent*0.35,
                                             child: RaisedButton(
                                               splashColor: Colors.grey[200],
                                               elevation: 10.0,
@@ -478,7 +482,15 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                                     });
                                                     _openPaymentPageFromCallBacks(userModel);
                                                   } else {
-                                                    Navigator.of(context).push(_createRoute(SelectItensPage()));
+
+                                                    //se já tiver agendado mudança abre a página myMoves
+                                                    if(_showMoveShortCutBtn==true){
+                                                      Navigator.of(context).push(_createRoute(MyMoves()));
+                                                    } else {
+                                                      //abre a página para seleconar itens e agendar mudança
+                                                      Navigator.of(context).push(_createRoute(SelectItensPage()));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
+                                                    }
+
                                                   }
 
 
@@ -546,8 +558,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                              */
                                     ) : Container(),
 
-
-
+                                    /*
                                     _showPayPopUp==true
                                         ? WidgetsConstructor().customPopUp('Chegou a hora', 'Você têm uma mudança agendada para às '+moveClassGlobal.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.", 'Pagar', 'Depois', widthPercent, heightPercent, () {_callbackPopupBtnPay(userModel);}, () {_callbackPopupBtnCancel();})
                                         : Container(),
@@ -555,7 +566,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                     popupCode=='no'
                                         ? Container()
                                         : popupCode=='accepted_little_negative'
-                                        ? WidgetsConstructor().customPopUp('Atenção!', 'Você ainda pagou pela mudança. O profissional ainda não cancelou o serviço e caso decida pagar, ainda pode ocorrer.', 'Pagar', 'Depois', widthPercent, heightPercent,
+                                        ? WidgetsConstructor().customPopUp('Atenção!', 'Você ainda não pagou pela mudança. O profissional ainda não cancelou o serviço e caso decida pagar, ainda pode ocorrer.', 'Pagar', 'Depois', widthPercent, heightPercent,
                                             () {_aceppted_little_lateCallback_Pagar(userModel);}, () {_aceppted_little_lateCallback_Depois();})
                                         : popupCode=='accepted_much_negative'
                                         ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você possuia uma mudança agendada às'+moveClassGlobal.timeSelected+' na data '+moveClassGlobal.dateSelected+', no entanto não efetuou pagamento. Esta mudança foi cancelada pela falta de pagamento.', Colors.red, widthPercent, heightPercent,
@@ -577,6 +588,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                         : popupCode=='trucker_finished'
                                         ? WidgetsConstructor().customPopUp('Mudança terminando', 'O profissional informou que a mudança terminou. Se o serviço realmente já terminou, confirme para avaliar.', 'Finalizar e avaliar', 'Ainda não terminou', widthPercent, heightPercent, () { _truckerInformedFinishedMove(userModel);}, () {_setPopuoCodeToDefault();})
                                         : Container(),
+
+                                     */
+                                    
                                   ],
                                 ),
                               ),
@@ -589,21 +603,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                               child: FakeAppBar(userModel),
                             ),
 
-                            GestureDetector(
-                              onTap: (){
-
-                                void _click1(){
-                                  print('click1');
-                                }
-                                void _click2(){
-                                  print('click2');
-                                }
-
-                                MyBottomSheet().settingModalBottomSheet(context, 'Titulo', 'subtitle', 'texts saijisi asuhdu asinasini saijiasji exemplos text txtx dlksalk txe', Icons.credit_card, heightPercent, widthPercent, 2, true, Icons.credit_card, 'Pagar', () {_click1();}, Icons.arrow_downward, 'Pagar depois', () {_click1();});
-                              },
-                              child: Container(width: 150.0, height: 100.0, color: Colors.pink,),
-                            ),
-
+                            _showDarkerBackground==true
+                                ? Container(height: heightPercent, width: widthPercent,
+                                color: Colors.black54.withOpacity(0.6)): Container(),
 
 
                           ],
@@ -1198,7 +1200,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   Future<void> _solvingProblems(UserModel userModel) async {
     //esta função é para o caso do user relatar que o trucker encerrou ou nao apareceu na mudança e fechou o app. Então vai abrir
     //direto a pagina de mudança aguardando o trucker resonder
-    _displaySnackBar(context, "Ainda estamos buscando a solução do seu problema, aguarde.");
+    MyBottomSheet().settingModalBottomSheet(context, 'Aguarde', 'Só mais um pouquinho', 'Ainda estamos buscando a solução do seu problema', Icons.warning_amber_sharp, heightPercent, widthPercent,
+        0, true);
+    //_displaySnackBar(context, "Ainda estamos buscando a solução do seu problema, aguarde.");
 
     Future<void> _onSucessLoadScheduledMoveInFb() async {
 
@@ -1433,11 +1437,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     var situationRef = FirebaseFirestore.instance.collection(FirestoreServices .agendamentosPath).doc(moveClass.moveId);
     situationRef.snapshots().listen((DocumentSnapshot event) async {
 
-      print('teste: currentSituation inicial é '+currentSituation);
       //se a situação mudar, chamar o método que lida com as situações
       if(event.data()['situacao'] !=  currentSituation){
-        print('entrou no listener');
-        print('nova situação é ${event.data()['situacao']}');
         moveClass.situacao = event.data()['situacao'];
         moveClassGlobal.situacao = moveClass.situacao;
         _handleSituation(userModel, moveClass);
@@ -1454,7 +1455,234 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   }
 
 
+  void _handleSituation(UserModel userModel, MoveClass moveClass){
 
+    moveClassGlobal.situacao = moveClass.situacao;
+    DateTime scheduledDate = DateUtils().convertDateFromString(moveClass.dateSelected);
+    DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
+    final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
+
+
+    if(moveClass.situacao == 'trucker_finished') {
+
+      setState(() {
+        //popupCode='trucker_finished';
+        _showDarkerBackground=true;
+        MyBottomSheet().settingModalBottomSheet(context, 'Terminando', 'Mudança terminando', 'O profissional informou que a mudança terminou. Se o serviço realmente já terminou, confirme para avaliar.',
+            Icons.warning_amber_sharp, heightPercent, widthPercent, 2, false,
+            Icons.star, 'Finalizar e avaliar', () {_truckerInformedFinishedMove(userModel); Navigator.pop(context);_toogleDarkScreen();},
+            Icons.schedule, 'Ainda não terminou', () {_setPopuoCodeToDefault();Navigator.pop(context);_toogleDarkScreen();}
+        );
+      });
+
+
+    }
+
+    if(moveClass.situacao == 'trucker_quited_after_payment'){
+
+      setState(() {
+        //popupCode='trucker_quited_after_payment';
+        _showDarkerBackground=true;
+        MyBottomSheet().settingModalBottomSheet(context, 'Desculpas', 'Pedimos Desculpas', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções',
+            Icons.warning_amber_sharp, heightPercent, widthPercent, 2, false,
+            Icons.account_box_rounded, 'Escolher outro profissional', () {_trucker_quitedAfterPayment_getNewTrucker(); Navigator.pop(context);_toogleDarkScreen();},
+            Icons.monetization_on_outlined, 'Reaver dinheiro', () {_trucker_quitedAfterPayment_cancel(userModel);;Navigator.pop(context);_toogleDarkScreen();}
+        );
+      });
+
+    } else if(moveClass.situacao == 'user_informs_trucker_didnt_make_move' || moveClass.situacao == 'user_informs_trucker_didnt_finished_move'){
+      //user relatou problrema como: Mudança nao feita ou finalizada pelo trucker sem ter concluido
+      _solvingProblems(userModel);
+
+    } else if(moveClass.situacao == 'accepted'){
+
+      if(dif.isNegative) {
+        //a data já expirou
+
+        if (dif > -300) {  //5 horas
+          setState(() {
+            //popupCode = 'accepted_little_negative';
+            _showDarkerBackground=true;
+            MyBottomSheet().settingModalBottomSheet(context, 'Atenção', 'Pagamento ainda não realizado', 'Você ainda não pagou pela mudança. No entanto o profissional ainda não cancelou o serviço. Caso decida pagar, o trabalho ainda pode ocorrer.',
+                Icons.warning_amber_sharp, heightPercent, widthPercent, 2, true,
+                Icons.credit_card, 'Pagar', () {_aceppted_little_lateCallback_Pagar(userModel); Navigator.pop(context);_toogleDarkScreen();},
+                Icons.schedule, 'Decidir depois', () {_aceppted_little_lateCallback_Depois();Navigator.pop(context);_toogleDarkScreen();}
+            );
+          });
+
+          //neste caso o user fechou o app e abriu novamente
+
+        } else {
+          //a mudança já se encerrou há tempos
+          setState(() {
+            //popupCode = 'accepted_much_negative';
+            _showDarkerBackground=true;
+            MyBottomSheet().settingModalBottomSheet(context, 'Atenção', 'Pagamento ainda não realizado', 'Você possuia uma mudança agendada às'+moveClassGlobal.timeSelected+' na data '+moveClassGlobal.dateSelected+', no entanto não efetuou pagamento. Esta mudança foi cancelada pela falta de pagamento.',
+                Icons.warning_amber_sharp, heightPercent, widthPercent, 2, false,
+                Icons.info, '   Ok', () {_aceppted_toMuch_lateCallback_Delete(); Navigator.pop(context);_toogleDarkScreen();},
+                null, '', () {Navigator.pop(context);_toogleDarkScreen();}
+            );
+          });
+        }
+
+        /*
+        moveClass = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClass, userModel);
+         */
+        //WidgetsConstructor().customPopUp('Hora de mudança', 'Você tinha uma mudança agendada mas que ainda não foi paga.', btnOk, btnCancel, widthPercent, heightPercent, () => null, () => null)
+
+        //setState(() {
+        //  showPayBtn=true;
+        //});
+
+      } else if(dif<=150 && dif>15){
+
+        //_displaySnackBar(context, "Você possui uma mudança agendada às "+moveClass.timeSelected);
+
+        setState(() {
+          //_showPayPopUp=true;
+          _showDarkerBackground=true;
+          MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Chegou a hora', 'Você têm uma mudança agendada para às '+moveClassGlobal.timeSelected+". Efetue o pagamento para o profissional começar a se deslocar até o ponto combinado.",
+              Icons.schedule_outlined, heightPercent, widthPercent, 2, false,
+              Icons.credit_card, 'Pagar', () {_callbackPopupBtnPay(userModel); Navigator.pop(context);_toogleDarkScreen();},
+              Icons.schedule, 'Decidir depois', () {_callbackPopupBtnCancel();Navigator.pop(context);_toogleDarkScreen();}
+          );
+        });
+
+      } else if(dif<=15){
+
+        setState(() {
+          //popupCode='accepted_timeToMove';
+          _showDarkerBackground=true;
+          MyBottomSheet().settingModalBottomSheet(context, 'Atenção', 'Pagamento não identificado', 'Você tem uma mudança agendada para daqui a pouco que não foi paga. O profissional não começa a se deslocar enquanto não houver pagamento.',
+              Icons.warning_amber_sharp, heightPercent, widthPercent, 2, false,
+              Icons.credit_card, 'Pagar', () {_acepted_almostTime(userModel); Navigator.pop(context);_toogleDarkScreen();},
+              Icons.schedule, 'Decidir depois', () {_setPopuoCodeToDefault();Navigator.pop(context);_toogleDarkScreen();}
+          );
+        });
+
+        /*
+        Future<void> _onSucessLoadScheduledMoveInFb() async {
+
+          moveClass = await MoveClass().getTheCoordinates(moveClass, moveClass.enderecoOrigem, moveClass.enderecoDestino).whenComplete(() {
+
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => MoveDayPage(moveClass)));
+
+          });
+        }
+
+        //ta na hora da mudança. Abrir a pagina de mudança
+        await FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb();});
+         */
+
+      } else {
+
+        //do nothing, falta mt ainda
+
+      }
+
+    } else if(moveClass.situacao == 'pago'){
+
+      if(dif.isNegative) {
+        //a data já expirou
+
+        if (dif > -300) {  //5 horas
+          setState(() {
+            //popupCode = 'pago_little_negative';
+            //_showDarkerBackground=true;
+            MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Mudança acontecendo agora', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
+                Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
+                Icons.airport_shuttle, 'Ir para mudança', () {_pago_little_lateCallback_IrParaMudanca(userModel); Navigator.pop(context);},
+                Icons.schedule, 'Decidir depois', () {_setPopuoCodeToDefault();Navigator.pop(context);}
+            );
+          });
+
+          //neste caso o user fechou o app e abriu novamente
+
+        } else {
+          //a mudança já se encerrou há tempos
+          setState(() {
+            //popupCode = 'pago_much_negative';
+            //_showDarkerBackground=true;
+            MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Mudança em curso', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
+                Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
+                Icons.airport_shuttle, 'Ir para mudança', () {_pago_toMuch_lateCallback_Finalizar(userModel); Navigator.pop(context);},
+                Icons.schedule, 'Decidir depois', () {_setPopuoCodeToDefault();Navigator.pop(context);}
+            );
+          });
+        }
+
+      } else if(dif<=150 && dif>15){
+
+        setState(() {
+          //popupCode = 'pago_almost_time';
+          MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Quase na hora', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
+              Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
+              Icons.airport_shuttle, 'Ir para mudança', () {_pago_almost_time(userModel);; Navigator.pop(context);},
+              Icons.schedule, 'Decidir depois', () {_setPopuoCodeToDefault();Navigator.pop(context);}
+          );
+        });
+
+
+      } else if(dif<=15){
+
+        setState(() {
+          //popupCode='pago_timeToMove';
+          MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Tá na hora', 'Você tem uma mudança agendada para agora.',
+              Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
+              Icons.airport_shuttle, 'Ir para mudança', () {_pago_almost_time(userModel);; Navigator.pop(context);},
+              Icons.schedule, 'Decidir depois', () {_setPopuoCodeToDefault();Navigator.pop(context);}
+          );
+        });
+
+
+      } else {
+
+        //do nothing, falta mt ainda
+
+      }
+
+
+    } else if(moveClass.situacao=='quit'){
+      //significa que o sistema cancelou - agora vamso cancelar essa mudança
+      setState(() {
+        //popupCode='sistem_canceled';
+        MyBottomSheet().settingModalBottomSheet(context, 'Mudança cancelada', 'Motivo: Falta de pagamento', 'Você não efetuou o pagamento para uma mudança que estava agendada. Nós cancelamos este serviço.',
+            Icons.warning_amber_sharp, heightPercent, widthPercent, 0, true,
+        );
+      });
+    }
+
+    moveClassGlobal = moveClass; //used in showShortCutToMove
+
+
+    //exibe o botao para pagar
+    if(moveClass.situacao=='accepted'){
+      _showPayBtn=true;
+    } else {
+      _showPayBtn=false;
+    }
+
+    //exibe o botao de ir pra mudança
+    setState(() {
+      _showMoveShortCutBtn=true;
+    });
+
+  }
+
+  void _toogleDarkScreen(){
+    if(_showDarkerBackground==true){
+      setState(() {
+        _showDarkerBackground=false;
+      });
+    } else {
+      setState(() {
+        _showDarkerBackground=true;
+      });
+    }
+  }
+  /*
   void _handleSituation(UserModel userModel, MoveClass moveClass){
 
     moveClassGlobal.situacao = moveClass.situacao;
@@ -1630,7 +1858,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     });
 
   }
-
+   */
   Future<void> _callbackPopupBtnPay(UserModel userModel) async {
 
     setState(() {
@@ -1793,76 +2021,44 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                     ),
                   ),
 
+                  //botão de login
+                  FlatButton(
+                      onPressed: () {
+                        Navigator.of(context).push(_createRoute(LoginChooseView()));
+                      },
+                      child: Container(
 
-                  InkWell( //só exibir o botão de loggin se não estiver logado
-                    onTap: (){ //click
+                        child: _drawMenuLine(Icons.person, "Login", CustomColors.blue, context),
+                      )),
 
-                      Navigator.of(context).push(_createRoute(LoginChooseView()));
+                  /*  //n precisa existir
+                  FlatButton(onPressed: null,
+                      child: Container(
 
-                      /*
-                  Navigator.of(context).pop();
-                  Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => LoginChooseView()));
-                       */
-
-                    },
-                    child: Container(
-
-                      child: _drawMenuLine(Icons.person, "Login", CustomColors.blue, context),
-                    ),
+                        child: _drawMenuLine(Icons.airport_shuttle, "Quero mudar", CustomColors.blue, context),
+                      ),
                   ),
 
-                  InkWell( //toque com animação
-                    onTap: (){ //click
+                   */
 
-                      /*
-                      Navigator.of(context).pop();
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => SelectItensPage()));
-
-                       */
-
-                    },
-                    child: Container(
-
-                      child: _drawMenuLine(Icons.airport_shuttle, "Quero me mudar", CustomColors.blue, context),
-                    ),
+                  FlatButton(
+                      onPressed: (){
+                        Navigator.of(context).push(_createRoute(LoginChooseView()));
+                      },
+                      child: Container(
+                        child: _drawMenuLine(Icons.list, "Minhas\nmudanças", CustomColors.blue, context),
+                      )
                   ),
 
-                  InkWell( //toque com animação
-                    onTap: (){ //click
-
-
-                      Navigator.of(context).pop();
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => MyMoves()));
-
-
-                    },
-                    child: Container(
-                      child: _drawMenuLine(Icons.shopping_bag, "Minhas mudanças", CustomColors.blue, context),
-                    ),
-                  ),
-
-                  InkWell( //toque com animação
-                    onTap: (){ //click
-                      setState(() {
-
+                  FlatButton(
+                      onPressed: (){
                         Navigator.of(context).pop();
                         newAuthService.SignOut();
                         newAuthService.updateAuthStatus(false);
-
-                        /*
-                        //LoginModel().signOut();
-                        AuthService(mAuth).signOut(userModel);
-                        Navigator.of(context).pop();
-
-                         */
-                      });
-                    },
-                    child: userModel.Uid != "" ? Container(margin: EdgeInsets.only(left: 20.0), child:_drawMenuLine(Icons.exit_to_app, "Sair da conta", CustomColors.blue, context),) : Container(),
-
+                      },
+                      child: userModel.Uid != "" ? Container(margin: EdgeInsets.only(left: 20.0), child:_drawMenuLine(Icons.exit_to_app, "Sair da conta", CustomColors.blue, context),) : Container(),
                   ),
+
 
 
                 ],

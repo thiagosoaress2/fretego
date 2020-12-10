@@ -13,14 +13,15 @@ class MyBottomSheet {
         ] ) {
 
     showModalBottomSheet(
-        isDismissible: false,
+        enableDrag: false,
+        isDismissible: isDismissible,
         barrierColor: Colors.black.withAlpha(1),
         backgroundColor: Colors.transparent,
         context: context,
         builder: (BuildContext bc) {
           return Container(
             color: Colors.transparent,
-            height: height*0.8,
+            height: options==0 ? height*0.4 : height*0.8,
             child: Stack(
               children: [
 
@@ -55,7 +56,7 @@ class MyBottomSheet {
                           SizedBox(width: width*0.10,),
                           Container(
                             width: width*0.8,
-                            child: WidgetsConstructor().makeText(text, CustomColors.blue, 15.0, 35.0, 20.0, 'center'),
+                            child: WidgetsConstructor().makeText(text, CustomColors.blue, 15.0, 15.0, 10.0, 'center'),
                           ),
                           SizedBox(width: width*0.10),
 
@@ -81,7 +82,7 @@ class MyBottomSheet {
                                 SizedBox(width: 10.0,),
                                 Icon(option1Icon, color: CustomColors.blue, size: 50.0,),
                                 SizedBox(width: 10.0,),
-                                WidgetsConstructor().makeText(option1Text, CustomColors.blue, 20.0, 10.0, 0.0, 'no'),
+                                WidgetsConstructor().makeText(option1Text, CustomColors.blue, 17.0, 10.0, 0.0, 'no'),
                               ],
                             ),
                       ) : Container(),
@@ -106,7 +107,7 @@ class MyBottomSheet {
                             SizedBox(width: 10.0,),
                             Icon(option2Icon, color: Colors.grey[500], size: 50.0,),
                             SizedBox(width: 10.0,),
-                            WidgetsConstructor().makeText(option2Text, Colors.grey[500], 20.0, 10.0, 0.0, 'no'),
+                            WidgetsConstructor().makeText(option2Text, Colors.grey[500], 17.0, 10.0, 0.0, 'no'),
                           ],
                         ),
                       ) : Container(),
