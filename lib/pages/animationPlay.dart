@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fretego/utils/colors.dart';
+import 'package:fretego/widgets/widgets_constructor.dart';
 
 class AnimationPlayPage extends StatefulWidget {
   @override
@@ -29,7 +31,7 @@ class _AnimationPlayPageState extends State<AnimationPlayPage>
 
 
 
-  String sample = 'airplane';
+  String sample = 'itenspage';
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +40,399 @@ class _AnimationPlayPageState extends State<AnimationPlayPage>
     widthPercent = MediaQuery.of(context).size.width;
 
 
-    return sample == 'menu'
-        ? _MenuSample(animationController)
-        : sample == 'airplane'
+    return Scaffold(
+      appBar: AppBar(),
+      body: sample == 'menu'
+          ? _MenuSample(animationController)
+          : sample == 'airplane'
           ? _AirPlaneSample(animationController)
-          : Container();
+          : sample == 'itenspage'
+          ? _itensPageAnim()
+          : Container(),
+    );
 
   }
 
+
+    bool canScroll=false; //vai liberar o scroll so na hora da animacao
+    double offset=0.0;
+    ScrollController _TopAnimcrollController;
+    int step=0;
+
+  Widget _itensPageAnim(){
+
+    _TopAnimcrollController = ScrollController();
+
+    //para animação da tela
+    _TopAnimcrollController.addListener(() {
+      setState(() {
+        offset = _TopAnimcrollController.hasClients ? _TopAnimcrollController.offset : 0.1;
+
+      });
+      print(offset);
+    });
+
+    return Container(
+      width: widthPercent,
+      height: heightPercent,
+      color: Colors.white,
+      child: Stack(
+        children: [
+
+          Positioned(
+            top: heightPercent*0.12,
+              left: 0.1,
+              right: 0.1,
+              child: Container(
+                width: widthPercent,
+                height: heightPercent*0.08,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 3,
+                      blurRadius: 3,
+                      offset: Offset(0, 3), // changes position of shadow
+                    ),
+                  ],
+                ),
+              )
+          ),
+
+          //lista
+          Positioned(
+            top: heightPercent*0.10,
+            left: widthPercent*0.05,
+            right: 10.0,
+            child: Container(
+              height: heightPercent*0.10,
+              width: widthPercent,
+              child: ListView(
+                controller: _TopAnimcrollController,
+                physics: canScroll == false ? NeverScrollableScrollPhysics() : AlwaysScrollableScrollPhysics(),
+                scrollDirection: Axis.horizontal,
+
+                children: [
+
+
+                  SizedBox(width: widthPercent*0.02,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.assignment, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Itens', Colors.grey, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+                  SizedBox(width: widthPercent*0.09,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.home, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Endereços', Colors.grey, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+                  SizedBox(width: widthPercent*0.09,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.airport_shuttle, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Veículo', Colors.grey, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+
+                  SizedBox(width: widthPercent*0.09,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.people_alt_sharp, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Pessoal', Colors.grey, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+                  SizedBox(width: widthPercent*0.09,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.schedule_outlined, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Agendar', Colors.grey, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+                  SizedBox(width: widthPercent*0.09,),
+                  Column(
+                    children: [
+                      Container(
+                        child: Icon(Icons.check, color: Colors.white,),
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,// You can use like this way or like the below line
+                          color: Colors.blue,
+                          border: Border.all(
+                            color: Colors.blue,
+                            width: 2.0, //                   <--- border width here
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 3,
+                              blurRadius: 3,
+                              offset: Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        width: widthPercent*0.10,
+                        height: heightPercent*0.07,
+                      ),
+                      WidgetsConstructor().makeText('Pronto!', CustomColors.yellow, 8.0, 1.0, 0.0, 'center'),
+                    ],
+                  ),
+
+                  SizedBox(width: 10000.0,),
+
+
+                ],
+              ),
+            ),
+
+          ),
+
+          //caixa 1
+          step>=1 ? Positioned(
+              top: heightPercent*0.04,
+              left: widthPercent*0.047,
+              child: Container(
+                width: widthPercent*0.025,
+                height: heightPercent*0.015,
+                color: CustomColors.brown,)
+          ) : Container(),
+
+          //caixa 2
+          step>=2 ? Positioned(
+              top: heightPercent*0.04,
+              left: widthPercent*0.072,
+              child: Container(
+                width: widthPercent*0.025,
+                height: heightPercent*0.015,
+                color: CustomColors.brown,)
+          ) : Container(),
+
+          //caixa 3
+          step>=3 ? Positioned(
+              top: heightPercent*0.04,
+              left: widthPercent*0.097,
+              child: Container(
+                width: widthPercent*0.025,
+                height: heightPercent*0.015,
+                color: CustomColors.brown,)
+          ) : Container(),
+
+          //caixa 4
+          step>=4 ? Positioned(
+              top: heightPercent*0.025,
+              left: widthPercent*0.052,
+              child: Container(
+                width: widthPercent*0.025,
+                height: heightPercent*0.015,
+                color: CustomColors.brown,)
+          ) : Container(),
+
+          //caixa 5
+          step>=5 ? Positioned(
+              top: heightPercent*0.025,
+              left: widthPercent*0.082,
+              child: Container(
+                width: widthPercent*0.025,
+                height: heightPercent*0.015,
+                color: CustomColors.brown,)
+          ) : Container(),
+
+          //caminhonete
+          Positioned(
+              top: heightPercent*0.03,
+              left: widthPercent*0.04,
+              child: Container(
+                width: widthPercent*0.15,
+                height: heightPercent*0.055,
+                child: Image.asset('images/itensselect/anim/anim_caminhonete.png', fit: BoxFit.fill,),
+              )),
+
+          //roda traseira
+          Positioned(
+            top: heightPercent*0.07,
+              left: widthPercent*0.047,
+              child: Container(
+                width: widthPercent*0.045,
+                height: heightPercent*0.025,
+                child: Image.asset('images/itensselect/anim/anim_roda.png', fit: BoxFit.fill,),
+              )
+          ),
+
+          //roda dianteira
+          Positioned(
+              top: heightPercent*0.07,
+              left: widthPercent*0.14,
+              child: Container(
+                width: widthPercent*0.045,
+                height: heightPercent*0.025,
+                child: Image.asset('images/itensselect/anim/anim_roda.png', fit: BoxFit.fill,),
+              )
+          ),
+
+
+          Positioned(
+              top: 380.0,
+              left: 10.0,
+              right: 10.0,
+              child:
+              RaisedButton(
+                  child: Text('Para frente'),
+                  color: Colors.blue, onPressed: (){
+                _scroll();
+              })
+          ),
+          Positioned(
+              top: 480.0,
+              left: 10.0,
+              right: 10.0,
+              child:
+              RaisedButton(
+                  child: Text('Para tras'),
+                  color: Colors.blue, onPressed: (){
+                _scrollBack();
+              })
+          ),
+        ],
+      ),
+    );
+
+
+  }
+
+  void _scroll(){
+    double offsetAcrescim=widthPercent*0.19;
+
+      canScroll=true;
+      offset=offset+offsetAcrescim;
+      _TopAnimcrollController.animateTo(offset, duration: Duration(milliseconds: 200), curve:Curves.easeInOut);
+      canScroll=false;
+      setState(() {
+        step=step+1;
+      });
+  }
+
+  void _scrollBack(){
+    double offsetAcrescim=widthPercent*0.19;
+
+    canScroll=true;
+    offset<0.1 ? 0.0 : offset=offset-offsetAcrescim;
+    _TopAnimcrollController.animateTo(offset, duration: Duration(milliseconds: 200), curve:Curves.easeInOut);
+    canScroll=false;
+
+    if(step!=0){
+      setState(() {
+        step=step-1;
+      });
+    }
+
+  }
 
   Widget _AirPlaneSample(AnimationController animationController){
 

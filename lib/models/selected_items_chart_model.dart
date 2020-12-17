@@ -16,6 +16,19 @@ class SelectedItemsChartModel extends Model {
     itemsSelectedCart.add(itemClass);
   }
 
+  void removeItemFromChart(ItemClass itemClass){
+    int cont=0;
+    while(cont<itemsSelectedCart.length){
+      if(itemsSelectedCart[cont].name==itemClass.name){
+        itemsSelectedCart.removeAt(cont);
+        cont = itemsSelectedCart.length;
+      } else {
+        cont++;
+      }
+
+    }
+  }
+
   get getList => itemsSelectedCart;
 
   int getItemsChartSize(){

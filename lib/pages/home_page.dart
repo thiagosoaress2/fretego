@@ -7,7 +7,7 @@ import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/drawer/menu_drawer.dart';
 import 'package:fretego/login/pages/email_verify_view.dart';
 import 'package:fretego/login/pages/login_choose_view.dart';
-import 'package:fretego/login/services/auth.dart';
+import 'package:fretego/login/pages/login_page.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/animationPlay.dart';
@@ -23,8 +23,10 @@ import 'package:fretego/utils/anim_fader.dart';
 import 'package:fretego/utils/anim_fader_left.dart';
 import 'package:fretego/utils/colors.dart';
 import 'package:fretego/utils/date_utils.dart';
+import 'package:fretego/utils/globals_strings.dart';
 import 'package:fretego/utils/mp_globals.dart';
 import 'package:fretego/utils/my_bottom_sheet.dart';
+import 'package:fretego/utils/popup.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -54,7 +56,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   bool _showPayPopUp=false;
   
   bool _showDarkerBackground=false;
-  bool _bottomSheetIsOnScreen=false;
 
   //bool _showMoveShortCutBtn=false;
   bool _showPayBtn=false; //somente se a situação for accepted
@@ -67,6 +68,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   bool menuIsVisible=false;
 
   bool isLoading=false;
+
+  bool lockButton=false;
 
   //TUDO DA ANIMIACAO DO DRAWER
   AnimationController animationController; //usado para fazer a tela diminuir e dar sensação do menu
@@ -168,6 +171,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   Future<void> afterFirstLayout(BuildContext context) async {
     // isto é exercutado após todo o layout ser renderizado
 
+    //Navigator.of(context).push(_createRoute(AnimationPlayPage()));
+
     await checkFBconnection();
     if(userIsLoggedIn==true){
       checkEmailVerified(userModelGLobal, _newAuthService);
@@ -194,6 +199,22 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
           builder: (BuildContext context, Widget child, NewAuthService newAuthService) {
 
             _newAuthService = newAuthService;
+
+            String btnTxt;
+            if(userIsLoggedIn==true){
+              if(userModel.ThisUserHasAmove==false){
+                btnTxt='Começar mudança';
+              } else if(_showPayBtn == true){
+                btnTxt = 'Pagar';
+              } else if(userModel.ThisUserHasAmove==true){
+                btnTxt='Ver minha mudança';
+              } else {
+                btnTxt='';
+              }
+
+            } else {
+              btnTxt='Login';
+            }
 
 
             return SafeArea(
@@ -350,7 +371,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                         ))
                                     :Container(),
 
-
                                     Scrollbar(child: ListView(
                                       controller: _scrollController,
                                       children: [
@@ -474,19 +494,44 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                               color: _showPayBtn == true ? Colors.red : CustomColors.yellow,
                                               onPressed: (){
 
+                                                if(lockButton==false){
+                                                   lockButton=true;
+
+                                                  setState(() {
+                                                    isLoading=true;
+                                                  });
+
+                                                  if(btnTxt=='Login'){
+                                                    //Navigator.of(context).push(_createRoute(LoginChooseView()));
+                                                    Navigator.of(context).push(_createRoute(LoginPage()));
+                                                    lockButton=false;
+                                                  } else if(btnTxt=='Começar mudança'){
+                                                    Navigator.of(context).pushReplacement(_createRoute(SelectItensPage()));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
+                                                    lockButton=false;
+                                                  } else if(btnTxt=='Ver minha mudança'){
+                                                    _loadMoveClassAndOpenPage(MyMoves(), userModel);
+                                                    lockButton=false;
+                                                  } else if(btnTxt=='Pagar'){
+                                                    _openPaymentPageFromCallBacks(userModel);
+                                                    lockButton=false;
+                                                  } else {
+                                                    _displaySnackBar(context, 'Ocorreu um erro');
+                                                    lockButton=false;
+                                                  }
+
+                                                  /*
                                                 if(userIsLoggedIn==true){
 
                                                   //se o botão de pagar está sendo exibido enviar direto para página de pagamento
                                                   if(_showPayBtn==true){
-                                                    setState(() {
-                                                      isLoading=true;
-                                                    });
                                                     _openPaymentPageFromCallBacks(userModel);
                                                   } else {
 
                                                     //se já tiver agendado mudança abre a página myMoves
                                                     if(userModel.ThisUserHasAmove==true){
-                                                      Navigator.of(context).push(_createRoute(MyMoves()));
+
+                                                      _loadMoveClassAndOpenPage(MyMoves(), userModel);
+                                                      //Navigator.of(context).push(_createRoute(MyMoves()));
                                                     } else {
                                                       //abre a página para seleconar itens e agendar mudança
                                                       Navigator.of(context).push(_createRoute(SelectItensPage()));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
@@ -500,10 +545,18 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                                   Navigator.of(context).push(_createRoute(LoginChooseView()));
 
                                                 }
+                                                 */
+
+
+                                                } else {
+                                                  //faça nada
+                                                }
+
 
                                               },
                                               //child: WidgetsConstructor().makeText(userIsLoggedIn == true && _showMoveShortCutBtn==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && _showMoveShortCutBtn==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
-                                              child: WidgetsConstructor().makeText(userIsLoggedIn == true && userModel.ThisUserHasAmove==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && userModel.ThisUserHasAmove==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
+                                              //child: WidgetsConstructor().makeText(userIsLoggedIn == true && userModel.ThisUserHasAmove==false ? 'Começar mudança' : _showPayBtn == true ? 'Pagar' : userIsLoggedIn == true && userModel.ThisUserHasAmove==true ? 'Ver minha mudança'  : 'Login', Colors.white, 18.0, 5.0, 5.0, 'center'),
+                                              child: WidgetsConstructor().makeText(btnTxt, Colors.white, 18.0, 5.0, 5.0, 'center'),
                                             ),
                                           ),
 
@@ -609,6 +662,9 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                 ? Container(height: heightPercent, width: widthPercent,
                                 color: Colors.black54.withOpacity(0.6)): Container(),
 
+                            isLoading == true
+                            ? Center(child: CircularProgressIndicator(),)
+                                : Container(),
 
                           ],
                         );
@@ -1044,6 +1100,30 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
   }
 
 
+
+  Future<void> _loadMoveClassAndOpenPage(Widget page, UserModel userModel) async {
+
+    setState(() {
+      isLoading=true;
+    });
+
+    void _sucessfullLoad(){
+      Navigator.of(context).push(_createRoute(page));
+      setState(() {
+        isLoading=false;
+      });
+
+    }
+
+    await UserModel().getEmailFromFb();
+    print(userModel.Email);
+    FirestoreServices().loadScheduledMoveInFbWithCallBack(moveClassGlobal, userModel, () {_sucessfullLoad();});
+    //moveClassGlobal = await FirestoreServices().loadScheduledMoveInFbReturnMoveClass(moveClassGlobal, userModel);
+
+
+  }
+
+
   /*
   CALBACKS DOS POPUPS
    */
@@ -1469,7 +1549,18 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
 
 
-    if(moveClass.situacao == 'trucker_finished') {
+    if(moveClass.situacao == GlobalsStrings.sitDeny){
+      setState(() {
+        _showDarkerBackground=true;
+        MyBottomSheet().settingModalBottomSheet(context, 'Que pena', 'Vamos escolher outro profissional', 'O profissional que você escolheu não aceitou o serviço. Você pode escolher outro.',
+            Icons.assignment_ind_outlined, heightPercent, widthPercent, 2, true,
+            Icons.assignment_ind_outlined, 'Gerenciar minha mudança', () {Navigator.of(context).push(_createRoute(MyMoves())); Navigator.pop(context);_toogleDarkScreen();},
+            Icons.schedule, 'Decidir depois', () {_aceppted_little_lateCallback_Depois();Navigator.pop(context);_toogleDarkScreen();}
+        );
+      });
+    }
+
+    if(moveClass.situacao == GlobalsStrings.sitTruckerFinished) {
 
       setState(() {
         //popupCode='trucker_finished';
@@ -1484,7 +1575,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
     }
 
-    if(moveClass.situacao == 'trucker_quited_after_payment'){
+    if(moveClass.situacao == GlobalsStrings.sitTruckerQuitAfterPayment){
 
       setState(() {
         //popupCode='trucker_quited_after_payment';
@@ -1496,11 +1587,11 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
         );
       });
 
-    } else if(moveClass.situacao == 'user_informs_trucker_didnt_make_move' || moveClass.situacao == 'user_informs_trucker_didnt_finished_move'){
+    } else if(moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntMakeMove || moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntFinishedMove){
       //user relatou problrema como: Mudança nao feita ou finalizada pelo trucker sem ter concluido
       _solvingProblems(userModel);
 
-    } else if(moveClass.situacao == 'accepted'){
+    } else if(moveClass.situacao == GlobalsStrings.sitAccepted){
 
       if(dif.isNegative) {
         //a data já expirou
@@ -1588,7 +1679,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
       }
 
-    } else if(moveClass.situacao == 'pago'){
+    } else if(moveClass.situacao == GlobalsStrings.sitPago){
 
       if(dif.isNegative) {
         //a data já expirou
@@ -1650,7 +1741,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
       }
 
 
-    } else if(moveClass.situacao=='quit'){
+    } else if(moveClass.situacao == GlobalsStrings.sitQuit){
       //significa que o sistema cancelou - agora vamso cancelar essa mudança
       setState(() {
         //popupCode='sistem_canceled';
@@ -1664,7 +1755,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
 
     //exibe o botao para pagar
-    if(moveClass.situacao=='accepted'){
+    if(moveClass.situacao== GlobalsStrings.sitAccepted){
       _showPayBtn=true;
     } else {
       _showPayBtn=false;
@@ -1986,10 +2077,12 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
           builder: (BuildContext context, Widget child, UserModel userModel){
 
             return Container(
+              alignment: Alignment.topLeft,
               color: Colors.white,
               width: widthPercent,
               height: heightPercent,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
 
                   Padding(padding: EdgeInsets.only(left: 25.0), child: Column(
@@ -2001,23 +2094,28 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                   ),),
 
                   Container(
-                    width: widthPercent*0.55,
+                    //width: widthPercent*0.55,
+                    alignment: Alignment.centerLeft,
                     child:Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: 10.0,),
+                        SizedBox(width: 20.0,),
                         userModel.FullName != null ? WidgetsConstructor().makeText(userModel.FullName, CustomColors.blue, 16.0, 10.0, 0.0, 'no') : WidgetsConstructor().makeText('Você não está logado', CustomColors.blue, 16.0, 10.0, 0.0, 'no'),
                       ],
                     ),
                   ),
 
                   Container(
-                    width: widthPercent*0.55,
+                    //width: widthPercent*0.55,
+                    alignment: Alignment.centerLeft,
                     child:Row(
                       mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: 10.0,),
-                        userModel.Email != null ? WidgetsConstructor().makeText(userModel.Email, CustomColors.blue, 14.0, 0.0, 10.0, 'no') : Container(),
+                        SizedBox(width: 20.0,),
+                        WidgetsConstructor().makeText(userModel.Email != null ? userModel.Email : 'Você não\nestá logado', CustomColors.blue, 14.0, 0.0, 10.0, 'no')
+                        //userModel.Email != null ? WidgetsConstructor().makeText(userModel.Email, CustomColors.blue, 14.0, 0.0, 10.0, 'no') : Container(),
                       ],
                     ),
                   ),
@@ -2025,26 +2123,17 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                   //botão de login
                   FlatButton(
                       onPressed: () {
-                        Navigator.of(context).push(_createRoute(LoginChooseView()));
+                        //Navigator.of(context).push(_createRoute(LoginChooseView()));
+                        Navigator.of(context).push(_createRoute(LoginPage()));
                       },
                       child: Container(
 
                         child: _drawMenuLine(Icons.person, "Login", CustomColors.blue, context),
                       )),
 
-                  /*  //n precisa existir
-                  FlatButton(onPressed: null,
-                      child: Container(
-
-                        child: _drawMenuLine(Icons.airport_shuttle, "Quero mudar", CustomColors.blue, context),
-                      ),
-                  ),
-
-                   */
-
                   FlatButton(
                       onPressed: (){
-                        Navigator.of(context).push(_createRoute(LoginChooseView()));
+                        Navigator.of(context).push(_createRoute(MyMoves()));
                       },
                       child: Container(
                         child: _drawMenuLine(Icons.list, "Minhas\nmudanças", CustomColors.blue, context),
@@ -2057,7 +2146,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                         newAuthService.SignOut();
                         newAuthService.updateAuthStatus(false);
                       },
-                      child: userModel.Uid != "" ? Container(margin: EdgeInsets.only(left: 20.0), child:_drawMenuLine(Icons.exit_to_app, "Sair da conta", CustomColors.blue, context),) : Container(),
+                      child: userModel.Uid != "" ? _drawMenuLine(Icons.exit_to_app, "Sair da conta", CustomColors.blue, context) : Container(),
                   ),
 
 
@@ -2396,7 +2485,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                         : popupCode=='pago_timeToMove'
                                         ? WidgetsConstructor().customPopUp('Hora da mudança', 'Você tem uma mudança agora.', 'Ir para mudança', 'Depois', widthPercent, heightPercent, () {_pago_almost_time(userModel);} , () {_setPopuoCodeToDefault();} )
                                         : popupCode=='sistem_canceled'
-                                        ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você não efetuou o pagamento para uma mudança que estava agendada. Nós cancelamos este serviço.', Colors.red, widthPercent, heightPercent, () {_quit_systemQuitMove(userModel);})
+                                        ? WidgetsConstructor().customPopUp1Btn('Atenção', 'Você não efetuou o pagamento para uma mudança que estava agendada. Nós cancelamos este serviço.', Colors.red, widthPercent, heightPercent, () {_quisystemQuitMove(userModel);})
                                         : popupCode=='trucker_quited_after_payment'
                                         ? WidgetsConstructor().customPopUp('Pedimos Desculpas', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções:', 'Escolher outro', 'Reaver dinheiro', widthPercent, heightPercent, () { _trucker_quitedAfterPayment_getNewTrucker();}, () { _trucker_quitedAfterPayment_cancel(userModel);})
                                         : popupCode=='trucker_finished'

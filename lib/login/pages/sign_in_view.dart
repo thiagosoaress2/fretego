@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/login/pages/sign_up_view.dart';
-import 'package:fretego/login/services/auth.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/home_page.dart';

@@ -51,6 +51,15 @@ class NewAuthService extends Model {
    notifyListeners();
  }
 
+ Future<void> recoverPassword(String email, @required VoidCallback onSuccess, @required VoidCallback onFailure()) async {
+
+   await FirebaseAuth.instance.sendPasswordResetEmail(email: email).whenComplete(() {
+     onSuccess();
+   }).catchError((){
+     onFailure();
+   });
+ }
+
  void loadUser(){
    _user = FirebaseAuth.instance.currentUser;
    _user.reload();

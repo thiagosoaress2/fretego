@@ -18,6 +18,7 @@ class FirestoreServices {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   static final String agendamentosPath = "agendamentos_aguardando";
+  static final String userPath = 'users';
   static final String truckerCancelmentNotify = 'notificacoes_cancelamento';
   static final String ordersPath = 'orders';
   static final String truckerAdvice = 'truckers_advice';
@@ -610,6 +611,41 @@ class FirestoreServices {
     });
 
   }
+
+  Future<double> loadOwnAvaliation(String userId, double rate, VoidCallback onSucess(double rateback)){
+
+    FirebaseFirestore.instance
+        .collection(userPath)
+        .doc(userId)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+
+        rate = documentSnapshot['rate'];
+        onSucess(rate);
+
+        //onSucess();
+
+      } else {
+        //erro
+      }
+    });
+  }
+
+  Future<double> saveOwnAvaliation(String userId, double rate, VoidCallback onSucess()){
+
+    CollectionReference userLocation = FirebaseFirestore.instance.collection(userPath);
+    return userLocation
+        .doc(userId)
+        .update({
+      'rate' : rate,
+    }).then((value) {
+      onSucess();
+    });
+
+  }
+
+
 
 
 

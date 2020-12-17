@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
@@ -156,12 +157,6 @@ class MoveClass {
     return formatedSit;
   }
 
-  MoveClass clearTheList(MoveClass moveClass){
-
-    List<ItemClass> itemsSelectedCart2 =[];
-    moveClass.itemsSelectedCart = itemsSelectedCart2;
-    return moveClass;
-  }
 
   String returnSituation (String sit){
 
@@ -241,6 +236,40 @@ class MoveClass {
     moveDate = DateUtils().addMinutesAndHoursFromStringToAdate(moveDate, time);
     return moveDate;
 
+  }
+
+
+  //List functions
+  MoveClass clearTheList(MoveClass moveClass){
+
+    List<ItemClass> itemsSelectedCart2 =[];
+    moveClass.itemsSelectedCart = itemsSelectedCart2;
+    return moveClass;
+  }
+
+  MoveClass deleteOneItem(MoveClass moveClass, String itemName){
+
+    int cont=0;
+    while(cont<moveClass.itemsSelectedCart.length){
+      //se for item com mesmo nome, remove um
+      if(moveClass.itemsSelectedCart[cont].name==itemName){
+       moveClass.itemsSelectedCart.removeAt(cont);
+       cont=moveClass.itemsSelectedCart.length;  //cont pega valor máximo para parar a verificação
+     } else {
+       cont++;
+     }
+    }
+
+    return moveClass;
+  }
+
+  MoveClass addOneItem(MoveClass moveClass, List<dynamic> myData, int index){
+
+    print(myData[index]['name']);
+    ItemClass itemClass = ItemClass(myData[index]['name'], myData[index]['weight'], myData[index]['singlePerson'], myData[index]['volume']);
+    moveClass.itemsSelectedCart.add(itemClass);
+
+    return moveClass;
   }
 
   /*  reference

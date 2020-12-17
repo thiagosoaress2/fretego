@@ -148,7 +148,7 @@ class SharedPrefsUtils {
 
     while(cont<itemsSelectedCart.length){
       await prefs.setString('item_name'+cont.toString(), itemsSelectedCart[cont].name);
-      await prefs.setString('item_image'+cont.toString(), itemsSelectedCart[cont].image);
+      //await prefs.setString('item_image'+cont.toString(), itemsSelectedCart[cont].image);
       await prefs.setBool('item_single_person'+cont.toString(), itemsSelectedCart[cont].singlePerson);
       await prefs.setDouble('item_volume'+cont.toString(), itemsSelectedCart[cont].volume);
       await prefs.setDouble('item_weight'+cont.toString(), itemsSelectedCart[cont].weight);
@@ -169,6 +169,7 @@ class SharedPrefsUtils {
       await prefs.remove('item_volume'+cont.toString());
       await prefs.remove('item_weight'+cont.toString());
       await prefs.remove('item_list_size');
+      cont++;
     }
 
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:responsive_flutter/responsive_flutter.dart';
 
 class WidgetsConstructor {
 
@@ -184,6 +185,20 @@ class WidgetsConstructor {
 
   Widget makeSimpleText(String msg, Color color, double Size){
     return Text(msg, style: TextStyle(color: color, fontSize: Size) ,);
+  }
+
+  Widget makeResponsiveText(BuildContext context, String msg, Color color, double size, double marginTop, double marginBottom, String aligment){
+    //sample
+    //WidgetsConstructor().makeText("informe moeda da compra", Theme.of(context).primaryColor, 18.0, 16.0, 0.0, "center"),
+
+    return Container(
+      alignment: aligment=="center" ? Alignment.center : Alignment.centerLeft,
+      margin: EdgeInsets.fromLTRB(0.0, marginTop, 0.0, marginBottom),
+      child: Text(msg,
+        style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(size), color: color),
+
+      ),
+    );
   }
 
   BoxDecoration myBoxDecoration(Color backgroundColor, Color borderColor, double width, double radius) {

@@ -11,5 +11,23 @@
   "singlePerson" : false,
   "volume" : 0.10,
   "image" : "images/baixados.png"
+  },
+  {"name" : "Outro",
+    "weigth" : 10.0,
+    "singlePerson" : false,
+    "volume" : 10.0,
+    "image" : "images/baixados.png"
+  },
+  {"name" : "Sofá 2 lugares",
+    "weigth" : 25.0,
+    "singlePerson" : false,
+    "volume" : 15.0,
+    "image" : "images/baixados.png"
+  },
+  {"name" : "Sofá 4 lugares",
+    "weigth" : 50.0,
+    "singlePerson" : false,
+    "volume" : 30.0,
+    "image" : "images/baixados.png"
   }
 ]
