@@ -89,29 +89,26 @@ class _MyAppState extends State<MyApp> {
 
     return ScopedModel<UserModel>(
       model: userModel,
-      child: ScopedModel<SelectedItemsChartModel>(
-        model: selectedItensChartModel,
-        child: ScopedModel<NewAuthService>(
-          model: newAuthService,
-          child: MaterialApp(
-            title: 'Fretes Go',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              primaryColor: blue,
+      child: ScopedModel<NewAuthService>(
+        model: newAuthService,
+        child: MaterialApp(
+          title: 'Fretes Go',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            primaryColor: blue,
 
 
-            ),
-            //home: HomePage(),
-            home: HomePage(),
-            localizationsDelegates: [
-              GlobalMaterialLocalizations.delegate,
-            ],
-            supportedLocales: [
-              const Locale('pt'),
-            ],
           ),
+          //home: HomePage(),
+          home: HomePage(),
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+          ],
+          supportedLocales: [
+            const Locale('pt'),
+          ],
         ),
       ),
     );

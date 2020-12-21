@@ -75,24 +75,24 @@ class MoveClass {
     double price = 0.0;
 
     //price vai receber o custo adicional. O custo base é dado pelo banco de dados (neste momento é 80). E cada valor aqui é acrescido neste valor base.
-    if(vehicle=="carroca"){
+    if(vehicle=="carroca" || vehicle=='carroça'){
       price=priceCarroca;
-    } else if(vehicle=="pickupP"){
+    } else if(vehicle=="pickupP" || vehicle=='pickup pequena'){
       //price=100.0;
       price=pricePickupP;
-    } else if(vehicle=="pickupG"){
+    } else if(vehicle=="pickupG" || vehicle=='pickup grande'){
       //price=120.0;
       price = pricePickupG;
-    } else if(vehicle=="kombiF"){
+    } else if(vehicle=="kombiF" || vehicle=='kombi' || vehicle=='kombi fechada'){
       //price=150.0;
       price=priceKombiF;
-    } else if(vehicle=="kombiA"){
+    } else if(vehicle=="kombiA" || vehicle=='kombi aberta'){
       //price=180.0;
       price=priceKombiA;
-    } else if(vehicle=="caminhaoPA"){
+    } else if(vehicle=="caminhaoPA" || vehicle=='caminhao aberto'){
       //price=190.0;
       price= priceCaminhaoPa;
-    } else if(vehicle=="caminhaoBP"){
+    } else if(vehicle=="caminhaoBP" || vehicle=='caminhao baú pequeno'){
       //price=210.0;
       price=priceCaminhaoBP;
     } else {//if(vehicle=="caminhaoBG"){
@@ -130,6 +130,55 @@ class MoveClass {
       return "- R\$"+dif.toStringAsFixed(2)+" (mais barato)";
     } else  {
       return "+ R\$"+dif.toStringAsFixed(2)+" (mais caro)";
+    }
+    /*
+    if(dif<0){
+      return dif-dif*2;  //aqui ele converte o numero negativo para o equivalente positivo
+    } else {
+      return dif;
+    }
+
+     */
+
+    //return dif;
+
+  }
+
+  String returnThePriceDiferenceWithNumberOnly(String carSelected, String truckComparison){
+
+    double dif = 0.0;
+
+    if (carSelected == "carroça") {
+      dif = priceCarroca-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "pickup pequena") {
+      dif = pricePickupP-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "pickup grande") {
+      dif = pricePickupG-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "kombi") {
+      dif = priceKombiF-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "kombi aberta") {
+      dif = priceKombiA-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "caminhao aberto") {
+      dif = priceCaminhaoPa-giveMeThePriceOfEachvehicle(truckComparison);
+    } else if (carSelected == "caminhao baú pequeno") {
+      dif = priceCaminhaoBP-giveMeThePriceOfEachvehicle(truckComparison);
+    } else { //if(truck=="caminhaoBG"){
+      dif = priceCaminhaoBG-giveMeThePriceOfEachvehicle(truckComparison);
+    }
+
+    if(dif>0){
+      //return "- R\$"+dif.toStringAsFixed(2);
+      print('o valor negativo é em moveclass é '+"R\$"+(dif*-1).toStringAsFixed(2));
+      return "R\$"+(dif*-1).toStringAsFixed(2);
+    } else  {
+      if(dif==0){
+        return "R\$"+(dif*-1).toStringAsFixed(2);
+      } else {
+        return "+R\$"+(dif*-1).toStringAsFixed(2);
+      }
+      //return "+ R\$"+dif.toStringAsFixed(2);
+      print('o valor positivo é em moveclass é '+"R\$"+(dif*-1).toStringAsFixed(2));
+      return "R\$"+(dif*-1).toStringAsFixed(2);
     }
     /*
     if(dif<0){

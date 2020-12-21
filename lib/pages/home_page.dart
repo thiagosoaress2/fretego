@@ -13,6 +13,7 @@ import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/animationPlay.dart';
 import 'package:fretego/pages/avalatiation_page.dart';
 import 'package:fretego/pages/mercadopago.dart';
+import 'package:fretego/pages/move_schedule_page.dart';
 import 'package:fretego/pages/payment_page.dart';
 import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/my_moves.dart';
@@ -83,7 +84,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     _scrollController.addListener(() {
       setState(() {
         offset = _scrollController.hasClients ? _scrollController.offset : 0.1;
-
       });
       print(offset);
     });
@@ -172,6 +172,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     // isto é exercutado após todo o layout ser renderizado
 
     //Navigator.of(context).push(_createRoute(AnimationPlayPage()));
+    //Navigator.of(context).push(_createRoute(MoveSchedulePage2(moveClassGlobal.userId)));
 
     await checkFBconnection();
     if(userIsLoggedIn==true){
@@ -182,7 +183,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
   @override
   Widget build(BuildContext context) {
-
     heightPercent = MediaQuery.of(context).size.height;
     widthPercent = MediaQuery.of(context).size.width;
 
@@ -506,7 +506,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
                                                     Navigator.of(context).push(_createRoute(LoginPage()));
                                                     lockButton=false;
                                                   } else if(btnTxt=='Começar mudança'){
-                                                    Navigator.of(context).pushReplacement(_createRoute(SelectItensPage()));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
+                                                    //Navigator.of(context).pushReplacement(_createRoute(SelectItensPage()));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
+                                                    Navigator.of(context).pushReplacement(_createRoute(MoveSchedulePage(userModel.Uid)));  //nao envia mais para cá. Envia para a página minhas mudanças que tem o mesmo resumo
                                                     lockButton=false;
                                                   } else if(btnTxt=='Ver minha mudança'){
                                                     _loadMoveClassAndOpenPage(MyMoves(), userModel);
@@ -1205,12 +1206,12 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
   }
 
-  void _trucker_quitedAfterPayment_getNewTrucker(){
+  void _trucker_quitedAfterPayment_getNewTrucker(String uid){
     //escolher novo trucker
     //a gerencia de saber em qual página abrir vai ser feita na página. Neste ponto já está atualizado no bd
     Navigator.of(context).pop();
     Navigator.push(context, MaterialPageRoute(
-        builder: (context) => SelectItensPage()));
+        builder: (context) => MoveSchedulePage(uid)));
   }
 
   //aqui foi o trucker que informou que n fez a mudança, n precisa verificar e pode cancelar direto.
@@ -1582,7 +1583,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
         _showDarkerBackground=true;
         MyBottomSheet().settingModalBottomSheet(context, 'Desculpas', 'Pedimos Desculpas', 'Infelizmente o profissional que você escolheu desistiu do serviço. Sabemos o quanto isso é chato e oferecemos as seguintes opções',
             Icons.warning_amber_sharp, heightPercent, widthPercent, 2, false,
-            Icons.account_box_rounded, 'Escolher outro profissional', () {_trucker_quitedAfterPayment_getNewTrucker(); Navigator.pop(context);_toogleDarkScreen();},
+            Icons.account_box_rounded, 'Escolher outro profissional', () {_trucker_quitedAfterPayment_getNewTrucker(userModel.Uid); Navigator.pop(context);_toogleDarkScreen();},
             Icons.monetization_on_outlined, 'Reaver dinheiro', () {_trucker_quitedAfterPayment_cancel(userModel);;Navigator.pop(context);_toogleDarkScreen();}
         );
       });

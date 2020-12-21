@@ -93,6 +93,15 @@ flutter:
     - images/popup/myboxes.png
     - images/itensselect/anim/anim_caminhonete.png
     - images/itensselect/anim/anim_roda.png
+    - images/itensselect/trucks/truck_aberto.png
+    - images/itensselect/trucks/truck_baug.png
+    - images/itensselect/trucks/truck_baup.png
+    - images/itensselect/trucks/truck_carroca.png
+    - images/itensselect/trucks/truck_kombi.png
+    - images/itensselect/trucks/truck_kombia.png
+    - images/itensselect/trucks/truck_pickupg.png
+    - images/itensselect/trucks/truck_pickupp.png
+    - images/itensselect/relogiopulso.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

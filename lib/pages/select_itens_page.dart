@@ -1864,6 +1864,7 @@ class _SelectItensPageState extends State<SelectItensPage>  with AfterLayoutMixi
                           topCustomBar(heightPercent, widthPercent, "Escolher profissional", 4),
 
                           SizedBox(height: 20.0,),
+
                           moveClass.nomeFreteiro != null ?
                           Container(
                             child: Padding(
@@ -2037,6 +2038,7 @@ class _SelectItensPageState extends State<SelectItensPage>  with AfterLayoutMixi
                             ],
                           ),),
                       ) : Container(),
+
 
                     ],
                   );
@@ -3185,6 +3187,11 @@ class _SelectItensPageState extends State<SelectItensPage>  with AfterLayoutMixi
 
   Future<void> loadMoveClassFromShared() async {
     setState(() async {
+
+      SharedPrefsUtils().saveListOfItemsInShared().then((value) {
+
+      });
+
       moveClass = await SharedPrefsUtils().loadMoveClassFromSharedPrefs(moveClass);
       //moveClass = await SharedPrefsUtils().loadListOfItemsInSharedToMoveClass(moveClass);
       shouldOpenOnlyResume();

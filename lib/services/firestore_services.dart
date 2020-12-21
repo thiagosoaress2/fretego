@@ -241,6 +241,37 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
+  Future<MoveClass> copyOfloadScheduledMoveInFbWithCallBack(MoveClass moveClass, String id, [VoidCallback onSucess]) async {
+
+    MoveClass moveClassUpdated;
+
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
+
+      moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
+      moveClass.enderecoDestino = querySnapshot['endereco_destino'];
+      moveClass.ajudantes = querySnapshot['ajudantes'];
+      moveClass.carro = querySnapshot['carro'];
+      moveClass.escada = querySnapshot['escada'] ?? false;
+      moveClass.lancesEscada = querySnapshot['lances_escada'] ?? 0;
+      moveClass.userId = userModel.Uid;
+      moveClass.freteiroId = querySnapshot['id_freteiro'];
+      moveClass.nomeFreteiro = querySnapshot['nome_freteiro'];
+      moveClass.situacao = querySnapshot['situacao'];
+      moveClass.ps = querySnapshot['ps'];
+      moveClass.dateSelected = querySnapshot['selectedDate'];
+      moveClass.timeSelected = querySnapshot['selectedTime'];
+      moveClass.preco = querySnapshot['valor'];
+      moveClass.moveId = querySnapshot['moveId'];
+      moveClass.alert = querySnapshot['alert'];
+      moveClass.alertSaw = querySnapshot['alert_saw'];
+      moveClass.placa = querySnapshot['placa'];
+      moveClassUpdated = moveClass;
+      onSucess();
+    });
+
+    return moveClassUpdated;
+  }
+
   Future<MoveClass> loadScheduledMoveInFbReturnMoveClass(MoveClass moveClass, UserModel userModel) async {
 
     MoveClass moveClassUpdated;

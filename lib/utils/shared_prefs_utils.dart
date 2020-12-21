@@ -141,20 +141,76 @@ class SharedPrefsUtils {
   }
 
   //Aqui estes métodos são somente para a primeira página, onde salva a lista de itens do usuário
-  Future<void> saveListOfItemsInShared(List<ItemClass> itemsSelectedCart) async {
+  Future<void> saveListOfItemsInShared([List<ItemClass> itemsSelectedCart]) async {
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int cont=0;
+    giveMeTheSizeOfTheListInShared().then((value) async {
 
-    while(cont<itemsSelectedCart.length){
-      await prefs.setString('item_name'+cont.toString(), itemsSelectedCart[cont].name);
-      //await prefs.setString('item_image'+cont.toString(), itemsSelectedCart[cont].image);
-      await prefs.setBool('item_single_person'+cont.toString(), itemsSelectedCart[cont].singlePerson);
-      await prefs.setDouble('item_volume'+cont.toString(), itemsSelectedCart[cont].volume);
-      await prefs.setDouble('item_weight'+cont.toString(), itemsSelectedCart[cont].weight);
-      cont++;
-      await prefs.setInt('item_list_size', cont);  //utilizar isto para saber o tamanho da lista
-    }
+      int _newValue=0;
+      if(value!=null){
+        _newValue=value;
+      }
+      //value é o tamanho da lista
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int _cont=0;
+
+      while(_cont<itemsSelectedCart.length){  //o cont vai servir para contar quantas vezes precisa passar para salvar os novos dados.
+        int internalCont=_cont+_newValue; //digamos que cont seja 0 e a lista seja de tamanho 1. Mas já existam 2 itens salvos anteriormente.
+        // Então cont=0 < lista.lenght. Então ele entra. Mas o index para salvar será internalCont = 2(itens ja salvos)+cont
+
+        await prefs.setString('item_name'+internalCont.toString(), itemsSelectedCart[_cont].name);
+        //await prefs.setString('item_image'+cont.toString(), itemsSelectedCart[cont].image);
+        await prefs.setBool('item_single_person'+internalCont.toString(), itemsSelectedCart[_cont].singlePerson);
+        await prefs.setDouble('item_volume'+internalCont.toString(), itemsSelectedCart[_cont].volume);
+        await prefs.setDouble('item_weight'+internalCont.toString(), itemsSelectedCart[_cont].weight);
+        _cont++;
+        internalCont = _newValue+_cont; //pega valor atualizado
+        await prefs.setInt('item_list_size', internalCont);  //utilizar isto para saber o tamanho da lista
+
+
+        /* codigo original
+        await prefs.setString('item_name'+cont.toString(), itemsSelectedCart[cont].name);
+        //await prefs.setString('item_image'+cont.toString(), itemsSelectedCart[cont].image);
+        await prefs.setBool('item_single_person'+cont.toString(), itemsSelectedCart[cont].singlePerson);
+        await prefs.setDouble('item_volume'+cont.toString(), itemsSelectedCart[cont].volume);
+        await prefs.setDouble('item_weight'+cont.toString(), itemsSelectedCart[cont].weight);
+        cont++;
+        await prefs.setInt('item_list_size', cont);  //utilizar isto para saber o tamanho da lista
+
+         */
+
+
+        /*
+        exemplo
+        value (tamanho original da lista) = 3
+        cont=0;
+        listSize=2;
+        enquanto cont(0)<listSize(2) faça
+          //o que já existe na lista
+          //item_name0
+          //item_name1
+          //item_name2
+          //preciso salvar como 3 então
+          internalCont=value(3)+cont(0);
+          set item_name+internalCont;
+          cont++;
+          set item_list_size=value(3)+cont(1); (item_list_size agora é 4);
+
+          //rodada 2
+          //agora a lsita
+          //item_name0
+          //item_name1
+          //item_name2
+          //item_name3 (o ultimo salvo)
+          internalCont=value(3)+cont(1);
+          set item_name+internalCont; (item_name4)
+          cont++;
+          set item_list_size=value(3)+cont(1); (item_list_size agora é 5);
+
+         */
+
+      }
+    });
+
   }
 
   //obs: Este método precisa ser chamado antes de apagar a lista
@@ -183,6 +239,14 @@ class SharedPrefsUtils {
     } else {
       return true;
     }
+
+  }
+
+  Future<int> giveMeTheSizeOfTheListInShared() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int counter = (prefs.getInt('item_list_size'));
+    return counter;
 
   }
 
@@ -251,6 +315,43 @@ class SharedPrefsUtils {
     await prefs.setInt('ajudantes', moveClass.ajudantes);
     await prefs.setString('carro', moveClass.carro);
 
+  }
+
+  Future<void> saveAjudantesInShared(int n) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('ajudantes', n);
+  }
+
+  Future<int> getAjudantesFromShared() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int n = prefs.getInt('ajudantes');
+    return n;
+  }
+
+  Future<void> saveLancesDeEscadasInShared(int n) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('lancesEscada', n);
+  }
+
+  Future<int> getLancesDeEscadaFromShared() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int n = prefs.getInt('lancesEscada');
+    return n;
+  }
+
+  Future<void> savePsInShared(String value) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ps', value);
+  }
+
+  Future<String> getPsFromShared() async {
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String n = prefs.getString('ps');
+  return n;
   }
 
   Future<void> saveDataFromSelectAddressPage(MoveClass moveClass) async {

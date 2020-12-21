@@ -78,7 +78,7 @@ class TruckClass {
       bestChoice = "kombi fechada";
     } else if(volumeMudanca<11.50){
       //bestChoice = "caminhaoPA";
-      bestChoice = "caminhao pequeno aberto";
+      bestChoice = "caminhao aberto";
     } else if(volumeMudanca<52.00){
       //bestChoice = "caminhaoBP";
       bestChoice = "caminhao baú pequeno";
