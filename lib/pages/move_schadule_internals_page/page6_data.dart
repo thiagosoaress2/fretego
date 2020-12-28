@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/classes/truck_class.dart';
 import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/services/date_services.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/utils/notificationMeths.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/responsive_text_custom.dart';
+import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class Page6Data extends StatelessWidget {
@@ -43,63 +45,85 @@ class Page6Data extends StatelessWidget {
                 child: Stack(
                   children: [
 
+
                     //imagem de fundo com relogio de pulso
                     Positioned(
-                        top: heightPercent*0.35,
+                        top: heightPercent*0.40,
                         left: -10.0,
                         child: Image.asset('images/itensselect/relogiopulso.png')),
 
                     //botoes de hora e data
                     Positioned(
-                        left: widthPercent*0.60,
-                        top: heightPercent*0.35,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ResponsiveTextCustom('Definir', context, CustomColors.blue, 3.5, 0.0, 40.0, 'center'),
-                            //botao data
-                            Container(
-                              color: Colors.blue,
-                              width: widthPercent*0.35,
-                              height: heightPercent*0.10,
-                              child: FlatButton(
-                                color: CustomColors.blue,
-                                onPressed: (){
-                                  _selectDate(context, moveModel);
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    ResponsiveTextCustom('Data', context, Colors.white, 2.5, 0.0, 0.0, 'no'),
-                                    Icon(Icons.calendar_today_rounded, color: Colors.white,)
-                                  ],
+                        left: widthPercent*0.40,
+                        top: heightPercent*0.50,
+                        right: 5.0,
+                        child: Container(
+                          //width: widthPercent*0.38,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              //botao data
+                              Container(
+                                color: Colors.blue,
+                                width: widthPercent*0.35,
+                                height: heightPercent*0.10,
+                                child: FlatButton(
+                                  color: CustomColors.blue,
+                                  onPressed: (){
+                                    _selectDate(context, moveModel);
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      ResponsiveTextCustom('Data', context, Colors.white, 2.5, 0.0, 0.0, 'no'),
+                                      Icon(Icons.calendar_today_rounded, color: Colors.white,)
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            ResponsiveTextCustom(moveModel.dataIsOk == false ? 'Sem data definida' : 'Data escolhida: \n${moveModel.SelectedDate.toString()}', context, Colors.black, 2.0, 5.0, 0.0, 'center'),
-                            SizedBox(height: heightPercent*0.08,),
-                            //botao hora
-                            Container(
-                              color: Colors.blue,
-                              width: widthPercent*0.35,
-                              height: heightPercent*0.10,
-                              child: FlatButton(
-                                color: CustomColors.blue,
-                                onPressed: (){
-                                  _selectTime(context, moveModel);
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    ResponsiveTextCustom('Hora', context, Colors.white, 2.5, 0.0, 0.0, 'no'),
-                                    Icon(Icons.schedule, color: Colors.white,)
-                                  ],
+                              ResponsiveTextCustom(moveModel.dataIsOk == false ? 'Sem data definida' : 'Data escolhida: \n${DateServices().convertToStringFromDate(moveModel.SelectedDate)}', context, Colors.black, 2.0, 5.0, 0.0, 'center'),
+                              SizedBox(height: heightPercent*0.08,),
+                              //botao hora
+                              Container(
+                                color: Colors.blue,
+                                width: widthPercent*0.35,
+                                height: heightPercent*0.10,
+                                child: FlatButton(
+                                  color: CustomColors.blue,
+                                  onPressed: (){
+                                    _selectTime(context, moveModel);
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      ResponsiveTextCustom('Hora', context, Colors.white, 2.5, 0.0, 0.0, 'no'),
+                                      Icon(Icons.schedule, color: Colors.white,)
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            ResponsiveTextCustom(moveModel.horaIsOk==false ? 'Sem hora definida' : 'Horário: \n${moveModel.SelectedTime.toString()}', context, Colors.black, 2.0, 5.0, 0.0, 'center'),
-                          ],
-                        )),
+                              ResponsiveTextCustom(moveModel.horaIsOk==false ? 'Sem hora definida' : 'Horário: \n${moveModel.SelectedTime.format(context)}', context, Colors.black, 2.0, 5.0, 0.0, 'center'),
+                            ],
+                          ),
+                        )
+                    ),
+
+
+                    //titulo
+                    Positioned(
+                      top: heightPercent*0.40,
+                      left: 10.0,
+                      right: 10.0,
+                      child: ResponsiveTextCustom(moveModel.dataIsOk==true && moveModel.horaIsOk ? 'Pronto!' : 'Definir data e hora', context, CustomColors.blue, 3.5, 0.0, 40.0, 'center'),
+                    ),
+
+
+                    //mensagem
+                      moveModel.dataIsOk==true && moveModel.horaIsOk ? Positioned(
+                        bottom: 25.0,
+                        right: 100.0,
+                        child: ResponsiveTextCustom('Pronto! Toque aqui >', context, CustomColors.yellow, 2.5, 0.0, 0.0, 'center'),
+                      ) : SizedBox(),
 
                     //floating button
                     moveModel.dataIsOk==true && moveModel.horaIsOk ? Positioned(
@@ -107,6 +131,8 @@ class Page6Data extends StatelessWidget {
                         right: 10.0,
                         child: FloatingActionButton(
                           onPressed: (){
+
+                            moveModel.updateShowResume(false);  //esta variavel foi reciclada. Ela foi usada no endereço e agora vai ser usada na pagina final. Entou agora volto ela pro estado inicial
 
                             moveModel.moveClass.dateSelected = DateServices().convertToStringFromDate(moveModel.SelectedDate); //salvando dentro de moveclass
                             moveModel.moveClass.timeSelected = moveModel.SelectedTime.format(context);
@@ -121,7 +147,7 @@ class Page6Data extends StatelessWidget {
                             scheduleAmove(userModel, moveModel);
 
                             waitAmoment(3, moveModel);
-                            moveModel.changePageForward('final', 'data', 'Resumo final');
+                            moveModel.changePageForward('final', 'data', 'Mudança agendada');
 
                           },
                           backgroundColor: CustomColors.yellow,

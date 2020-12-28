@@ -253,6 +253,7 @@ class _Page5TruckerState extends State<Page5Trucker> {
                 moveModel.moveClass.placa = map['placa'];
                 SharedPrefsUtils().saveDataFromSelectTruckERPage(moveModel.moveClass);
                 moveModel.changePageForward('data', 'profissional', 'Agendar');
+
                 //showPopupFinal=true;
                 //scheduleAmove();
 

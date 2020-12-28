@@ -387,7 +387,7 @@ class Page3Truck extends StatelessWidget {
                               child: Column(
                                 children: [
                                   ResponsiveTextCustomWithMargin('Veículo selecionado' , context, Colors.black, 2.0, 5.0, 2.0, 5.0, 5.0,'center'),
-                                  ResponsiveTextCustomWithMargin(moveModel.moveClass.carro == null ? '' : moveModel.moveClass.carro , context, CustomColors.blue, 2.0, 10.0, 2.0, 5.0, 5.0,'center'),
+                                  ResponsiveTextCustomWithMargin(moveModel.moveClass.carro == null ? '' : TruckClass.empty().formatCodeToHumanName(moveModel.moveClass.carro) , context, CustomColors.blue, 2.0, 10.0, 2.0, 5.0, 5.0,'center'),
                                   Container(
                                     child:
                                     moveModel.carInMoveClass == null ? ResponsiveTextCustomWithMargin('Não selecionado' , context, Colors.black, 1.5, 10.0, 2.0, 5.0, 5.0,'center')

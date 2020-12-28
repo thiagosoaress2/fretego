@@ -455,6 +455,16 @@ class _Page4EnderecosState extends State<Page4Enderecos> {
             moveModel.DestinyAddress != "" ? WidgetsConstructor().makeText(moveModel.DestinyAddress, Colors.black, 12.0, 5.0, 10.0, "center") : Container(),
 
             SizedBox(height: 20.0,),
+            //mensagem
+            FakeLine(Colors.blue),
+            moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
+            ? ResponsiveTextCustomWithMargin('Pronto! Já temos todas informações para calcular o orçamento.', context, CustomColors.blue, 2.5,
+                25.0, 25.0, 15.0, 15.0, 'center') : SizedBox(),
+            moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
+            ? Icon(Icons.keyboard_arrow_down_outlined, color: CustomColors.yellow, size: 50.0,) : SizedBox(),
+            SizedBox(height: 15.0,),
+
+
             //botao calcular
             moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
                 ? GestureDetector(
@@ -618,7 +628,7 @@ class _Page4EnderecosState extends State<Page4Enderecos> {
                         //coloca na classe mudança para popular o bd no final com ela
                         moveModel.moveClass.enderecoOrigem = moveModel.OrigemAddress;
                         moveModel.moveClass.enderecoDestino = moveModel.DestinyAddress;
-                        moveModel.changePageForward('trucker', 'End.', 'Profissional');
+                        moveModel.changePageForward('trucker', 'Endereço', 'Profissional');
 
                       },
                       backgroundColor: CustomColors.yellow,

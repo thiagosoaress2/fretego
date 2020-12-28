@@ -80,6 +80,37 @@ class DateUtils {
     return formattedTime;
   }
 
+  String giveMeJustTheTimeOfThisDateTime(DateTime date){
+
+    int hour = date.hour;
+    int minute = date.minute;
+    if(minute==0){
+      minute=00;
+    } else if(minute==1){
+      minute=01;
+    } else if(minute==2){
+      minute=02;
+    }
+    else if(minute==3){
+      minute=03;
+    } else if(minute==4){
+      minute=04;
+    } else if(minute==5){
+      minute=05;
+    } else if(minute==6){
+      minute=06;
+    } else if(minute==7){
+      minute=07;
+    } else if(minute==8){
+      minute=08;
+    } else if(minute==9){
+      minute=09;
+    }
+
+    return hour.toString()+':'+minute.toString();
+
+  }
+
   DateTime addDaysToDate(DateTime originalDate, int daysToAdd){
     //use este de baixo para trabalhar com horas e minutos se precisar
     //DateTime newDate = DateTime(originalDate.year, originalDate.month, originalDate.day, originalDate.hour, originalDate.minute);
@@ -184,6 +215,26 @@ class DateUtils {
     }
 
      */
+
+  }
+
+  String iHaveStringWithTimeAndHeveToMinusItFromADateMinusMinutes(String date, String time, int minutesToSub){
+
+    DateTime dateInDateTime = DateUtils().convertDateFromString(date);
+    DateTime timeInDateTime = DateUtils().addMinutesAndHoursFromStringToAdate(dateInDateTime, time);
+    DateTime newDateWithNewTime = DateUtils().subMinutesFromDate(timeInDateTime, minutesToSub);
+    String timeFinal = DateUtils().giveMeJustTheTimeOfThisDateTime(newDateWithNewTime);
+    return timeFinal;
+
+  }
+
+  String iHaveStringWithTimeAndHaveToMinusItFromADateMinusHours(String date, String time, int hourToSub){
+
+    DateTime dateInDateTime = DateUtils().convertDateFromString(date);
+    DateTime timeInDateTime = DateUtils().addMinutesAndHoursFromStringToAdate(dateInDateTime, time);
+    DateTime newDateWithNewTime = DateUtils().subHoursFromDate(timeInDateTime, hourToSub);
+    String timeFinal = DateUtils().giveMeJustTheTimeOfThisDateTime(newDateWithNewTime);
+    return timeFinal;
 
   }
 

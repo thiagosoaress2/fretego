@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
+import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/utils/notificationHelper.dart';
@@ -84,6 +85,7 @@ class _MyAppState extends State<MyApp> {
     UserModel userModel = UserModel();
     SelectedItemsChartModel selectedItensChartModel = SelectedItemsChartModel();
     NewAuthService newAuthService = NewAuthService();
+    HomePageModel homePageModel = HomePageModel();
 
     const blue = const Color(0xff247BA0);
 
@@ -91,24 +93,27 @@ class _MyAppState extends State<MyApp> {
       model: userModel,
       child: ScopedModel<NewAuthService>(
         model: newAuthService,
-        child: MaterialApp(
-          title: 'Fretes Go',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            primaryColor: blue,
+        child: ScopedModel<HomePageModel>(
+          model: homePageModel,
+          child: MaterialApp(
+            title: 'Fretes Go',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              primaryColor: blue,
 
 
+            ),
+            //home: HomePage(),
+            home: HomePage(),
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+            ],
+            supportedLocales: [
+              const Locale('pt'),
+            ],
           ),
-          //home: HomePage(),
-          home: HomePage(),
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-          ],
-          supportedLocales: [
-            const Locale('pt'),
-          ],
         ),
       ),
     );

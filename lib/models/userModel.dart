@@ -10,7 +10,7 @@ class UserModel extends Model {
 
   bool _alert=false;
 
-  bool _thisUserHasAMove;
+  bool _thisUserHasAMove=false;
 
   //UserModel({this.uid, this.fullName, this.email, this.userRole});
   //UserModel();
@@ -60,7 +60,6 @@ class UserModel extends Model {
     _thisUserHasAMove = value;
     notifyListeners();
   }
-
   get ThisUserHasAmove=>_thisUserHasAMove;
 
 

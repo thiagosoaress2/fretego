@@ -33,6 +33,13 @@ class MoveModel extends Model {
   }
   get QntItens=>_qntItens;
 
+  bool _needFirstLoad=true;
+  void updateNeedFirstLoad(bool value){
+    _needFirstLoad = value;
+    notifyListeners();
+  }
+  get NeedFirstLoad=>_needFirstLoad;
+
   String _appBarTextBack='Início';
   String _appBarTitleText='Itens Grandes';
 
@@ -376,5 +383,12 @@ class MoveModel extends Model {
     notifyListeners();
   }
   get SelectedTime=>_selectedtime;
+
+  bool _specialConditionChangingTrucker=false;
+  void updateSpecialCondition(bool value){
+    _specialConditionChangingTrucker=value;
+    notifyListeners();
+  }
+  get SpecialCondition=>_specialConditionChangingTrucker;
 
 }

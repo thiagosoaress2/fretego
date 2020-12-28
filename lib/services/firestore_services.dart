@@ -6,6 +6,8 @@ import 'package:fretego/classes/avaliation_class.dart';
 import 'package:fretego/classes/bank_data_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/classes/trucker_movement_class.dart';
+import 'package:fretego/models/home_page_model.dart';
+import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/utils/date_utils.dart';
@@ -272,6 +274,35 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
+  Future<void> loadScheduledMoveInMoveMovelToChangeTrucker(MoveModel moveModel, String id, [VoidCallback onSucess]) async {
+
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
+
+      moveModel.moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
+      moveModel.moveClass.enderecoDestino = querySnapshot['endereco_destino'];
+      moveModel.moveClass.ajudantes = querySnapshot['ajudantes'];
+      moveModel.moveClass.carro = querySnapshot['carro'];
+      moveModel.moveClass.escada = querySnapshot['escada'] ?? false;
+      moveModel.moveClass.lancesEscada = querySnapshot['lances_escada'] ?? 0;
+      moveModel.moveClass.userId = userModel.Uid;
+      //moveModel.moveClass.freteiroId = querySnapshot['id_freteiro'];
+      //moveModel.moveClass.nomeFreteiro = querySnapshot['nome_freteiro'];
+      moveModel.moveClass.situacao = querySnapshot['situacao'];
+      moveModel.moveClass.ps = querySnapshot['ps'];
+      moveModel.moveClass.dateSelected = querySnapshot['selectedDate'];
+      moveModel.moveClass.timeSelected = querySnapshot['selectedTime'];
+      moveModel.moveClass.preco = querySnapshot['valor'];
+      moveModel.moveClass.moveId = querySnapshot['moveId'];
+      moveModel.moveClass.alert = querySnapshot['alert'];
+      moveModel.moveClass.alertSaw = querySnapshot['alert_saw'];
+      //moveModel.moveClass.placa = querySnapshot['placa'];
+      //moveClassUpdated = moveClass;
+
+      onSucess();
+    });
+
+  }
+
   Future<MoveClass> loadScheduledMoveInFbReturnMoveClass(MoveClass moveClass, UserModel userModel) async {
 
     MoveClass moveClassUpdated;
@@ -302,7 +333,7 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
-  Future<void> loadScheduledMoveSituationAndDateTime(MoveClass moveClass, UserModel userModel,  [VoidCallback onSucess]) async {
+  Future<void> loadScheduledMoveSituationAndDateTime(MoveClass moveClass, UserModel userModel,  [VoidCallback onSucess, VoidCallback onFailure]) async {
 
     //MoveClass moveClassUpdated;
     //String situacao;
@@ -314,7 +345,25 @@ class FirestoreServices {
       moveClass.dateSelected = querySnapshot['selectedDate'];
       moveClass.timeSelected = querySnapshot['selectedTime'];
       onSucess();
-    });
+    }).catchError((error) => onFailure());
+
+    //return moveClassUpdated;
+  }
+
+  Future<void> loadScheduledMoveSituationAndDateTimeInModel(HomePageModel homePageModel, UserModel userModel,  [VoidCallback onSucess, VoidCallback onFailure]) async {
+
+    //MoveClass moveClassUpdated;
+    //String situacao;
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
+
+      homePageModel.moveClass.freteiroId = querySnapshot['id_freteiro'];
+      homePageModel.moveClass.moveId = querySnapshot['moveId'];
+      homePageModel.moveClass.situacao = querySnapshot['situacao'];
+      homePageModel.moveClass.dateSelected = querySnapshot['selectedDate'];
+      homePageModel.moveClass.timeSelected = querySnapshot['selectedTime'];
+      homePageModel.updateMoveClass(homePageModel.moveClass);
+      onSucess();
+    }).catchError((error) => onFailure());
 
     //return moveClassUpdated;
   }

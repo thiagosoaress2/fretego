@@ -209,6 +209,7 @@ class MoveClass {
 
   String returnSituation (String sit){
 
+    print(sit);
     String newStr;
     if(sit=='aguardando confirmação do profissional'){
       newStr = sit;

@@ -4,8 +4,10 @@ import 'package:after_layout/after_layout.dart';
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
+import 'package:fretego/classes/truck_class.dart';
 import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
+import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/colors.dart';
 import 'package:fretego/utils/my_bottom_sheet.dart';
@@ -44,7 +46,7 @@ bool isLoading=false;
 var myData;
 int selectedIndex;
 Map<String, int> itensMap = Map(); //guarda o nome do item e a quantidade do item que existe
-Map<String, int> itensIndex = Map(); //guarda a posicao do item na itensMap
+Map<String, int> _itensIndex = Map(); //guarda a posicao do item na itensMap
 
 MoveModel moveModelGlobal = MoveModel();
 
@@ -167,7 +169,10 @@ class _Page1SelectItensState extends State<Page1SelectItens> with AfterLayoutMix
               //barra de busca
               selectItemPageElement_searchBar(),
 
+
               selectItemPageElement_productList(moveModel, widget.heightPercent, widget.widthPercent),
+
+
 
 
               Positioned(
@@ -360,7 +365,7 @@ class _Page1SelectItensState extends State<Page1SelectItens> with AfterLayoutMix
                           if(qnt!=0){
                             if(qnt==1){
                               qnt--;
-                              itensIndex.removeWhere((key, value) => key == myData[index]["name"]);  //remove da lista de index
+                              _itensIndex.removeWhere((key, value) => key == myData[index]["name"]);  //remove da lista de index
                               itensMap.removeWhere((key, value) => key == myData[index]["name"]);  //remove da lista de index
                               //moveClass = MoveClass().deleteOneItem(moveClass, myData[index]["name"]);
 
@@ -422,7 +427,7 @@ class _Page1SelectItensState extends State<Page1SelectItens> with AfterLayoutMix
                         onTap: (){
 
                           qnt++;
-                          itensIndex[myData[index]["name"]] = index; //salva o index para depois sabermos como alvar os itens
+                          _itensIndex[myData[index]["name"]] = index; //salva o index para depois sabermos como alvar os itens
 
                           //add a moveClass
                           final ItemClass itemClass = ItemClass(myData[index]['name'], myData[index]['weight'], myData[index]['singlePerson'], myData[index]['volume']);

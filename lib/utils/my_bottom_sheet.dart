@@ -137,6 +137,8 @@ class MyBottomSheet {
                 ),
                 ),
 
+                //BOTAO DE OK SENDO RETIRADO
+                /*
                 options==0 ? Positioned(
                   right: 20.0,
                   bottom: 20.0,
@@ -154,6 +156,8 @@ class MyBottomSheet {
                   ),
                 ) : Container(),
 
+
+                 */
 
 
                 Positioned(

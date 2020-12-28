@@ -14,6 +14,8 @@ class GlobalsStrings {
   static String sitDeny = 'deny';
   static String sitUserInformTruckerDidntFinishedButItsGoingBack = 'user_informs_trucker_didnt_finished_move_goingback'; //<<esse n tem correspondencia no app do user
   static String sitUserFinished = 'user_finished';
+  static String sitNoTrucker = 'sem motorista';
+  static String sitTruckerIsGoingToMove = 'motorista a caminho'; //ainda precisa implementar. Vai perguntar ao user se ele ta indo quando faltar 2 horas pra mudanças...e ele vai dar ok
 
 
 }

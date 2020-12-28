@@ -3,10 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/home_page.dart';
+import 'package:fretego/pages/home_page_internals/widget_loading_screen.dart';
 import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/colors.dart';
 import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/globals_strings.dart';
+import 'package:fretego/widgets/responsive_text_custom.dart';
+import 'package:fretego/widgets/responsive_text_custom_withmargin.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:mercado_pago_mobile_checkout/mercado_pago_mobile_checkout.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -17,6 +22,7 @@ import 'package:scoped_model/scoped_model.dart';
 
 bool isLoading=false;
 bool showSucessScreen=false;
+bool showAwaitingScreen=false;
 
 double heightPercent;
 double widthPercent;
@@ -42,7 +48,6 @@ class PaymentPage extends StatefulWidget {
 
 
 class _PaymentPageState extends State<PaymentPage> {
-
 
   createOrder (String uid) async {
 
@@ -76,7 +81,7 @@ class _PaymentPageState extends State<PaymentPage> {
         );
 
         setState(() {
-          isLoading=false;
+          showAwaitingScreen=false;
         });
 
         if(result.status == 'approved'){
@@ -122,6 +127,10 @@ class _PaymentPageState extends State<PaymentPage> {
 
           }
 
+          setState(() {
+            showAwaitingScreen=false;
+          });
+
         }
 
 
@@ -140,99 +149,205 @@ class _PaymentPageState extends State<PaymentPage> {
     heightPercent = MediaQuery.of(context).size.height;
     widthPercent = MediaQuery.of(context).size.width;
 
+    showSucessScreen=true;
+
     return ScopedModelDescendant<UserModel>(
       builder: (BuildContext context, Widget widget, UserModel userModel){
 
         //_moveClass.moveId = 'moveIdCode';
         //_moveClass.preco = 200.0;
         _email = userModel.Email;
-        print(_email);
         _name = userModel.FullName;
-
 
         return Scaffold(
           key: _scaffoldKey,
-          appBar: AppBar(title: Text("Mercado Pago"), centerTitle: true,),
-          body: Center(
-              child: Stack(
-                children: [
+          //appBar: AppBar(title: Text("Mercado Pago"), centerTitle: true,),
+          body: Container(
+            width: widthPercent,
+            height: heightPercent,
+            color: Colors.white,
+            child: Stack(
+              children: [
 
-                  showSucessScreen == false
-                  ? Column(
-                    children: <Widget>[
-                      SizedBox(height: 40.0,),
+                showSucessScreen==false ? Positioned(
+                  top: 0.0,
+                    left: 0.0,
+                    right: 0.0,
+                    child: Container(
+                      height: heightPercent*0.30,
+                      color: CustomColors.blue,
+                      child: Column(
+                        children: [
 
-                      Padding(
-                          padding: EdgeInsets.all(10.0),
-                        child: Column(
-                          children: [
+                          SizedBox(height: heightPercent*0.05,),
 
-                            WidgetsConstructor().makeText("Resumo da mudança", Colors.blue, 18.0, 25.0, 20.0, 'center'),
-                            Row(
-                              children: [
-                                WidgetsConstructor().makeText('Origem: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
-                                SizedBox(width: 5.0,),
-                                WidgetsConstructor().makeText(_moveClass.enderecoOrigem, Colors.black, 16.0, 0.0, 15.0, 'no'),
-                              ],
-                            ),
+                          //barra de voltar
+                          Row(
+                            children: [
 
-                            Row(
-                              children: [
-                                WidgetsConstructor().makeText('Destino: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
-                                SizedBox(width: 5.0,),
-                                WidgetsConstructor().makeText(_moveClass.enderecoDestino, Colors.black, 16.0, 0.0, 15.0, 'no'),
-                              ],
-                            ),
-                            SizedBox(height: 30.0,),
-                            Row(
-                              children: [
-                                WidgetsConstructor().makeText('Total a ser pago: ', Colors.blue, 16.0, 15.0, 20.0, 'no'),
-                                WidgetsConstructor().makeText('R\$'+_moveClass.preco.toStringAsFixed(2), Colors.black, 16.0, 15.0, 20.0, 'no'),
+                              SizedBox(width: widthPercent*0.01,),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.keyboard_arrow_left, color: Colors.white, size: 35,),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  Navigator.push(context, MaterialPageRoute(
+                                      builder: (context) => HomePage()));
+                                },),
+                              ResponsiveTextCustomWithMargin('Início', context, Colors.white, 1.5, 0.0, 0.0, 0.0, 0.0, 'no'),
 
-                              ],
-                            )
-
-                          ],
-                        ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ResponsiveTextCustom('Valor final', context, Colors.white60, 1.5, 20.0, 0.0, 'center'),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ResponsiveTextCustom('R\$ ${_moveClass.preco.toStringAsFixed(2).replaceAll('.', ',')}', context, Colors.white, 4.5, 0.0, 0.0, 'center'),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+                ) : Container(),
 
+                showSucessScreen==false ? Positioned(
+                  top: heightPercent*0.3,
+                  left: 15.0,
+                  right: 15.0,
+                  child: Container(
+                    width: widthPercent*0.9,
+                    child: ResponsiveTextCustom('Origem: ${_moveClass.enderecoOrigem}', context, Colors.black, 2.0, 35.0, 0.0, 'no'),
+                  ),
+                ) : Container(),
 
-                      RaisedButton(
-                        color: Colors.blue,
-                        splashColor: Colors.blue[100],
-                        onPressed: () async {
-                          if(isLoading==false){
+                showSucessScreen==false ? Positioned(
+                  top: heightPercent*0.45,
+                  left: 15.0,
+                  right: 15.0,
+                  child: Container(
+                    width: widthPercent*0.9,
+                    child: ResponsiveTextCustom('Destino: ${_moveClass.enderecoDestino}', context, Colors.black, 2.0, 35.0, 0.0, 'no'),
+                  ),
+                ) : Container(),
+
+                showSucessScreen==false ? Positioned(
+                  top: heightPercent*0.70,
+                  left: 15.0,
+                  right: 15.0,
+                  child: Container(
+                    height: heightPercent*0.10,
+                    width: widthPercent*0.8,
+                    child: RaisedButton(
+                        color: CustomColors.yellow,
+                        child: ResponsiveTextCustom('Pagar', context, Colors.white, 3.0, 0.0, 0.0, 'center'),
+                        onPressed: (){
+
+                          if(showAwaitingScreen==false){
                             setState(() {
-                              isLoading=true;
+                              showAwaitingScreen=true;
                             });
-                            _displaySnackBar(context, 'aguarde, iniciando pagamento. Isto pode demorar um pouco.', 10);
+                            //_displaySnackBar(context, 'aguarde, iniciando pagamento. Isto pode demorar um pouco.', 10);
                             createOrder(userModel.Uid);
 
                           } else {
                             //do nothing
                           }
 
-                        },
-                        child: Center(
-                          child: Text("Efetuar pagamento",),
-                        ),
+                        }),
+                  ),
+                ) : Container(),
+
+                showAwaitingScreen==true ? WidgetLoadingScreeen('Aguarde', 'Preparando pagamento') : Container(),
+
+                showSucessScreen==true
+                ? _sucessScreen()
+                : Container(),
+
+                /*
+                showSucessScreen == false
+                    ? Column(
+                  children: <Widget>[
+                    SizedBox(height: 40.0,),
+
+                    Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Column(
+                        children: [
+
+                          WidgetsConstructor().makeText("Resumo da mudança", Colors.blue, 18.0, 25.0, 20.0, 'center'),
+                          Row(
+                            children: [
+                              WidgetsConstructor().makeText('Origem: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
+                              SizedBox(width: 5.0,),
+                              WidgetsConstructor().makeText(_moveClass.enderecoOrigem, Colors.black, 16.0, 0.0, 15.0, 'no'),
+                            ],
+                          ),
+
+                          Row(
+                            children: [
+                              WidgetsConstructor().makeText('Destino: ', Colors.blue, 16.0, 0.0, 15.0, 'no'),
+                              SizedBox(width: 5.0,),
+                              WidgetsConstructor().makeText(_moveClass.enderecoDestino, Colors.black, 16.0, 0.0, 15.0, 'no'),
+                            ],
+                          ),
+                          SizedBox(height: 30.0,),
+                          Row(
+                            children: [
+                              WidgetsConstructor().makeText('Total a ser pago: ', Colors.blue, 16.0, 15.0, 20.0, 'no'),
+                              WidgetsConstructor().makeText('R\$'+_moveClass.preco.toStringAsFixed(2), Colors.black, 16.0, 15.0, 20.0, 'no'),
+
+                            ],
+                          )
+
+                        ],
                       ),
-                    ],
-                  )
-                  : Container(),
+                    ),
 
-                  showSucessScreen==true
-                  ? _sucessScreen()
-                  : Container(),
 
-                  isLoading == true
-                      ? Center(
-                    child: CircularProgressIndicator(),
-                  ) : Container(),
+                    RaisedButton(
+                      color: Colors.blue,
+                      splashColor: Colors.blue[100],
+                      onPressed: () async {
+                        if(isLoading==false){
+                          setState(() {
+                            isLoading=true;
+                          });
+                          _displaySnackBar(context, 'aguarde, iniciando pagamento. Isto pode demorar um pouco.', 10);
+                          createOrder(userModel.Uid);
 
-                ],
-              )
-          ),
+                        } else {
+                          //do nothing
+                        }
+
+                      },
+                      child: Center(
+                        child: Text("Efetuar pagamento",),
+                      ),
+                    ),
+                  ],
+                )
+                    : Container(),
+                 */
+
+                /*
+                showSucessScreen==true
+                    ? _sucessScreen()
+                    : Container(),
+
+                 */
+                isLoading == true
+                    ? Center(
+                  child: CircularProgressIndicator(),
+                ) : Container(),
+
+              ],
+            ),
+          )
         );
 
       },
@@ -240,7 +355,75 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
 
+  Widget _sucessScreen(){
 
+    return Container(
+      color: Colors.white,
+      width: widthPercent,
+      height: heightPercent,
+      child: Stack(
+        children: [
+
+          Positioned(
+            top: heightPercent*0.15,
+            left: 10.0,
+            right: 10.0,
+            child: Container(
+              child: Icon(Icons.done, color: Colors.white, size: 80.0,),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: CustomColors.blue,
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: heightPercent*0.28,
+            left: 10.0,
+            right: 10.0,
+            child: Container(
+              child: ResponsiveTextCustom('Sucesso!', context, CustomColors.blue, 4.0, 0.0, 0.0, 'center'),
+            ),
+          ),
+
+          Positioned(
+            top: heightPercent*0.45,
+            left: 10.0,
+            right: 10.0,
+            child: Container(
+              child: ResponsiveTextCustom('Agora basta aguardar a hora da mudança.', context, Colors.black, 2.0, 0.0, 0.0, 'center'),
+            ),
+          ),
+
+          Positioned(
+            top: heightPercent*0.70,
+            left: 20.0,
+            right: 20.0,
+            child: Container(
+              height: heightPercent*0.10,
+              child: RaisedButton(
+                  color: CustomColors.blue,
+                  child: ResponsiveTextCustom('Voltar ao início', context, Colors.white, 2.5, 0.0, 0.0, 'center'),
+                  onPressed: (){
+
+                      Navigator.of(context).pop();
+                      Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => HomePage()));
+                      },
+              ),
+
+            ),
+          ),
+          
+
+        ],
+      )
+    );
+  }
+
+
+
+  /*
   Widget _sucessScreen(){
 
     return Container(
@@ -280,6 +463,7 @@ class _PaymentPageState extends State<PaymentPage> {
       ),
     );
   }
+   */
 
   _displaySnackBar(BuildContext context, String msg, int duration) {
 

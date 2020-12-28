@@ -30,7 +30,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home_page.dart';
 
+/*
 
+ATENÇÃO ESTA PÁGINA FOI DESATIVADA E AGORA TODO PROCEDIMENTO OCORRE EM MOVE_SCHEDULE_PAGE POIS FOI DESMEMBRADA EM VÁRIAS.
+VAI SER MANTIIDA AQUI POR REFERENCIA MAS QUASE TODOS ELEMENTOS FORAM TRANSPORTADOS
+
+
+ */
 class SelectItensPage extends StatefulWidget {
   @override
   _SelectItensPageState createState() => _SelectItensPageState();
