@@ -7,6 +7,7 @@ import 'package:fretego/login/pages/email_verify_view.dart';
 import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/move_schedule_page.dart';
 import 'package:fretego/pages/payment_page.dart';
 import 'package:fretego/services/firestore_services.dart';
@@ -50,9 +51,12 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
         if(_isFirstLoad==true){
           _isFirstLoad=false;
 
+
           Future.delayed(Duration(seconds: 4)).then((value) {
             homePageModel.updateShowOptions();
           });
+          
+
         }
 
         return ScopedModelDescendant<UserModel>(
@@ -64,7 +68,6 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
               _scrollController = ScrollController();
               loadInfoFromFb(userModel, homePageModel);
             }
-
 
             return Container(
               height: widget.heightPercent,
@@ -127,6 +130,7 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
       },
     );
   }
+
 
   Widget _orderTrack(HomePageModel homePageModel, UserModel userModel, BuildContext context){
 
@@ -423,6 +427,9 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
               homePageModel.moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntFinishedButItsGoingBack ||
               homePageModel.moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntFinishedMove
               ? _lineWithWhastappBtn(context, userModel, homePageModel) : Container(),
+
+          homePageModel.ShouldShowGoToMoveBtn==true
+          ? _lineWithGoToMoveBtn(context, userModel, homePageModel) : Container(),
 
           homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando ||
               homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitTruckerQuitAfterPayment ||
@@ -816,6 +823,58 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
         Divider(),
       ],
     );
+  }
+
+  Widget _lineWithGoToMoveBtn(BuildContext context, UserModel userModel, HomePageModel homePageModel){
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              width: widget.widthPercent*0.15,
+              height: widget.heightPercent*0.08,
+              child: RaisedButton(
+                onPressed: () async {
+
+                  //abrir a página
+                  _goToMovePage(userModel, homePageModel);
+
+                },
+                color: CustomColors.yellow,
+                child: Icon(Icons.airport_shuttle, color: Colors.white,),
+              ),
+            ),
+            SizedBox(width: widget.widthPercent*0.05,),
+            ResponsiveTextCustom('Ir para mapa da mudança', context, Colors.black, 2, 0.0, 0.0, 'no'),
+          ],
+        ),
+        Divider(),
+      ],
+    );
+  }
+
+  Future<void> _goToMovePage(UserModel userModel, HomePageModel homePageModel) async {
+
+    //colocar loading aqui
+    homePageModel.setIsLoading(true);
+    Future<void> _onSucessLoadScheduledMoveInFb(UserModel userModel) async {
+
+      MoveClass moveClass = MoveClass();
+      moveClass = await MoveClass().getTheCoordinates(homePageModel.moveClass, homePageModel.moveClass.enderecoOrigem, homePageModel.moveClass.enderecoDestino).whenComplete(() {
+
+        Navigator.of(context).pop();
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => MoveDayPage(homePageModel.moveClass)));
+
+        homePageModel.setIsLoading(false);
+
+      });
+    }
+
+    //ta na hora da mudança. Abrir a pagina de mudança
+    await FirestoreServices().loadScheduledMoveInFbWithCallBack(homePageModel.moveClass, userModel, (){ _onSucessLoadScheduledMoveInFb(userModel);});
+
   }
 
   void _toogleDarkScreen(HomePageModel homePageModel){

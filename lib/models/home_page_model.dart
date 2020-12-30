@@ -3,6 +3,12 @@ import 'package:scoped_model/scoped_model.dart';
 
 class HomePageModel extends Model {
 
+  bool _shouldShowGoToMoveBtn=false;
+  void updateShouldShowGoToMoveBtn (bool value){
+    _shouldShowGoToMoveBtn=value;
+    notifyListeners();
+  }
+  get ShouldShowGoToMoveBtn=>_shouldShowGoToMoveBtn;
 
   bool _showClassicPage=true;
   void updateShowClassicPage(bool value){

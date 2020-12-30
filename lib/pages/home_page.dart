@@ -204,10 +204,6 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
                 }
 
-                print('offset');
-                print(homePageModel.Offset);
-                print('menu is visible');
-                print(menuIsVisible);
 
                 return Scaffold(
                     key: _scaffoldKey,
@@ -944,9 +940,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
         Navigator.push(context, MaterialPageRoute(
             builder: (context) => MoveDayPage(moveClassGlobal)));
 
-        setState(() {
-          isLoading=false;
-        });
+        isLoading=false;
 
       });
     }
@@ -1209,7 +1203,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
         moveClass.situacao = event.data()['situacao'];
         moveClassGlobal.situacao = moveClass.situacao;
         homePageModel.updateSituationInMoveClass(moveClassGlobal.situacao);
-        _handleSituation(userModel, moveClass);
+        _handleSituation(userModel, moveClass, homePageModel);
       }
     });
   }
@@ -1219,7 +1213,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     userModel.updateThisUserHasAmove(true);
     setupYellowButtonText(userModel, homePageModel); //atualiza o texto do botão
 
-    _handleSituation(userModel, moveClass); //lida com o valor existente agora
+    _handleSituation(userModel, moveClass, homePageModel); //lida com o valor existente agora
     _placeListenerInSituation(moveClass.situacao, userModel, moveClass, homePageModel); //coloca um listener para ficar observando se mudou
 
     homePageModel.updateShowLoadingInitial(false);
@@ -1227,9 +1221,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
 
   }
-
-
-  void _handleSituation(UserModel userModel, MoveClass moveClass){
+  
+  void _handleSituation(UserModel userModel, MoveClass moveClass, HomePageModel homePageModel){
 
     //update ui para informar que tem mudança
     userModel.updateThisUserHasAmove(true);
@@ -1239,6 +1232,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
     DateTime scheduledDateAndTime = DateUtils().addMinutesAndHoursFromStringToAdate(scheduledDate, moveClass.timeSelected);
     final dif = DateUtils().compareTwoDatesInMinutes(DateTime.now(), scheduledDateAndTime);
 
+    homePageModel.moveClass = moveClass; //atualiza para poder utilizar em home_my_move
 
     if(moveClass.situacao == GlobalsStrings.sitDeny){
       setState(() {
@@ -1379,6 +1373,8 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
           setState(() {
             //popupCode = 'pago_little_negative';
             //_showDarkerBackground=true;
+            //libera o botão na proxima página
+            homePageModel.updateShouldShowGoToMoveBtn(true);
             MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Mudança acontecendo agora', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
                 Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
                 Icons.airport_shuttle, 'Ir para mudança', () {_pago_little_lateCallback_IrParaMudanca(userModel); Navigator.pop(context);},
@@ -1393,6 +1389,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
           setState(() {
             //popupCode = 'pago_much_negative';
             //_showDarkerBackground=true;
+            homePageModel.updateShouldShowGoToMoveBtn(true);
             MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Mudança em curso', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
                 Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
                 Icons.airport_shuttle, 'Ir para mudança', () {_pago_toMuch_lateCallback_Finalizar(userModel); Navigator.pop(context);},
@@ -1403,6 +1400,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
       } else if(dif<=150 && dif>15){
 
+        homePageModel.updateShouldShowGoToMoveBtn(true);
         setState(() {
           //popupCode = 'pago_almost_time';
           MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Quase na hora', "Você tem uma mudança que iniciou às "+moveClassGlobal.timeSelected+'.',
@@ -1417,6 +1415,7 @@ class HomePageState extends State<HomePage> with AfterLayoutMixin<HomePage>, Tic
 
         setState(() {
           //popupCode='pago_timeToMove';
+          homePageModel.updateShouldShowGoToMoveBtn(true);
           MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Tá na hora', 'Você tem uma mudança agendada para agora.',
               Icons.schedule_outlined, heightPercent, widthPercent, 2, true,
               Icons.airport_shuttle, 'Ir para mudança', () {_pago_almost_time(userModel);; Navigator.pop(context);},

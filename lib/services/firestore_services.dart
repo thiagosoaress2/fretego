@@ -568,6 +568,7 @@ class FirestoreServices {
       phone = phone.replaceAll("(", "");
       phone = phone.replaceAll(")", "");
       phone = phone.replaceAll("-", "");
+      phone = phone.replaceAll(" ", "");
       phone = phone.trim();
 
     });
@@ -575,12 +576,50 @@ class FirestoreServices {
     return phone;
   }
 
+  Future<String> getTruckerImage(String truckerId, [@required VoidCallback onSucess, @required VoidCallback onFailure]) async {
+
+    String image;
+    await FirebaseFirestore.instance.collection('truckers').doc(truckerId).get().then((querySnapshot) {
+      //moveClass.carroImagem = querySnapshot['vehicle_image'];
+      image = querySnapshot['image'];
+    });
+
+    return image;
+  }
+
+  Future<String> getTruckerCarImage(String truckerId, [@required VoidCallback onSucess, @required VoidCallback onFailure]) async {
+
+    String image;
+    await FirebaseFirestore.instance.collection('truckers').doc(truckerId).get().then((querySnapshot) {
+      image = querySnapshot['vehicle_image'];
+    });
+
+    return image;
+  }
+
   Future<void> loadLastKnownTruckerPosition(String id, TruckerMovementClass truckerMovementClass, [@required VoidCallback onSucess]) async {
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id)
         .get()
         .then((querySnapshot) {
-      truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
-      truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+          if(querySnapshot.data().containsKey('lastTrucker_lat')){
+            truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
+            truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+          } else {
+            truckerMovementClass.latitude = 0.0;
+            truckerMovementClass.longitude = 0.0;
+          }
+
+          /*
+          if(querySnapshot['lastTrucker_lat'].toString() != null){
+            truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
+            truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+          } else {
+            truckerMovementClass.latitude = 0.0;
+            truckerMovementClass.longitude = 0.0;
+          }
+
+           */
+
 
       onSucess();
     });

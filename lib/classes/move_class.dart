@@ -35,6 +35,7 @@ class MoveClass {
   bool alertSaw;
 
   String placa;
+  String carroImagem;
 
 
   static const double priceCarroca = 0.00;
