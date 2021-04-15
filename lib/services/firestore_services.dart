@@ -10,7 +10,9 @@ import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/models/userModel.dart';
+import 'package:fretego/pages/move_schadule_internals_page/page2_obs.dart';
 import 'package:fretego/utils/date_utils.dart';
+import 'package:fretego/utils/globals_strings.dart';
 
 
 class FirestoreServices {
@@ -30,6 +32,11 @@ class FirestoreServices {
   static final String punishmentPath = 'freteiros_em_punicao';
   static final String historicPathUsers = 'historico_mudancas_users';
   static final String historicPathTrucker = 'historico_mudancas_truckers';
+  static final String reembolsoPathUsers = 'reembolso_usuarios';
+  static final String reembolsoPathTrucker = 'reembolso_freteiros';
+  static final String locationPath = 'location';
+  static final String truckersPath = 'truckers';
+  static final String agendamentosSemMotorista = 'agendamentos_sem_motorista';
 
   Future<void> createNewUser(String name, String email, String uid) {
     // Call the user's CollectionReference to add a new user
@@ -51,17 +58,21 @@ class FirestoreServices {
 
   }
 
-  void getUserInfoFromCloudFirestore(UserModel userModel, [VoidCallback onSucess()]){
+  void getUserInfoFromCloudFirestore(UserModel userModel, @required VoidCallback userExists(), @required VoidCallback userNotReg()){
 
     FirebaseFirestore.instance
         .collection('users')
         .doc(userModel.Uid)
         .get()
         .then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists) {
-        userModel.updateFullName(documentSnapshot['name']);
-        onSucess();
-      }
+
+              if (documentSnapshot.exists) {
+                userModel.updateFullName(documentSnapshot['name']);
+                userExists();
+              } else {
+                userNotReg();
+              }
+
     });
 
   }
@@ -184,6 +195,80 @@ class FirestoreServices {
       'alert' : 'trucker',
       'alert_saw' : false,
       'placa' : moveClass.placa,
+      'pago' : moveClass.pago,
+      'situacao_backup' : 'nao',
+    })
+        .then((value) => onSuccess())
+        .catchError((error) => onFailure());
+
+    /*
+    return schedule
+        .add({
+
+          'endereco_origem': moveClass.enderecoOrigem,
+          'endereco_destino' : moveClass.enderecoDestino,
+          'ps' : moveClass.ps,
+          'carro' : moveClass.carro,
+          'ajudantes' : moveClass.ajudantes,
+          'escada' : escadaFinal,
+          'lances_escada' : lancesEscadaFinal,
+          'id_freteiro' : moveClass.freteiroId,
+          'valor' : moveClass.preco,
+          'id_contratante' : moveClass.userId,
+          'selectedDate' : moveClass.dateSelected,
+          'selectedTime' : moveClass.timeSelected,
+            'nome_freteiro' : moveClass.nomeFreteiro,
+    })
+        .then((value) => onSuccess())
+        .catchError((error) => onFailure());
+
+     */
+  }
+
+  Future<void> scheduleAmoveInBdWithoutTrucker(MoveModel moveModel, MoveClass moveClass, @required VoidCallback onSuccess, @required VoidCallback onFailure, double Latlong, double distance){
+
+    CollectionReference schedule = FirebaseFirestore.instance.collection(agendamentosPath);
+
+    String escadaFinal = "nao";
+    int lancesEscadaFinal = 0;
+    if(moveClass.escada!=null){
+      escadaFinal = "sim";
+      lancesEscadaFinal = moveClass.lancesEscada;
+    }
+
+    bool escada;
+    if(escadaFinal=='sim'){
+      escada=true;
+    } else {
+      escada = false;
+    }
+
+    //obs: O id do pedido é o mesmo do user já que cada user só pode ter um ativo por vez
+    return schedule.doc(moveClass.userId)
+        .set({
+
+      'endereco_origem': moveClass.enderecoOrigem,
+      'endereco_destino' : moveClass.enderecoDestino,
+      'ps' : moveClass.ps,
+      'carro' : moveClass.carro,
+      'ajudantes' : moveClass.ajudantes,
+      'escada' : escada,
+      'moveId' : moveClass.userId,
+      'lances_escada' : lancesEscadaFinal,
+      'id_freteiro' : moveClass.freteiroId == null ? 'nao' : moveClass.freteiroId,
+      'valor' : moveClass.preco,
+      'id_contratante' : moveClass.userId,
+      'selectedDate' : moveClass.dateSelected,
+      'selectedTime' : moveClass.timeSelected,
+      'nome_freteiro' : moveClass.apelido == null  ? 'nao' : moveClass.apelido,  //se estiver vindo de um agendamento com motorista especifico este dado já vai ser preenchido
+      'situacao' : moveClass.freteiroId == null  ? 'aguardando' : GlobalsStrings.sitAguardandoEspecifico,//se estiver vindo de um agendamento com motorista especifico este dado já vai ser preenchido
+      'alert' : 'trucker',
+      'alert_saw' : false,
+      'placa' : moveClass.placa == null  ? 'nao' : moveClass.placa,//se estiver vindo de um agendamento com motorista especifico este dado já vai ser preenchido
+      'pago' : moveClass.pago,
+      'situacao_backup' : 'nao',
+      'latlong' : Latlong,
+      'distancia' : moveModel.Distance,
     })
         .then((value) => onSuccess())
         .catchError((error) => onFailure());
@@ -236,6 +321,12 @@ class FirestoreServices {
       moveClass.alert = querySnapshot['alert'];
       moveClass.alertSaw = querySnapshot['alert_saw'];
       moveClass.placa = querySnapshot['placa'];
+      moveClass.pago = querySnapshot['pago'];
+      moveClass.situacaoBackup = querySnapshot['situacao_backup']??'nao';
+
+      if(moveClass.situacao==GlobalsStrings.sitReschedule){
+        moveClass.situacao = moveClass.situacaoBackup; //usar a situação antiga.
+      }
       moveClassUpdated = moveClass;
       onSucess();
     });
@@ -243,11 +334,13 @@ class FirestoreServices {
     return moveClassUpdated;
   }
 
+
+
   Future<MoveClass> copyOfloadScheduledMoveInFbWithCallBack(MoveClass moveClass, String id, [VoidCallback onSucess]) async {
 
     MoveClass moveClassUpdated;
 
-    await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
       moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
       moveClass.enderecoDestino = querySnapshot['endereco_destino'];
@@ -255,7 +348,7 @@ class FirestoreServices {
       moveClass.carro = querySnapshot['carro'];
       moveClass.escada = querySnapshot['escada'] ?? false;
       moveClass.lancesEscada = querySnapshot['lances_escada'] ?? 0;
-      moveClass.userId = userModel.Uid;
+      moveClass.userId = uid;
       moveClass.freteiroId = querySnapshot['id_freteiro'];
       moveClass.nomeFreteiro = querySnapshot['nome_freteiro'];
       moveClass.situacao = querySnapshot['situacao'];
@@ -267,6 +360,29 @@ class FirestoreServices {
       moveClass.alert = querySnapshot['alert'];
       moveClass.alertSaw = querySnapshot['alert_saw'];
       moveClass.placa = querySnapshot['placa'];
+      moveClass.situacaoBackup = querySnapshot['situacao_backup']??'nao';
+      moveClassUpdated = moveClass;
+      onSucess();
+    });
+
+    return moveClassUpdated;
+  }
+
+  Future<MoveClass> loadAdditionalTruckerInfosToScheduledMoveInFbWithCallBack(MoveClass moveClass, UserModel userModel, [VoidCallback onSucess]) async {
+
+    MoveClass moveClassUpdated;
+
+    print(moveClass.freteiroId);
+
+    //obs. quando o user terminou adicionou not ao final do id do user para não ficar achando este serviço como se ainda fosse aberto. Vamos remover agora
+    if(moveClass.situacao == GlobalsStrings.sitTruckerFinished){
+      moveClass.freteiroId = moveClass.freteiroId.replaceAll('not', '').trim();
+    }
+    print(moveClass.freteiroId);
+    await FirebaseFirestore.instance.collection(truckersPath).doc(moveClass.freteiroId).get().then((querySnapshot) {
+
+      moveClassUpdated = moveClass; //atualiza com os dados ja baixados
+      moveClass.freteiroImage = querySnapshot['image'] ?? 'no';
       moveClassUpdated = moveClass;
       onSucess();
     });
@@ -278,13 +394,15 @@ class FirestoreServices {
 
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
+      bool pago = moveModel.moveClass.pago;
+      
       moveModel.moveClass.enderecoOrigem = querySnapshot['endereco_origem'];
       moveModel.moveClass.enderecoDestino = querySnapshot['endereco_destino'];
       moveModel.moveClass.ajudantes = querySnapshot['ajudantes'];
       moveModel.moveClass.carro = querySnapshot['carro'];
       moveModel.moveClass.escada = querySnapshot['escada'] ?? false;
       moveModel.moveClass.lancesEscada = querySnapshot['lances_escada'] ?? 0;
-      moveModel.moveClass.userId = userModel.Uid;
+      moveModel.moveClass.userId = id;
       //moveModel.moveClass.freteiroId = querySnapshot['id_freteiro'];
       //moveModel.moveClass.nomeFreteiro = querySnapshot['nome_freteiro'];
       moveModel.moveClass.situacao = querySnapshot['situacao'];
@@ -295,6 +413,8 @@ class FirestoreServices {
       moveModel.moveClass.moveId = querySnapshot['moveId'];
       moveModel.moveClass.alert = querySnapshot['alert'];
       moveModel.moveClass.alertSaw = querySnapshot['alert_saw'];
+      moveModel.moveClass.pago = pago;
+      moveModel.updateMoveClass(moveModel.moveClass);
       //moveModel.moveClass.placa = querySnapshot['placa'];
       //moveClassUpdated = moveClass;
 
@@ -327,6 +447,7 @@ class FirestoreServices {
       moveClass.alert = querySnapshot['alert'];
       moveClass.alertSaw = querySnapshot['alert_saw'];
       moveClass.placa = querySnapshot['placa'];
+      moveClass.situacaoBackup = querySnapshot['situacao_backup']??'nao';
       moveClassUpdated = moveClass;
     });
 
@@ -339,12 +460,19 @@ class FirestoreServices {
     //String situacao;
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(userModel.Uid).get().then((querySnapshot) {
 
-      moveClass.freteiroId = querySnapshot['id_freteiro'];
-      moveClass.moveId = querySnapshot['moveId'];
-      moveClass.situacao = querySnapshot['situacao'];
-      moveClass.dateSelected = querySnapshot['selectedDate'];
-      moveClass.timeSelected = querySnapshot['selectedTime'];
-      onSucess();
+      if(querySnapshot.exists){
+        //moveClass.freteiroId = querySnapshot['id_freteiro']??null;
+        moveClass.freteiroId = null;
+        moveClass.moveId = querySnapshot['moveId'];
+        moveClass.situacao = querySnapshot['situacao'];
+        moveClass.dateSelected = querySnapshot['selectedDate'];
+        moveClass.timeSelected = querySnapshot['selectedTime'];
+        //moveClass.pago = querySnapshot['pago'];
+        onSucess();
+      } else {
+        onFailure();
+      }
+
     }).catchError((error) => onFailure());
 
     //return moveClassUpdated;
@@ -392,8 +520,8 @@ class FirestoreServices {
       'preco' : moveClass.preco,
       'origem' : moveClass.enderecoOrigem,
       'destino' : moveClass.enderecoDestino,
-      'data' : DateUtils().giveMeTheDateToday(),
-      'hora' : DateUtils().giveMeTheTimeNow(),
+      'data' : DateServices().giveMeTheDateToday(),
+      'hora' : DateServices().giveMeTheTimeNow(),
 
     }).then((value) => createHistoricOfMovesToTrucker(moveClass));
 
@@ -401,8 +529,8 @@ class FirestoreServices {
 
   Future<void> createHistoricOfMovesToTrucker(MoveClass moveClass){
 
+    /*
     CollectionReference history = FirebaseFirestore.instance.collection(historicPathTrucker);
-
     //cria historico do trucker
     history.doc(moveClass.freteiroId).set({
       'user' : moveClass.userId,
@@ -413,6 +541,18 @@ class FirestoreServices {
       'data' : DateUtils().giveMeTheDateToday(),
       'hora' : DateUtils().giveMeTheTimeNow(),
 
+    });
+     */
+
+
+    FirebaseFirestore.instance.collection(historicPathTrucker).doc(moveClass.freteiroId).collection('historico').add({
+      'user' : moveClass.userId,
+      'freteiro' : moveClass.freteiroId,
+      'preco' : moveClass.preco,
+      'origem' : moveClass.enderecoOrigem,
+      'destino' : moveClass.enderecoDestino,
+      'data' : DateServices().giveMeTheDateToday(),
+      'hora' : DateServices().giveMeTheTimeNow(),
     });
 
   }
@@ -432,6 +572,18 @@ class FirestoreServices {
 
   }
 
+  Future<bool>  loadPagoSituation(String id) async {
+
+    bool pago;
+    await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
+
+      pago = querySnapshot['pago'];
+
+    });
+    return pago;
+
+  }
+
   Future<void> updateMoveSituation(String newSituationString, truckerId, MoveClass moveClass, [VoidCallback onSucess(), VoidCallback onFail()]){
 
 
@@ -440,6 +592,21 @@ class FirestoreServices {
         .doc(moveClass.moveId)
         .update({
       'situacao' : newSituationString,
+
+    }).then((value) {
+      onSucess();
+    }).catchError((e) => onFail());
+
+  }
+
+  Future<void> updateMoveBackupSituation(String newSituationString, truckerId, MoveClass moveClass, [VoidCallback onSucess(), VoidCallback onFail()]){
+
+
+    CollectionReference update = FirebaseFirestore.instance.collection(agendamentosPath);
+    return update
+        .doc(moveClass.moveId)
+        .update({
+      'situacao_backup' : newSituationString,
 
     }).then((value) {
       onSucess();
@@ -524,6 +691,23 @@ class FirestoreServices {
 
   }
 
+  Future<void> changeSchedule(String id, String data, String hora, String oldSituation, @required VoidCallback onSucess, @required VoidCallback onFailure) async {
+
+    CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
+    return move.doc(id)
+        .update({
+
+      'situacao': GlobalsStrings.sitReschedule,
+      'selectedDate' : data,
+      'selectedTime' : hora,
+      'situacao_backup' : oldSituation,
+
+    })
+        .then((value) => onSucess())
+        .catchError((error) => onFailure());
+
+  }
+
   Future<void> notifyTruckerThatHeWasChanged(String idFreteiro, String idUser) async {
 
     CollectionReference move = FirebaseFirestore.instance.collection(truckerCancelmentNotify);
@@ -548,12 +732,12 @@ class FirestoreServices {
 
   }
 
-  Future<void> alertSetTruckerAlert(String id){
+  Future<void> alertSetTruckerAlert(String moveId){
 
     bool test = false;
     CollectionReference alert = FirebaseFirestore.instance.collection(agendamentosPath);
     return alert
-        .doc(id)
+        .doc(moveId)
         .update({
       'alert_saw' : test,
       'alert' : 'trucker',
@@ -597,6 +781,46 @@ class FirestoreServices {
     return image;
   }
 
+  Future<void> saveLastKnownTruckerPosition(String id, TruckerMovementClass truckerMovementClass) async {
+
+    CollectionReference userLocation = FirebaseFirestore.instance.collection(locationPath);
+    return userLocation
+        .doc(id)
+        .update({
+      'lastTrucker_lat' : truckerMovementClass.latitude,
+      'lastTrucker_long' : truckerMovementClass.longitude,
+    });
+
+  }
+
+  Future<void> loadLastKnownTruckerPosition(String truckerId, TruckerMovementClass truckerMovementClass, [@required VoidCallback onSucess]) async {
+    await FirebaseFirestore.instance.collection(locationPath).doc(truckerId)
+        .get()
+        .then((querySnapshot) {
+      if(querySnapshot.data().containsKey('lastTrucker_lat')){
+        truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
+        truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+      } else {
+        truckerMovementClass.latitude = 0.0;
+        truckerMovementClass.longitude = 0.0;
+      }
+
+      /*
+          if(querySnapshot['lastTrucker_lat'].toString() != null){
+            truckerMovementClass.latitude = querySnapshot['lastTrucker_lat'];
+            truckerMovementClass.longitude = querySnapshot['lastTrucker_long'];
+          } else {
+            truckerMovementClass.latitude = 0.0;
+            truckerMovementClass.longitude = 0.0;
+          }
+
+           */
+
+
+      onSucess();
+    });
+  }
+  /*
   Future<void> loadLastKnownTruckerPosition(String id, TruckerMovementClass truckerMovementClass, [@required VoidCallback onSucess]) async {
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id)
         .get()
@@ -624,7 +848,7 @@ class FirestoreServices {
       onSucess();
     });
   }
-
+   */
 
 
   //punishiments functions
@@ -635,8 +859,8 @@ class FirestoreServices {
     path.doc(truckerId).set({
       'trucker' : truckerId,
       'motivo' : motivo,
-      'data' : DateUtils().giveMeTheDateToday(),
-      'hora' : DateUtils().giveMeTheTimeNow(),
+      'data' : DateServices().giveMeTheDateToday(),
+      'hora' : DateServices().giveMeTheTimeNow(),
 
     });
 
@@ -719,7 +943,7 @@ class FirestoreServices {
 
   }
 
-  Future<void> saveUserAvaliation(AvaliationClass avaliationClass){
+  Future<void> saveUserAvaliation(AvaliationClass avaliationClass){ 
 
     CollectionReference userLocation = FirebaseFirestore.instance.collection(avaliationPath);
     return userLocation
@@ -769,24 +993,27 @@ class FirestoreServices {
 
 
   //bank save to
-  Future<void> saveBankDataToDevolution(BankData bankData, VoidCallback onSucess(), VoidCallback onFail()){
+  Future<void> saveBankDataToDevolution(BankData _bankData, double _valorReembolso, double _valorTotal, String _idFreteiro, VoidCallback onSucess(), VoidCallback onFail()){
 
     CollectionReference path = FirebaseFirestore.instance.collection(reembolsoPath);
     return path
-        .doc(bankData.userId)
-        .set({
-      'userId' : bankData.userId,
-      'userName' : bankData.userName??'noName',
-      'userMail' : bankData.userMail,
-      'accountName' : bankData.nameOfAccountOwner,
-      'agency' : bankData.agency,
-      'account' : bankData.account,
-      'digit' : bankData.accountDigit,
-      'bank' : bankData.bank,
-      'cpf' : bankData.cpfOfAccountOwner,
-      'problema' : bankData.problem,
-      'tipoConta' : bankData.accountType,
-      'data_requisicao' : DateUtils().giveMeTheDateToday(),
+        .add({
+      'userId' : _bankData.userId,
+      'userName' : _bankData.userName??'noName',
+      'userMail' : _bankData.userMail,
+      'accountName' : _bankData.nameOfAccountOwner,
+      'agency' : _bankData.agency,
+      'account' : _bankData.account,
+      'digit' : _bankData.accountDigit,
+      'bank' : _bankData.bank,
+      'cpf' : _bankData.cpfOfAccountOwner,
+      'problema' : _bankData.problem,
+      'tipoConta' : _bankData.accountType,
+      'data_requisicao' : DateServices().giveMeTheDateToday(),
+      'valor_reembolso' : _valorReembolso,
+      'contato' : _bankData.phoneContact,
+      'freteiro' : _idFreteiro,
+      'valorTotal' : _valorTotal,
     }).then((value) {
 
       onSucess();
@@ -798,5 +1025,47 @@ class FirestoreServices {
     ;
 
   }
+
+
+  //salvar dados para reembolso
+//punishiments functions
+  Future<void> createReembolsoEntryUser(String data, userId, String truckerId, double valor, VoidCallback onSucess(), VoidCallback onFail()){
+
+    CollectionReference path = FirebaseFirestore.instance.collection(reembolsoPathUsers);
+
+    path.add({
+      'data' : data,
+      'valor' : valor.toStringAsFixed(2),
+      'userUid' : userId,
+      'truckerId' : truckerId,
+    }).then((value) => onSucess()).catchError(onFail());
+
+  }
+
+
+
+
+  //procedimentos de login de facebook
+
+  Future<void> checkIfTheUserIsCommingBack(String uid, String email){
+
+    FirebaseFirestore.instance
+        .collection(userPath)
+        .doc(uid)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+
+      if (documentSnapshot.exists) {
+
+        //do nothing
+
+      } else {
+        createNewUser(null, email, uid); //recria os campos
+      }
+
+    });
+  }
+
+
 }
 

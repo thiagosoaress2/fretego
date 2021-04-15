@@ -1,11 +1,14 @@
 import 'package:after_layout/after_layout.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/avaliation_class.dart';
 import 'package:fretego/classes/move_class.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/colors.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
+import 'package:responsive_flutter/responsive_flutter.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 
@@ -52,6 +55,10 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
   @override
   Widget build(BuildContext context) {
 
+    print('moveclass abaixo');
+    print(widget.moveClass);
+
+
     heightPercent = MediaQuery
         .of(context)
         .size
@@ -61,11 +68,9 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
         .size
         .width;
 
-    print(widget.moveClass.userId);
     //AvaliationClass _avaliationClass = AvaliationClass('', widget.moveClass.idPedido, 0, 0);
-    String freteiroIdReal = widget.moveClass.freteiroId.replaceAll('not', '');
+    String freteiroIdReal = widget.moveClass.freteiroId.replaceAll('not', ''); //quando o freteiro finaliza o serviço nós colocamos o not+id dele para não aparecer mais na busca da pagina inicial do freteiro este serviço. Então aqui retiramos o not.
     //_avaliationClass.avaliationTargetId = widget.moveClass.freteiroId;
-    print(freteiroIdReal);
     _avaliationClass.avaliationTargetId = freteiroIdReal;
 
 
@@ -74,35 +79,17 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
 
         return Scaffold(
           key: _scaffoldKey,
-          appBar: AppBar(
-
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios),
-              iconSize: 20.0,
-              onPressed: () {
-                _goBack(context);
-              },
-            ),
-
-            title: Text('Avaliação'), centerTitle: true,
-          ),
 
           body: Stack(
             children: [
 
-              showLandPage==true
-                  ? _landPage() : Container(),
+              if(showLandPage==true) _landPage(userModel),
 
-              showCompleteAvaliation==true
-                  ? _avaliationPage() : Container(),
+              if(showCompleteAvaliation==true) _avaliationPage(),
 
-              showLastPageConfirmationPage==true
-                  ? _postAvaliationPage()
-                  : Container(),
+              if(showLastPageConfirmationPage==true) _postAvaliationPage(),
 
-              isLoading==true
-                  ? Center(child:  CircularProgressIndicator(),)
-                  : Container(),
+              if(isLoading==true) Center(child:  CircularProgressIndicator(),),
 
             ],
 
@@ -114,24 +101,10 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
   }
 
   //PAGES
-  Widget _landPage(){
-
-    void _onConfirmPopup(){
-      _quickAvaliation(avaliation, widget.moveClass);
-      setState(() {
-        showConfirmationPopup=false;
-      });
-    }
-
-    void _onCancelPopup(){
-      setState(() {
-        showConfirmationPopup=false;
-      });
-    }
+  Widget _landPage(UserModel userModel){
 
     return ListView(
       children: [
-
 
         Stack(
           children: [
@@ -141,94 +114,41 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
 
-                name!='no123'
-                    ? WidgetsConstructor().makeText('Sua avaliação de '+name, Colors.blue, 18.0, 25.0, 20.0, 'no')
-                    : Container(),
+                //linha com foto e nome
+                _fotoEnomeCard(),
 
-                WidgetsConstructor().makeText('Avaliação rápida', Colors.blue, 18.0, 25.0, 20.0, 'center'),
+                //linha com total de avaliações e rate
+                _linhaComAvaliacoesEnotaAtuais(),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            showConfirmationPopup=true;
-                            avaliation=1;
-                          });
+                SizedBox(height: heightPercent*0.05,),
 
-                        },
-                        child: avaliation==0
-                            ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
-                            : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
-                    ),
+                //texto como você classifica o serviço
+                _linhaComTextoExplicativo(),
 
-                    GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            avaliation=2;
-                            showConfirmationPopup=true;
-                          });
+                //row com legenda 'muito bom e muito ruim'
+                _linhaComLegenda(),
 
-                        },
-                        child: avaliation<=1
-                            ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
-                            : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
-                    ),
+                //linha com as estrelas
+                _estrelas(),
 
-                    GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            showConfirmationPopup=true;
-                            avaliation=3;
-                          });
+                //texto mostrando pro user o que ele selecionou
+                if(avaliation!=0) _avalTip(),
 
-                        },
-                        child: avaliation<=2
-                            ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
-                            : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
-                    ),
+                SizedBox(height: heightPercent*0.04,),
 
-                    GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            avaliation=4;
-                            showConfirmationPopup=true;
-                          });
+                //botao
+                _btnAvaliar(),
 
-                        },
-                        child: avaliation<=3
-                            ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
-                            : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
-                    ),
-
-                    GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            avaliation=5;
-                            showConfirmationPopup=true;
-                          });
-
-                        },
-                        child: avaliation<=4
-                            ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
-                            : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: heightPercent*0.75,),
+                SizedBox(height: heightPercent*0.05,),
                 // WidgetsConstructor().makeText('Ou se preferir, faça uma avaliação detalhada', Colors.blue, 16.0, 25.0, 20.0, 'center'),
                 // SizedBox(height: 25.0,),
                 // WidgetsConstructor().makeButtonWithCallBack(Colors.blue, Colors.white, 200.0, 60.0, 2.0, 4.0, "Avaliação completa", Colors.white, 17.0, () {_completeAvaliation();}),
 
-
               ],
             ),
 
-            showConfirmationPopup==true
-                ? WidgetsConstructor().customPopUp('Confirmação', 'Confirmar avaliação.', 'Confirmar', 'Cancelar', widthPercent, heightPercent, () {_onConfirmPopup();}, (){_onCancelPopup();})
-                : Container(),
+            //if(showConfirmationPopup==true) WidgetsConstructor().customPopUp('Confirmação', 'Confirmar avaliação.', 'Confirmar', 'Cancelar', widthPercent, heightPercent, () {_onConfirmPopup();}, (){_onCancelPopup();}),
+            if(showConfirmationPopup==true) _popupPage(userModel),
 
 
           ],
@@ -338,21 +258,193 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
 
   Widget _postAvaliationPage(){
 
-    void _onClickOkButton(){
-      Navigator.of(context).pop();
-      Navigator.push(context, MaterialPageRoute(
-          builder: (context) => HomePage()));
-    }
 
     return ListView(
       children: [
 
-        WidgetsConstructor().makeText('Obrigado por avaliar '+name, Colors.blue, 20.0, 40.0, 25.0, 'center'),
-        WidgetsConstructor().makeButtonWithCallBack(Colors.blue, Colors.white, 150.0, 60.0, 2.0, 4.0, 'Finalizar', Colors.white, 18.0, () {_onClickOkButton();}),
+        SizedBox(height: heightPercent*0.2,),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              child: Text('Obrigado por avaliar '+name, textAlign: TextAlign.center,
+                style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.0), color: CustomColors.blue),
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: heightPercent*0.02,),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: widthPercent*0.8,
+              child: Text('As avaliações ajudam os outros usuários a escolherem as melhores opções. Você colaborou com toda a comunidade que utiliza nosso serviço.', textAlign: TextAlign.center,
+                style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(2.0), color: Colors.black),
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: heightPercent*0.3,),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            Container(
+              width: widthPercent*0.75,
+              height: heightPercent*0.10,
+              child: RaisedButton(
+                onPressed: (){
+                  Navigator.of(context).pop();
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => HomePage()));
+                },
+                color: CustomColors.blue,
+                child: Text('Finalizar', textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(4.0), color: Colors.white),
+                ),
+              ),
+            )
+          ],
+        )
+
 
       ],
     );
   }
+
+  Widget _popupPage(UserModel userModel){
+
+    return Container(
+     height: heightPercent,
+     width: widthPercent,
+     color: Colors.white,
+     child: Column(
+       crossAxisAlignment: CrossAxisAlignment.stretch,
+       children: [
+
+         SizedBox(height: heightPercent*0.03,),
+
+         //btn fechar
+         Row(
+           mainAxisAlignment: MainAxisAlignment.end,
+           children: [
+             CloseButton(
+               onPressed: (){
+                 setState(() {
+                   showConfirmationPopup = false;
+                 });
+               },
+             )
+           ],
+         ),
+
+         SizedBox(height: heightPercent*0.05,),
+
+         //imagem central
+         Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+
+             Container(
+               width: widthPercent*0.5,
+               height: heightPercent*0.25,
+               child: Image.asset('images/avalation/aval.png', fit: BoxFit.fill,),
+             ),
+           ],
+         ),
+
+         SizedBox(height: heightPercent*0.03,),
+
+         //texto: voce classificou o serviço como
+         Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Container(
+               width: widthPercent,
+               child: Text('Você classificou o serviço como:', textAlign: TextAlign.center,
+                 style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.0), color: CustomColors.blue),
+               ),
+             ),
+           ],
+         ),
+
+         SizedBox(height: heightPercent*0.02,),
+
+         //texto: classificação
+         Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Container(
+               width: widthPercent,
+               child: Text(_returnMeTheRightWord(), textAlign: TextAlign.center,
+                 style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(4.5), color: CustomColors.brown),
+               ),
+             ),
+           ],
+         ),
+
+         SizedBox(height: heightPercent*0.10,),
+
+         //botão confirmar*
+         Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Container(
+               width: widthPercent*0.80,
+               height: heightPercent*0.10,
+               child: RaisedButton(
+                 onPressed: (){
+                   _completeAvaliationClick(userModel);
+                 },
+                 color: CustomColors.yellow,
+                 child: Text('Avaliar e encerrar',
+                   style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.5), color: Colors.white),
+                 ),
+               ),
+             )
+
+           ],
+         ),
+
+         SizedBox(height: heightPercent*0.05,),
+
+         //botão voltar
+         Row(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Container(
+               width: widthPercent*0.80,
+               height: heightPercent*0.10,
+               child: RaisedButton(
+                 onPressed: (){
+                   setState(() {
+                     showConfirmationPopup=false;
+                   });
+                 },
+                 color: Colors.redAccent,
+                 child: Text('Voltar',
+                   style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.5), color: Colors.white),
+                 ),
+               ),
+             )
+
+           ],
+         ),
+
+
+
+       ],
+     ),
+    );
+  }
+
+
 
 
 
@@ -376,8 +468,244 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
     );
   }
 
+  Widget _fotoEnomeCard(){
+
+    return Padding(padding: EdgeInsets.all(25.0),
+      child: Row(
+        children: [
+          //foto
+          Container(
+            width: widthPercent*0.25,
+            height: heightPercent*0.20,
+            child: CircleAvatar(
+              backgroundImage: NetworkImage(widget.moveClass.freteiroImage),
+              radius: 35,
+            ),
+          ),
+          SizedBox(width: widthPercent*0.05,),
+          Container(
+            //width: widget*0.75,
+            alignment: Alignment.center,
+            height: heightPercent*0.20,
+            child: Text(name,
+                style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3))),
+          ),
+        ],
+      ),
+    );
+
+  }
+
+  Widget _linhaComAvaliacoesEnotaAtuais(){
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: widthPercent*0.22,
+          child: Column(
+            children: [
+              Text(_avaliationClass.avaliations.toString(),
+                  style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3))),
+              Text('serviços',
+                  style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(2))),
+            ],
+          ),
+
+        ),
+        SizedBox(width: widthPercent*0.15,),
+        Container(
+          width: widthPercent*0.22,
+          child: Column(
+            children: [
+              Text(_avaliationClass.avaliationTargetRate.toStringAsFixed(1),
+                  style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3))),
+              Text('avaliação',
+                  style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(2))),
+            ],
+          ),
+
+        ),
+      ],
+    );
+
+  }
+
+  Widget _linhaComTextoExplicativo(){
+
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: Container(
+        child: Text('Como você classifica o serviço de ${name}?',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: CustomColors.blue, fontSize: ResponsiveFlutter.of(context).fontSize(3))),
+      ),
+    );
+  }
+
+  Widget _linhaComLegenda(){
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(50.0, heightPercent*0.02, 50.0, 10.0),
+      child:
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Muito ruim',
+              style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(1.4))),
+          Text('Muito bom',
+              style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(1.4))),
+        ],
+      ),
+    );
+
+  }
+
+  Widget _estrelas(){
+    return Padding(
+      padding: EdgeInsets.fromLTRB(10.0, 1.0, 10.0, 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          //estrela 1
+          GestureDetector(
+              onTap: (){
+                setState(() {
+                  avaliation=1;
+                });
+                print(avaliation);
+              },
+              child: avaliation==0
+                  ? Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
+                  : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
+          ),
+
+          //estrela 2
+          GestureDetector(
+              onTap: (){
+                setState(() {
+                  avaliation=2;
+                  print(avaliation);
+                });
+
+              },
+              child: avaliation==2 || avaliation==3 || avaliation == 4 || avaliation==5
+                  ? Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
+                  : Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
+          ),
+
+          //estrela 3
+          GestureDetector(
+              onTap: (){
+                setState(() {
+                  avaliation=3;
+                });
+
+              },
+              child: avaliation<=2
+                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
+                  : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
+          ),
+
+          //estrela 4
+          GestureDetector(
+              onTap: (){
+                setState(() {
+                  avaliation=4;
+                });
+
+              },
+              child: avaliation<=3
+                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
+                  : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
+          ),
+
+          //estrela 5
+          GestureDetector(
+              onTap: (){
+                setState(() {
+                  avaliation=5;
+                });
+
+              },
+              child: avaliation<=4
+                  ?Icon(Icons.star_border, color: Colors.yellow[600], size: 60.0,)
+                  : Icon(Icons.star, color: Colors.yellow[600], size: 60.0,)
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _avalTip(){
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Text(_returnMeTheRightWord() , style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(2.5), color: CustomColors.brown),),
+        ),
+      ],
+    );
+  }
+
+  Widget _btnAvaliar(){
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(widthPercent*0.10, 0.0, widthPercent*0.10, 0.0),
+      child: Container(
+        width: widthPercent*0.85,
+        height: heightPercent*0.08,
+        child: RaisedButton(
+          onPressed: (){
+
+            if(avaliation!=0){
+              setState(() {
+                showConfirmationPopup=true;
+              });
+            } else {
+              _displaySnackBar(context, 'Classifique ${name} antes de finalizar.');
+            }
+
+
+          },
+          color: CustomColors.yellow,
+          child: Text('Finalizar avaliação', style: TextStyle(color: Colors.white, fontSize: ResponsiveFlutter.of(context).fontSize(2.5))),
+        ),
+      ),
+    );
+  }
+
 
   //Functions
+  String _returnMeTheRightWord(){
+
+    if(avaliation==0 || avaliation==null){
+      return '';
+    } else if(avaliation==1){
+      return 'Muito ruim';
+    } else if(avaliation==2){
+      return 'Ruim';
+    } else if(avaliation==3){
+      return 'Satisfatório';
+    } else if(avaliation==4){
+      return 'Bom';
+    }  else {
+      return 'Excelente';
+    }
+
+  }
+
+  void _completeAvaliationClick(UserModel userModel){
+
+    userModel.updateThisUserHasAmove(false); //ajustando para quando voltar a tela, voltar a tela inicial e não aquela de acompanhar a mudança
+    _quickAvaliation(avaliation, widget.moveClass);
+    setState(() {
+      showConfirmationPopup=false;
+    });
+
+  }
+
   _completeAvaliation(){
     setState(() {
       showCompleteAvaliation=true;
@@ -427,6 +755,7 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
 
     void _onSucessLoadAvaliationClass(){
 
+
       setState(() {
         name = _avaliationClass.avaliationTargetName;
         isLoading=false;
@@ -439,51 +768,19 @@ class _AvaliationPageState extends State<AvaliationPage> with AfterLayoutMixin<A
 
   }
 
-}
+  _displaySnackBar(BuildContext context, String msg) {
 
-
-
-
-
-/*
-import 'package:flutter/material.dart';
-import 'package:fretego/classes/avaliation_class.dart';
-import 'package:fretego/models/userModel.dart';
-import 'package:scoped_model/scoped_model.dart';
-
-AvaliationClass _avaliationClass = AvaliationClass();  //esta é a classe que será usada na activity
-
-class AvaliationPage extends StatefulWidget {
-  AvaliationClass avaliationClass = AvaliationClass();
-
-  AvaliationPage(this.avaliationClass);
-
-  @override
-  _AvaliationPageState createState() => _AvaliationPageState();
-}
-
-class _AvaliationPageState extends State<AvaliationPage> {
-  @override
-  Widget build(BuildContext context) {
-
-    _avaliationClass = widget.avaliationClass; //passando os dados que vieram da outra página para esta
-
-    return ScopedModelDescendant<UserModel>(
-      builder: (BuildContext context, Widget widget, UserModel userModel){
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Avaliação do serviço'),
-            centerTitle: true,
-          ),
-          body: SingleChildScrollView(
-            child: Container(color: Colors.yellow,),
-          ),
-        );
-      },
+    final snackBar = SnackBar(
+      content: Text(msg),
+      action: SnackBarAction(
+        label: "Ok",
+        onPressed: (){
+          _scaffoldKey.currentState.hideCurrentSnackBar();
+        },
+      ),
     );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
   }
+
 }
 
-
- */

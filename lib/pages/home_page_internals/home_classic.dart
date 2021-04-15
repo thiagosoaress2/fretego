@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:fretego/login/pages/email_verify_view.dart';
 import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/utils/anim_fader.dart';
@@ -20,14 +21,13 @@ class HomeClassic extends StatefulWidget {
 }
 
 
+  bool _firstLoad=true;
+
 class _HomeClassicState extends State<HomeClassic> {
 
   bool firstLoadVar=false;
   ScrollController _scrollController;
-
-
   ScrollController _scrollControllerLocal;
-
 
   void scrollToEnd(HomePageModel homePageModel) {
 
@@ -51,22 +51,17 @@ class _HomeClassicState extends State<HomeClassic> {
   }
 
   @override
-  void initState() {
-
-  }
-
-  @override
-  void dispose() {
-      super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     _scrollController = ScrollController();
     _scrollControllerLocal =  ScrollController();
     return ScopedModelDescendant<HomePageModel>(
       builder: (BuildContext context, Widget child, HomePageModel homePageModel){
 
+        if(_firstLoad==true){
+          _firstLoad=false;
+          print('entrou no clickticking');
+          ClockTicking(homePageModel);
+        }
 
         //para animação da tela
         _scrollController.addListener(() {
@@ -87,169 +82,58 @@ class _HomeClassicState extends State<HomeClassic> {
 
             return Container(
               width: widget.widthPercent,
-              height: widget.heightPercent*0.90,
+              height: widget.heightPercent,
               color: Colors.white,
               child: Stack(
                 children: [
 
                 //fundo de parede
-                Positioned(
-                //top: heightPercent*0.05,
-                left: -5.0,
-                right: -10.0,
-                top: 5.0,
-                child: Container(
-                  width: widget.widthPercent,
-                  height: widget.heightPercent*0.9,
-                  child: Image.asset('images/home_backwall.png', fit: BoxFit.fill,),
-                ),
-              ),
+                _deepestBackground(),
 
               //casal
-              Positioned(
-                  right: widget.widthPercent*0.10,
-                  top: widget.heightPercent*0.42+homePageModel.Offset,
-                  //bottom: heightPercent*0.1,
-                  child: Container(
-                    width: widget.widthPercent,
-                    height: widget.heightPercent*0.40,
-                    child: Image.asset('images/home_couple.png'),
-                  )),
+              _imagemCasal(homePageModel),
 
               //caixas
-              Positioned(
-                  top: widget.heightPercent*0.70 -homePageModel.Offset,
-                  //bottom: 0.0,
-                  child: Container(
-                    width: widget.widthPercent,
-                    height: widget.heightPercent*0.25,
-                    child: Image.asset('images/home_boxes.png', fit: BoxFit.fill,),
-                  )),
+              _imagemCaixas(homePageModel),
 
-              homePageModel.Offset < 250.0
-                  ? Positioned(
+              //primeira parte da animação
+              _inicioAnimacao(homePageModel),
+
+              //este é o card com o freteiro. Aparece sobreponto a Listview
+              if(homePageModel.Offset > 2250 && homePageModel.Offset<2650) _freteiroPreview(homePageModel),
+
+              if(homePageModel.Offset > 2550 && homePageModel.Offset < 3357) _animCarrinhos(homePageModel),
+
+              if(homePageModel.Offset < 250.0) Positioned(
                   left: 10.0,
                   right: 10.0,
                   top: widget.heightPercent*0.3,
                   //bottom: heightPercent*0.45,
                   child: Container(
                     width: widget.widthPercent*0.7,
-                    child: Column(
-                      children: [
-                        WidgetsConstructor().makeText('Conheça nosso', Colors.white, 25.0, 0.0, 0.0, 'center'),
-                        WidgetsConstructor().makeText('serviço', Colors.white, 25.0, 0.0, 0.0, 'center'),
-                        Transform.rotate(angle: 1.5, child: Icon(Icons.double_arrow, size: 25, color: Colors.white.withOpacity(0.5),),),
-                      ],
-                    ),
-                  ))
-                  :Container(),
+                    child: GestureDetector(
 
-              Scrollbar(
-                  child: ListView(
-                    controller: _scrollController,
-                    children: [
+                      onTap: (){
+                        setState(() {
 
-                      SizedBox(height: widget.heightPercent*0.85,),
-                      Container(alignment: Alignment.topCenter,color: CustomColors.brown,height: 100.0, width: widthPercent, child: Image.asset('images/home_boxline.png'),),
-                      Container(color: CustomColors.brown, width: widthPercent, height: 150.0,
-                        child: Column(
-                          children: [
-                            homePageModel.Offset>280
-                                ? WidgetsConstructor().makeText('O que nós fazemos?', Colors.white, 25.0, 25.0, 0.0, 'center')
-                                : Container(),
-                            homePageModel.Offset>350
-                                ? WidgetsConstructor().makeText('- Ajudamos na sua mudança', Colors.white, 16.0, 20.0, 0.0, 'center')
-                                : Container(),
+                          double end = _scrollController.position.maxScrollExtent;
+                          setState(() {
+                            //_scrollController.animateTo(end, duration: Duration(seconds: 20), curve: Curves.easeInOut);
+                            _scrollController.animateTo(end, duration: Duration(seconds: 35), curve: Curves.easeOut);
+                          });
 
-                          ],
-                        ),
-                      ),
-                      Container(
-                        color: Colors.white,
-                        width: widthPercent,
-                        height: 700.0,
-                        child: homePageModel.Offset>400 ? AnimationPage1(homePageModel, widget.heightPercent, widget.widthPercent): Container(),
-                      ),
-                      SizedBox(height: 20.0,),
-                      homePageModel.Offset>1000 ? EntranceFader(
-                        offset: Offset(widget.widthPercent /4,0),
-                        duration: Duration(seconds: 3),
-                        child: WidgetsConstructor().makeText('Informe os endereços', homePageModel.Offset<1455.0 ? Colors.white : CustomColors.blue, 25.0, 10.0, 0.0, 'center'),
-                      ): Container(),
-                      homePageModel.Offset>1100 ? AnimationPage2(homePageModel, widget.heightPercent, widget.widthPercent) : Container(),
-                      SizedBox(height: 250.0,),
-                      homePageModel.Offset>1850 ? AnimationPage3(homePageModel, widget.heightPercent, widget.widthPercent) : Container(),
-                      SizedBox(height: 1000.0,),
-                      homePageModel.Offset>3050 ? AnimationPage4(homePageModel, widget.heightPercent, widget.widthPercent) : Container(),
-                      //Container(color: Colors.white, height: 500.0,),
+                        });
+                      },
 
-                    ],
-                  )
-              ),
-
-              //este é o card com o freteiro. Aparece sobreponto a Listview
-              homePageModel.Offset > 2250 && homePageModel.Offset<2650 ? Positioned(
-                left: 10.0,
-                top: homePageModel.Offset-2250,
-                child: Container(
-                  height: 200.0,
-                  decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.white, 2.0, 8.0),
-                  width: widget.widthPercent*0.6,
-                  child: Column(
-                    children: [
-                      WidgetsConstructor().makeText('João do frete', CustomColors.blue, 18.0, 20.0, 20.0, 'center'),
-                      SizedBox(height: 15.0,),
-                      Row(
+                      child: Column(
                         children: [
-                          SizedBox(width: widget.widthPercent*0.02,),
-                          ClipRRect(
-                              borderRadius: BorderRadius.circular(360.0),
-                              child: Image.asset('images/home_trucker.jpg', width: 75.0, height: 75.9, fit: BoxFit.fill,)
-                          ),
-                          SizedBox(width: widget.widthPercent*0.02,),
-                          Icon(Icons.star, size: 20.0, color: Colors.yellow,),
-                          Icon(Icons.star, size: 20.0, color: Colors.yellow,),
-                          Icon(Icons.star, size: 20.0, color: Colors.yellow,),
-                          Icon(Icons.star, size: 20.0, color: Colors.yellow,),
-                          Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+                          WidgetsConstructor().makeText('Conheça nosso', Colors.white, 25.0, 0.0, 0.0, 'center'),
+                          WidgetsConstructor().makeText('serviço', Colors.white, 25.0, 0.0, 0.0, 'center'),
+                          Transform.rotate(angle: 1.5, child: Icon(Icons.double_arrow, size: 25, color: Colors.white.withOpacity(0.5),),),
                         ],
-                      )
-                    ],
-                  ),
-                ),
-              ) : Container(),
-
-              homePageModel.Offset > 2550 && homePageModel.Offset < 3357 ?
-              Positioned(
-                left: widget.widthPercent*0.2,
-                bottom: homePageModel.Offset<2890 ? homePageModel.Offset-2900 : homePageModel.Offset<3100 ? 0.0 : 3100-homePageModel.Offset, //primeiro vamos aumentando, pra subir, dps retirando pra baixar
-                child: Container(
-                  width: 150.0,
-                  height: 250.0,
-                  child: Image.asset('images/home_trucker_anim.png', fit: BoxFit.fill,),
-                ),
-              ) : Container(),
-
-
-                  /*
-                                    offset > 2550 && offset<2790 ? Positioned(
-                                      bottom: 0.0,
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          children: [
-                                            //SizedBox(width: widthPercent,),
-                                            SizedBox(width: offset<2550 ? 1000 : 2800-offset > 0.0 ? 2800-offset: 0.0,),
-                                            Container(
-                                              width: 150.0,
-                                              height: 250.0,
-                                              child: Image.asset('images/home_trucker_anim.png', fit: BoxFit.fill,),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ) : Container(),
-                                     */
+                      ),
+                    ),
+                  )),
 
 
                 ],
@@ -262,7 +146,6 @@ class _HomeClassicState extends State<HomeClassic> {
       },
     );
   }
-
 
   Widget AnimationPage1(HomePageModel homePageModel, double heightPercent, double widthPercent){
     return Container(
@@ -664,6 +547,155 @@ class _HomeClassicState extends State<HomeClassic> {
       ),
     );
 
+  }
+
+  void ClockTicking(HomePageModel model){
+
+    Future.delayed(Duration(seconds: 15)).then((_) {
+      print('15 segundos');
+      print(model.Offset);
+      if(model.Offset < 100.0 ){
+        print('scrolled to end');
+
+        _scrollController.animateTo(
+          3955.8999999999996, //este valor é offset máximo
+          duration: Duration(milliseconds: 25000),
+          curve: Curves.linear,
+        );
+
+      }
+    });
+
+  }
+
+
+  Widget _deepestBackground(){
+
+    return Positioned(
+      //top: heightPercent*0.05,
+      left: -5.0,
+      right: -10.0,
+      top: 0.0,
+      child: Container(
+        width: widget.widthPercent,
+        height: widget.heightPercent,
+        child: Image.asset('images/home_backwall_noeffect.png', fit: BoxFit.fill,),
+      ),
+    );
+  }
+
+  Widget _imagemCasal(HomePageModel homePageModel){
+    return Positioned(
+      //right: widget.widthPercent*0.10,
+        right: 0.0,
+        left: 0.0,
+        top: widget.heightPercent*0.45+homePageModel.Offset,
+        //bottom: heightPercent*0.1,
+        child: Container(
+          width: widget.widthPercent,
+          height: widget.heightPercent*0.40,
+          child: Image.asset('images/home_couple.png'),
+        ));
+  }
+
+  Widget _imagemCaixas(HomePageModel homePageModel){
+
+    return Positioned(
+        top: widget.heightPercent*0.70 -homePageModel.Offset,
+        //bottom: 0.0,
+        child: Container(
+          width: widget.widthPercent,
+          height: widget.heightPercent*0.25,
+          child: Image.asset('images/home_boxes.png', fit: BoxFit.fill,),
+        ));
+  }
+
+  Widget _inicioAnimacao(HomePageModel homePageModel){
+    return Scrollbar(
+        child: ListView(
+          controller: _scrollController,
+          children: [
+
+            SizedBox(height: widget.heightPercent*0.85,),
+            Container(alignment: Alignment.topCenter,color: CustomColors.brown,height: 100.0, width: widthPercent, child: Image.asset('images/home_boxline.png'),),
+            Container(color: CustomColors.brown, width: widthPercent, height: 150.0,
+              child: Column(
+                children: [
+                  if(homePageModel.Offset>280) WidgetsConstructor().makeText('O que nós fazemos?', Colors.white, 25.0, 25.0, 0.0, 'center'),
+                  if(homePageModel.Offset>350) WidgetsConstructor().makeText('- Ajudamos na sua mudança', Colors.white, 16.0, 20.0, 0.0, 'center'),
+
+                ],
+              ),
+            ),
+            Container(
+              color: Colors.white,
+              width: widthPercent,
+              height: 700.0,
+              child: homePageModel.Offset>400 ? AnimationPage1(homePageModel, widget.heightPercent, widget.widthPercent): Container(),
+            ),
+            SizedBox(height: 20.0,),
+            if(homePageModel.Offset>1000) EntranceFader(
+              offset: Offset(widget.widthPercent /4,0),
+              duration: Duration(seconds: 3),
+              child: WidgetsConstructor().makeText('Informe os endereços', homePageModel.Offset<1455.0 ? Colors.white : CustomColors.blue, 25.0, 10.0, 0.0, 'center'),
+            ),
+            if(homePageModel.Offset>1100) AnimationPage2(homePageModel, widget.heightPercent, widget.widthPercent),
+            SizedBox(height: 250.0,),
+            if(homePageModel.Offset>1850) AnimationPage3(homePageModel, widget.heightPercent, widget.widthPercent),
+            SizedBox(height: 1000.0,),
+            if(homePageModel.Offset>3050) AnimationPage4(homePageModel, widget.heightPercent, widget.widthPercent),
+            //Container(color: Colors.white, height: 500.0,),
+
+          ],
+        )
+    );
+  }
+
+  Widget _freteiroPreview(HomePageModel homePageModel){
+
+    return Positioned(
+      left: 10.0,
+      top: homePageModel.Offset-2250,
+      child: Container(
+        height: 200.0,
+        decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.white, 2.0, 8.0),
+        width: widget.widthPercent*0.6,
+        child: Column(
+          children: [
+            WidgetsConstructor().makeText('João do frete', CustomColors.blue, 18.0, 20.0, 20.0, 'center'),
+            SizedBox(height: 15.0,),
+            Row(
+              children: [
+                SizedBox(width: widget.widthPercent*0.02,),
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(360.0),
+                    child: Image.asset('images/home_trucker.jpg', width: 75.0, height: 75.9, fit: BoxFit.fill,)
+                ),
+                SizedBox(width: widget.widthPercent*0.02,),
+                Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+                Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+                Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+                Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+                Icon(Icons.star, size: 20.0, color: Colors.yellow,),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _animCarrinhos(HomePageModel homePageModel){
+
+    return Positioned(
+      left: widget.widthPercent*0.2,
+      bottom: homePageModel.Offset<2890 ? homePageModel.Offset-2900 : homePageModel.Offset<3100 ? 0.0 : 3100-homePageModel.Offset, //primeiro vamos aumentando, pra subir, dps retirando pra baixar
+      child: Container(
+        width: 150.0,
+        height: 250.0,
+        child: Image.asset('images/home_trucker_anim.png', fit: BoxFit.fill,),
+      ),
+    );
   }
 
 }

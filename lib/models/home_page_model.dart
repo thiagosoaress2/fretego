@@ -104,10 +104,17 @@ class HomePageModel extends Model {
   get FirstLoadInHomeMyMove=>_firstLoadInHomeMyMove;
 
   bool _showOptions=true;
-  void updateShowOptions(){
-    _showOptions = !_showOptions;
+  void updateShowOptions(bool value){
+    _showOptions = value;
     notifyListeners();
   }
   get ShowOptions=>_showOptions;
+
+  bool _shouldForceVerify=false;
+  void updateShouldForceVerify(bool value){
+    _shouldForceVerify=value;
+    notifyListeners();
+  }
+  get ShouldForceVeriry=>_shouldForceVerify;
 
 }

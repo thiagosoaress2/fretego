@@ -1,11 +1,17 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/classes/bank_data_class.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/services/firestore_services.dart';
+import 'package:fretego/utils/calculos_percentagem.dart';
+import 'package:fretego/utils/globals_strings.dart';
+import 'package:fretego/utils/notificationMeths.dart';
+import 'package:fretego/widgets/responsive_text_custom.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -29,9 +35,14 @@ TextEditingController _agencyController = TextEditingController();
 TextEditingController _otherBankController = TextEditingController();
 var _maskFormatterCpf = new MaskTextInputFormatter(mask: '###.###.###-##)', filter: { "#": RegExp(r'[0-9]') });
 final TextEditingController _cpfController = TextEditingController();
+final TextEditingController _phoneController = TextEditingController();
+var _maskFormatterPhone = new MaskTextInputFormatter(mask: '(##)####-#####', filter: { "#": RegExp(r'[0-9]') });
+
 
 String AcountType='cc';
 String bank;
+
+double _valorReembolso;
 
 FocusNode _otherBankFocusNode;
 
@@ -39,13 +50,14 @@ ScrollController _scrollController;
 
 bool isLoading=false;
 
-BankData bankData = BankData('', '', '', '', '', '','', '', '', '', '');
+BankData bankData = BankData('', '', '', '', '', '','', '', '', '', '', '');
 
 final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
 class UserInformsBankDataPage extends StatefulWidget {
   MoveClass _moveClass = MoveClass();
-  UserInformsBankDataPage(this._moveClass);
+  String motivo;
+  UserInformsBankDataPage(this._moveClass, this.motivo);
 
   @override
   _UserInformsBankDataPageState createState() => _UserInformsBankDataPageState();
@@ -89,6 +101,8 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
 
         //load fullna
 
+        print(widget._moveClass);
+
 
         return Scaffold(
           key: _scaffoldKey,
@@ -115,7 +129,7 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
                       : showResumePage==true
                       ? _resumePage(userModel)
                       : showByePage==true
-                      ? _byePage()
+                      ? _byePage(userModel)
                       : Container(),
 
                   isLoading==true
@@ -156,6 +170,8 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
       } else if(_cpfController.text.isEmpty) {
         _displaySnackBar(
             context, 'Informe o CPF do titular da conta', Colors.red);
+      } else if(_phoneController.text.length != 14){
+        _displaySnackBar(context, 'Informe um telefone válido', Colors.red);
       } else if(_cpfController.text.length != 14){
         _displaySnackBar(context, 'Verifique seu cpf. Formato inválido.', Colors.red);
 
@@ -173,6 +189,23 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
         bankData.cpfOfAccountOwner = _cpfController.text;
         bankData.problem = problemController.text;
         bankData.accountType = AcountType;
+        bankData.phoneContact = _phoneController.text;
+
+        if(bank == 'outro'){
+          bankData.bank = _otherBankController.text;
+        } else {
+          bankData.bank = bank;
+        }
+
+
+        if(widget.motivo == GlobalsStrings.motivoUserCancel){
+          _valorReembolso = CalculosPercentagem().CalculePorcentagemDesteValor(CalculosPercentagem.taxaMulta, widget._moveClass.preco);  //widget._moveClass.preco/2;]
+          //acima foi calculado o valor a ser descontado
+          _valorReembolso = widget._moveClass.preco-_valorReembolso; //agora retorna o valor a ser reembolsado para o usuario
+
+        } else {
+          _valorReembolso = widget._moveClass.preco; //devolve valor integral
+        }
 
         showLandPage=false;
         setState(() {
@@ -180,6 +213,7 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
         });
 
         //_saveData(userModel);
+
 
 
       }
@@ -192,7 +226,7 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
 
         return ListView(
           children: [
-            Column(
+            Padding(padding: EdgeInsets.all(10.0),child: Column(
 
               mainAxisSize: MainAxisSize.max,
               children: [
@@ -203,7 +237,7 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
                     width: widthPercent*0.95,
                     child: new TextField(
                       controller: problemController,
-                      decoration: InputDecoration(labelText: 'Primeiro nos explique o que aconteceu'),
+                      decoration: InputDecoration(labelText: 'Nos explique o que aconteceu. Isto vai nos ajudar a melhorar os serviço no futuro.'),
                       keyboardType: TextInputType.multiline,
                       maxLines: 10,
                     )
@@ -241,11 +275,16 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
                   child: WidgetsConstructor().makeEditTextForPhoneFormat(_cpfController, 'CPF do titular', _maskFormatterCpf),
                 ),
                 SizedBox(height: 20.0,),
-                WidgetsConstructor().makeButtonWithCallBack(Colors.blue, Colors.white, widthPercent*0.90, 80.0, 2.0, 4.0, 'Finalizar cadastro', Colors.white, 18.0, () {_onClickFinalize(widget._moveClass, userModel);}),
+
+                ResponsiveTextCustom('Telefone para contato', context, Colors.blue, 2, 0.0, 0.0, 'no'),
+                WidgetsConstructor().makeEditTextForPhoneFormat(_phoneController, 'Celular', _maskFormatterPhone),
+                SizedBox(height: 40.0,),
+                WidgetsConstructor().makeButtonWithCallBack(Colors.blue, Colors.white, widthPercent*0.90, 80.0, 2.0, 4.0, 'Enviar informações', Colors.white, 18.0, () {_onClickFinalize(widget._moveClass, userModel);}),
                 SizedBox(height: 25.0,),
 
 
               ],
+            ),
             )
           ],
         );
@@ -256,6 +295,9 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
   }
 
   Widget _resumePage(UserModel userModel){
+
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    NotificationAppLaunchDetails notificationAppLaunchDetails;
 
     return GestureDetector(
       onTap: (){
@@ -286,6 +328,12 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
 
               Row(
                 children: [
+                  WidgetsConstructor().makeText('Contato: ', Colors.black, 15.0, 25.0, 10.0, 'no'),
+                  WidgetsConstructor().makeText(bankData.phoneContact, Colors.black54, 15.0, 25.0, 10.0, 'no'),
+                ],
+              ),
+              Row(
+                children: [
                   WidgetsConstructor().makeText('Títular da conta: ', Colors.black, 15.0, 25.0, 10.0, 'no'),
                   WidgetsConstructor().makeText(bankData.nameOfAccountOwner, Colors.black54, 15.0, 25.0, 10.0, 'no'),
                 ],
@@ -314,6 +362,14 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
                   WidgetsConstructor().makeText(bankData.bank, Colors.black54, 15.0, 25.0, 10.0, 'no'),
                 ],
               ),
+              Row(
+                children: [
+                  WidgetsConstructor().makeText('Valor a ser devolvido: ', Colors.black, 15.0, 10.0, 25.0, 'no'),
+                  WidgetsConstructor().makeText('R\$'+_valorReembolso.toStringAsFixed(2), Colors.black54, 15.0, 25.0, 10.0, 'no'),
+                ],
+              ),
+
+              SizedBox(height: 20.0,),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -332,7 +388,12 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
                             isLoading=true;
                           });
 
-                          _saveData(userModel, widget._moveClass);
+                          FirestoreServices().notifyTruckerThatHeWasChanged(widget._moveClass.freteiroId, widget._moveClass.moveId); //alerta ao freteiro que ele foi cancelado na mudança. No freteiro vai recuperar isso para cancelar as notificações locais.
+
+                          //cancelar as notificações neste caso
+                          NotificationMeths().turnOffNotification(flutterLocalNotificationsPlugin); //apaga todas as notificações deste user
+
+                          _saveData(userModel, widget._moveClass, _valorReembolso);
                         }),
                   ),
 
@@ -349,54 +410,68 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
 
   }
 
-  Widget _byePage(){
-    return Container(
-      width: widthPercent,
-      height: heightPercent,
-      color: Colors.white,
-      child: Column(
-        children: [
+  Widget _byePage(UserModel userModel){
+    return ScopedModelDescendant<HomePageModel>(
+      builder: (BuildContext context, Widget widget, HomePageModel homePageModel){
 
-          Padding(
-              child: WidgetsConstructor().makeText('Nós realmente pedimos desculpas e iremos trabalhar para resolver seu problema o mais rápido possível.', Colors.blue, 16.0, 25.0, 25.0, 'center'),
-              padding: EdgeInsets.all(10.0)),
+        return Container(
+            width: widthPercent,
+            height: heightPercent,
+            color: Colors.white,
+            child: Column(
+              children: [
 
-          SizedBox(height: 25.0,),
+                Padding(
+                    child: WidgetsConstructor().makeText('Que pena pelo que aconteceu. Estaremos aqui quando precisar novamente.', Colors.blue, 16.0, 25.0, 25.0, 'center'),
+                    padding: EdgeInsets.all(10.0)),
+
+                SizedBox(height: 25.0,),
 
 
-          Container(
-            height: 60.0,
-            width: widthPercent*0.85,
-            child: RaisedButton(
-              color: Colors.blue,
-                splashColor: Colors.blue[200],
-                child: WidgetsConstructor().makeText('Fechar', Colors.white, 18.0, 5.0, 5.0, 'center'),
-                onPressed: (){
+                Container(
+                  height: 60.0,
+                  width: widthPercent*0.85,
+                  child: RaisedButton(
+                      color: Colors.blue,
+                      splashColor: Colors.blue[200],
+                      child: WidgetsConstructor().makeText('Fechar', Colors.white, 18.0, 5.0, 5.0, 'center'),
+                      onPressed: (){
 
-                  Navigator.of(context).pop();
-                  Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => HomePage()));
+                        homePageModel.setIsLoading(true);
+                        userModel.updateThisUserHasAmove(false);
+                        homePageModel.updateFirstLoad(true); //ajusta as variaveis para quando voltar ir para a página inicial e rever tudo.
 
-                }
+                        Navigator.of(context).pop();
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => HomePage()));
 
-            ),
-          ),
+                      }
 
-        ],
-      )
+                  ),
+                ),
+
+              ],
+            )
+        );
+      },
     );
   }
 
 
 
-  void _saveData(UserModel userModel, MoveClass moveClass){
+  void _saveData(UserModel userModel, MoveClass moveClass, double valorReembolso){
 
     void _onSucess(){
 
       FirestoreServices().deleteAscheduledMove(moveClass);
-      FirestoreServices().createPunishmentEntryToTrucker(moveClass.freteiroId, 'user informed trucker never showup');
+      if(widget.motivo == GlobalsStrings.motivoUserCancel){
+        //n precisa punir o freteiro
+      } else {
+        FirestoreServices().createPunishmentEntryToTrucker(moveClass.freteiroId, 'user informed trucker never showup');
+      }
 
-      _displaySnackBar(context, "Analisaremos suas informações e reembolsaremos o mais breve possível. Pedimos desculpas.", Colors.black87);
+
+      _displaySnackBar(context, "Reembolsaremos o mais breve possível.", Colors.black87);
       showLandPage=false;
       showResumePage=false;
       showByePage=true;
@@ -413,8 +488,7 @@ class _UserInformsBankDataPageState extends State<UserInformsBankDataPage> with 
       });
     }
 
-    FirestoreServices().saveBankDataToDevolution(bankData, () { _onSucess();}, () { _onFail();});
-
+    FirestoreServices().saveBankDataToDevolution(bankData, _valorReembolso, widget._moveClass.preco, widget._moveClass.freteiroId, () { _onSucess();}, () { _onFail();});
   }
 
   //Widgets

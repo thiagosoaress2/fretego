@@ -294,7 +294,7 @@ class MoveDayPage extends StatelessWidget {
                           height: heightPercent*0.08,
                           child: RaisedButton(
                             color: Colors.redAccent,
-                            child: ResponsiveTextCustom('Finalizar mudança', context, Colors.white, 2.5, 0.0, 0.0, 'center'),
+                            child: ResponsiveTextCustom('A mudança acabou?', context, Colors.white, 2.5, 0.0, 0.0, 'center'),
                             onPressed: (){
                               _finishMoveClick(moveDayPageModel);
                             },
@@ -420,7 +420,7 @@ class MoveDayPage extends StatelessWidget {
 
   Future<void> _loadFirst(MoveDayPageModel model) async {
 
-    await FirestoreServices().loadLastKnownTruckerPosition(_moveClass.moveId, model.truckerMovementClass, () {_onSucessLoadLastKnownPosition(model); });
+    await FirestoreServices().loadLastKnownTruckerPosition(_moveClass.freteiroId, model.truckerMovementClass, () {_onSucessLoadLastKnownPosition(model); });
 
   }
 
@@ -428,7 +428,7 @@ class MoveDayPage extends StatelessWidget {
 
     Future.delayed(Duration(seconds: 90)).whenComplete(() async {
 
-      await FirestoreServices().loadLastKnownTruckerPosition(_moveClass.moveId, model.truckerMovementClass, () {_onSucessLoadLastKnownPosition(model); });
+      await FirestoreServices().loadLastKnownTruckerPosition(_moveClass.freteiroId, model.truckerMovementClass, () {_onSucessLoadLastKnownPosition(model); });
 
     });
 
@@ -562,6 +562,7 @@ class MoveDayPage extends StatelessWidget {
               child: ResponsiveTextCustom('Encerrar e avaliar', context, Colors.white, 3, 0.0, 0.0, 'center'),
               onPressed: (){
 
+                _moveClass.freteiroImage = model.TruckerImage;
                 Navigator.of(context).pop();
                 Navigator.push(context, MaterialPageRoute(
                     builder: (context) => AvaliationPage(_moveClass)));

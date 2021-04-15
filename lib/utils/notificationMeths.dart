@@ -16,7 +16,7 @@ class NotificationMeths {
     );
     var iOSPlatformChannelSpecifics = IOSNotificationDetails();
     var platformChannelSpecifics = NotificationDetails(
-        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+        android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(0, 'Reminder', body,
         scheduledNotificationDateTime, platformChannelSpecifics);
   }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
+import 'package:fretego/services/distance_latlong_calculation.dart';
 import 'package:fretego/utils/date_utils.dart';
 import 'package:geocoder/geocoder.dart';
 
@@ -26,6 +27,8 @@ class MoveClass {
   String userImage;
   String freteiroImage;
   String situacao;
+  String situacaoBackup;
+  String apelido;
 
   String dateSelected;
   String timeSelected;
@@ -36,6 +39,7 @@ class MoveClass {
 
   String placa;
   String carroImagem;
+  bool pago;
 
 
   static const double priceCarroca = 0.00;
@@ -49,7 +53,7 @@ class MoveClass {
 
 
   //MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino});
-  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId, this.alert, this.alertSaw, this.placa});
+  MoveClass({this.itemsSelectedCart, this.ps, this.enderecoOrigem, this.enderecoDestino, this.ajudantes, this.carro, this.latEnderecoOrigem, this.longEnderecoOrigem, this.latEnderecoDestino, this.longEnderecoDestino, this.preco, this.escada, this.lancesEscada, this.freteiroId, this.userId, this.dateSelected, this.timeSelected, this.nomeFreteiro, this.userImage, this.freteiroImage, this.situacao, this.moveId, this.alert, this.alertSaw, this.placa, this.situacaoBackup});
 
   MoveClass.empty();
 
@@ -229,6 +233,16 @@ class MoveClass {
     return newStr?? 'ERRO';
   }
 
+  bool checkIfThereIsSituationInBackup(MoveClass moveClass){
+
+    if(moveClass.situacaoBackup!='nao'){
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
   String returnSituationWithNextAction(String sit){
 
     String newStr;
@@ -283,8 +297,8 @@ class MoveClass {
 
   DateTime formatMyDateToNotify(String originalDate, String time){
 
-    DateTime moveDate = DateUtils().convertDateFromString(originalDate);
-    moveDate = DateUtils().addMinutesAndHoursFromStringToAdate(moveDate, time);
+    DateTime moveDate = DateServices().convertDateFromString(originalDate);
+    moveDate = DateServices().addMinutesAndHoursFromStringToAdate(moveDate, time);
     return moveDate;
 
   }
@@ -321,6 +335,26 @@ class MoveClass {
     moveClass.itemsSelectedCart.add(itemClass);
 
     return moveClass;
+  }
+
+  Future<double> getTheDistanceFromTwoAddress({@required String addressOrigem, @required String adressDestino}) async {
+
+    var addresses = await Geocoder.local.findAddressesFromQuery(addressOrigem);
+    var adresses2 = await Geocoder.local.findAddressesFromQuery(adressDestino);
+    double latO1, latD1;
+    double longO1, longD2;
+
+    var first = addresses.first;
+    latO1 = first.coordinates.latitude;
+    longO1 = first.coordinates.longitude;
+
+    var first2 = adresses2.first;
+    latD1 = first2.coordinates.latitude;
+    longD2 = first2.coordinates.longitude;
+
+    double distance = DistanceLatLongCalculation().calculateDistance(latO1, longO1, latD1, longD2);
+    return distance;
+
   }
 
   /*  reference

@@ -61,7 +61,7 @@ class _PaymentPageState extends State<PaymentPage> {
           'name' : _name,
           'user' : uid,
           'statement_descriptor' : GlobalsStrings.appName,
-          'data_pgto' : DateUtils().giveMeTheDateToday(),
+          'data_pgto' : DateServices().giveMeTheDateToday(),
         }
     );
 
@@ -149,8 +149,6 @@ class _PaymentPageState extends State<PaymentPage> {
     heightPercent = MediaQuery.of(context).size.height;
     widthPercent = MediaQuery.of(context).size.width;
 
-    showSucessScreen=true;
-
     return ScopedModelDescendant<UserModel>(
       builder: (BuildContext context, Widget widget, UserModel userModel){
 
@@ -198,12 +196,14 @@ class _PaymentPageState extends State<PaymentPage> {
 
                             ],
                           ),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ResponsiveTextCustom('Valor final', context, Colors.white60, 1.5, 20.0, 0.0, 'center'),
                             ],
                           ),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

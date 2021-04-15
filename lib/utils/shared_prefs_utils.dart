@@ -83,26 +83,26 @@ class SharedPrefsUtils {
 
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('enderecoOrigem', moveClass.enderecoOrigem);
-    await prefs.setString('enderecoDestino', moveClass.enderecoDestino);
-    await prefs.setDouble('latEnderecoOrigem', moveClass.latEnderecoOrigem);
-    await prefs.setDouble('longEnderecoOrigem', moveClass.longEnderecoOrigem);
-    await prefs.setDouble('latEnderecoDestino', moveClass.latEnderecoDestino);
-    await prefs.setDouble('longEnderecoDestino', moveClass.longEnderecoDestino);
-    await prefs.setInt('ajudantes', moveClass.ajudantes);
-    await prefs.setString('carro', moveClass.carro);
-    await prefs.setDouble('preco', moveClass.preco);
-    await prefs.setString('ps', moveClass.ps);
-    await prefs.setBool('escada', moveClass.escada);
-    await prefs.setInt('lancesEscada', moveClass.lancesEscada);
-    await prefs.setString('freteiroId', moveClass.freteiroId);
-    await prefs.setString('nomeFreteiro', moveClass.nomeFreteiro);
-    await prefs.setString('dateSelected', moveClass.dateSelected);
-    await prefs.setString('timeSelected', moveClass.timeSelected);
-    await prefs.setString('userImage', moveClass.userImage);
-    await prefs.setString('freteiroImage', moveClass.freteiroImage);
-    await prefs.setString('situacao', moveClass.situacao);
-    await prefs.setString('userId', moveClass.userId);
+    await prefs.setString('enderecoOrigem', moveClass.enderecoOrigem??'erro');
+    await prefs.setString('enderecoDestino', moveClass.enderecoDestino??'erro');
+    await prefs.setDouble('latEnderecoOrigem', moveClass.latEnderecoOrigem??0.0);
+    await prefs.setDouble('longEnderecoOrigem', moveClass.longEnderecoOrigem??0.0);
+    await prefs.setDouble('latEnderecoDestino', moveClass.latEnderecoDestino??0.0);
+    await prefs.setDouble('longEnderecoDestino', moveClass.longEnderecoDestino??0.0);
+    await prefs.setInt('ajudantes', moveClass.ajudantes??0);
+    await prefs.setString('carro', moveClass.carro??'erro');
+    await prefs.setDouble('preco', moveClass.preco??0.0);
+    await prefs.setString('ps', moveClass.ps??'nao');
+    await prefs.setBool('escada', moveClass.escada??false);
+    await prefs.setInt('lancesEscada', moveClass.lancesEscada??0);
+    await prefs.setString('freteiroId', moveClass.freteiroId??'erro');
+    await prefs.setString('nomeFreteiro', moveClass.nomeFreteiro??'erro');
+    await prefs.setString('dateSelected', moveClass.dateSelected??'erro');
+    await prefs.setString('timeSelected', moveClass.timeSelected??'erro');
+    await prefs.setString('userImage', moveClass.userImage??'erro');
+    await prefs.setString('freteiroImage', moveClass.freteiroImage??'erro');
+    await prefs.setString('situacao', moveClass.situacao??'erro');
+    await prefs.setString('userId', moveClass.userId??'erro');
 
 
   }
@@ -344,7 +344,7 @@ class SharedPrefsUtils {
   Future<void> savePsInShared(String value) async {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('ps', value);
+    await prefs.setString('ps', value??'nao');
   }
 
   Future<String> getPsFromShared() async {

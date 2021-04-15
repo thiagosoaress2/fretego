@@ -5,12 +5,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
 import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/move_day_page_model.dart';
+import 'package:fretego/models/move_model.dart';
 import 'package:fretego/models/selected_items_chart_model.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/utils/notificationHelper.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'models/userModel.dart';
+import 'dart:io' show Platform;
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 NotificationAppLaunchDetails notificationAppLaunchDetails;
@@ -47,7 +49,7 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _initialized = true;
       });
-    } catch(e) {
+    } catch (e) {
       // Set `_error` state to true if Firebase initialization fails
       setState(() {
         _error = true;
@@ -67,7 +69,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     // Show error message if initialization failed
-    if(_error) {
+    if (_error) {
       return somethingGetWrong();
     }
 
@@ -78,15 +80,14 @@ class _MyAppState extends State<MyApp> {
 
     return myStartPage();
   }
-  }
 
 
-  Widget myStartPage(){
-
+  Widget myStartPage() {
     UserModel userModel = UserModel();
     NewAuthService newAuthService = NewAuthService();
     HomePageModel homePageModel = HomePageModel();
     MoveDayPageModel moveDayPageModel = MoveDayPageModel();
+    MoveModel moveModel = MoveModel();
 
     const blue = const Color(0xff247BA0);
 
@@ -98,24 +99,27 @@ class _MyAppState extends State<MyApp> {
           model: homePageModel,
           child: ScopedModel<MoveDayPageModel>(
             model: moveDayPageModel,
-            child: MaterialApp(
-              title: 'Fretes Go',
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                primarySwatch: Colors.blue,
-                visualDensity: VisualDensity.adaptivePlatformDensity,
-                primaryColor: blue,
+            child: ScopedModel<MoveModel>(
+              model: moveModel,
+              child: MaterialApp(
+                title: 'Fretes Go',
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  primarySwatch: Colors.blue,
+                  visualDensity: VisualDensity.adaptivePlatformDensity,
+                  primaryColor: blue,
 
 
+                ),
+                //home: HomePage(),
+                home: HomePage(),
+                localizationsDelegates: [
+                  GlobalMaterialLocalizations.delegate,
+                ],
+                supportedLocales: [
+                  const Locale('pt'),
+                ],
               ),
-              //home: HomePage(),
-              home: HomePage(),
-              localizationsDelegates: [
-                GlobalMaterialLocalizations.delegate,
-              ],
-              supportedLocales: [
-                const Locale('pt'),
-              ],
             ),
           ),
         ),
@@ -127,5 +131,7 @@ class _MyAppState extends State<MyApp> {
     return Text("Algo errado com o fireFlutter");
   }
 
+
+}
 
 

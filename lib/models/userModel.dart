@@ -8,6 +8,7 @@ class UserModel extends Model {
   String _email="";
   String _userRole="";
 
+
   bool _alert=false;
 
   bool _thisUserHasAMove=false;

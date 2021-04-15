@@ -324,9 +324,10 @@ class WidgetsConstructor {
     //WidgetsConstructor().customPopUp('title', 'text', widthPercent,  () {_onPressPopup();}, () {_onPressPopupCancel();})
 
     return Positioned(
-        top: heightPercent*0.25,
-        right: 0.5,
-        left: 0.5,
+        top: 0.0,
+        right: 0.0,
+        left: 0.0,
+        bottom: 0.0,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -335,7 +336,7 @@ class WidgetsConstructor {
               width: widthPercent*0.85,
               //decoration: WidgetsConstructor().myBoxDecoration(Colors.white, Colors.blue, 2.0, 4.0),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                borderRadius: BorderRadius.all(Radius.circular(7.0)),
                 border: Border.all(
                   color: Colors.blue,
                   width: 2.0, //                   <--- border width here
@@ -355,7 +356,6 @@ class WidgetsConstructor {
                 child: Column(
                   children: [
 
-                    WidgetsConstructor().makeText(title, Colors.blue, 20.0, 20.0, 20.0, 'center'),
                     WidgetsConstructor().makeText(text, Colors.black, 16.0, 0.0, 30.0, 'center'),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

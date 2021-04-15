@@ -16,7 +16,7 @@ import 'package:fretego/services/date_services.dart';
 import 'package:fretego/services/distance_latlong_calculation.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/colors.dart';
-import 'package:fretego/utils/date_utils.dart';
+import 'package:fretego/utils/date_utils.dart' as dateUtils;
 import 'package:fretego/utils/notificationMeths.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
@@ -3997,12 +3997,12 @@ class _SelectItensPageState extends State<SelectItensPage>  with AfterLayoutMixi
 
     //lets schedule a notification for 24 earlyer
     DateTime moveDate = MoveClass().formatMyDateToNotify(moveClass.dateSelected, moveClass.timeSelected);
-    DateTime notifyDateTime = DateUtils().subHoursFromDate(moveDate, 24); //ajusta 24 horas antes
+    DateTime notifyDateTime = dateUtils.DateServices().subHoursFromDate(moveDate, 24); //ajusta 24 horas antes
     NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId, "Lembrete: Sua mudança é amanhã às "+moveClass.timeSelected, notifyDateTime);
 
 
     //notificação com 2 horas de antecedencia (obs: o id da notificação é moveID (id do cliente+2)
-    notifyDateTime = DateUtils().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
+    notifyDateTime = dateUtils.DateServices().subHoursFromDate(moveDate, 2); //ajusta 2 horas antes
     NotificationMeths().scheduleNotification(flutterLocalNotificationsPlugin, moveClass.userId+'2', "Lembrete: Mudança em duas horas. Realize pagamento para confirmar." , notifyDateTime);
 
 

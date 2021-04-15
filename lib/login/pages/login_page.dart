@@ -1,10 +1,13 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fretego/login/pages/sign_up_view.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
+import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/home_page.dart';
+import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/colors.dart';
 import 'package:fretego/widgets/widgets_constructor.dart';
 import 'package:responsive_flutter/responsive_flutter.dart';
@@ -27,7 +30,8 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
 
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
   final FirebaseAuth mAuth = FirebaseAuth.instance;
-  FirebaseUser firebaseUser;
+  //FirebaseUser firebaseUser;
+  User firebaseuser = FirebaseAuth.instance.currentUser;
 
   FocusNode emailFocusNode;
   FocusNode passwordFocusNode;
@@ -40,6 +44,8 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
   bool isLoading=false;
 
   bool _showPassRecoveryPage=false;
+
+  int _sizeOfPassword=8;
 
   @override
   void afterFirstLayout(BuildContext context) {
@@ -73,7 +79,7 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
     });
 
     passwordController.addListener(() {
-      if(passwordController.text.length==6){
+      if(passwordController.text.length==_sizeOfPassword){
         setState(() {
           passwordIsOk=true;
           print('foi');
@@ -162,7 +168,7 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        WidgetsConstructor().makeResponsiveText(context, 'Bem vindo', Colors.white, 4, 0.0, 5.0, 'no'),
+                        WidgetsConstructor().makeResponsiveText(context, 'Bem-vindo', Colors.white, 4, 0.0, 5.0, 'no'),
                         WidgetsConstructor().makeResponsiveText(context, 'Nós queremos ajudar na sua mudança', Colors.white, 1.5, 0.0, 5.0, 'no'),
                       ],
                     )),
@@ -260,19 +266,27 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
       builder: (BuildContext context, Widget child, NewAuthService newAuthService){
 
         //procedimento de entrar e callbacks aqui dentro da função
-        void _entrarClick(){
+        void _entrarClick(HomePageModel homePageModel){
 
           void _onSucess(){
             isLoading = false;
             _scaffoldKey.currentState.showSnackBar(
                 SnackBar(content: Text("Achamos você! Redirecionando"), backgroundColor: Theme.of(context).primaryColor, duration: Duration(seconds: 1),)
             );
+            homePageModel.updateFirstLoad(true);
+            homePageModel.updateUserIsLoggedIn(true);
+            homePageModel.updateShouldForceVerify(true);
             Future.delayed(Duration(seconds: 1)).then((_){
               Navigator.of(context).pop();
+              Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => HomePage()));
+              /*
               Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => HomePage())
               );
+
+               */
 
             });
 
@@ -283,7 +297,7 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
               isLoading = false;
             });
             _scaffoldKey.currentState.showSnackBar(
-                SnackBar(content: Text("Usuário ou senha errado"), backgroundColor: Colors.red, duration: Duration(seconds: 5),)
+                SnackBar(content: Text(newAuthService.ErroLoginCode), backgroundColor: Colors.red, duration: Duration(seconds: 5),)
             );
 
           }
@@ -313,168 +327,191 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
           }
         }
 
-        return Column(
-          children: [
+        return ScopedModelDescendant<UserModel>(
+          builder: (BuildContext context, Widget widget, UserModel userModel){
 
-            //form elements
-            Form(
-              key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
+            return ScopedModelDescendant<HomePageModel>(
+              builder: (BuildContext context, Widget widget, HomePageModel homePageModel){
 
-                      SizedBox(height: maxHeight*0.05,),
-                      //email textfield
-                      Container(
-                        height: maxHeight*0.29,
-                        width: maxWidth*0.75,
-                        child: Focus(
-                          child: TextFormField(
+                return Column(
+                  children: [
 
-                            controller: emailController,
-                            focusNode: emailFocusNode,
-                            validator: (value){
-                              if(value.isEmpty){
-                                return 'Informe o e-mail';
-                              } else {
-                                return null;
-                              }
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'E-mail cadastrado',
-                              labelText: 'E-mail',
-                              suffixIcon: emailIsOk==true ? Icon(Icons.done, color: CustomColors.yellow,) : null,
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: CustomColors.yellow, width: 2.0),
+                    //form elements
+                    Form(
+                        key: _formKey,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
 
+                              SizedBox(height: maxHeight*0.05,),
+                              //email textfield
+                              Container(
+                                height: maxHeight*0.29,
+                                width: maxWidth*0.75,
+                                child: Focus(
+                                  child: TextFormField(
+
+                                    controller: emailController,
+                                    focusNode: emailFocusNode,
+                                    validator: (value){
+                                      if(value.isEmpty){
+                                        return 'Informe o e-mail';
+                                      } else {
+                                        return null;
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: 'E-mail cadastrado',
+                                      labelText: 'E-mail',
+                                      suffixIcon: emailIsOk==true ? Icon(Icons.done, color: CustomColors.yellow,) : null,
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(color: CustomColors.yellow, width: 2.0),
+
+                                      ),
+                                    ),
+                                    textInputAction: TextInputAction.next,
+                                    keyboardType: TextInputType.emailAddress,
+
+                                  ),
+                                  onFocusChange: (hasFocus) {
+                                    if(hasFocus) {
+
+                                      print('ganhou focus');
+                                    } else {
+
+                                      if(!emailController.text.contains('@')){
+                                        emailMsg = 'Ops, falta o simbolo @';
+                                      } else if(!emailController.text.contains('.com')){
+                                        emailMsg = 'Algo errado com o e-mail';
+                                      } else {
+                                        emailMsg = 'no';
+                                      }
+
+                                    }
+                                  },
+                                ),
+                                //editTextForEmail(emailController, 'E-mail', null),
                               ),
-                            ),
-                            textInputAction: TextInputAction.next,
-                            keyboardType: TextInputType.emailAddress,
+                              //mensagem de erro do email
+                              Container(
+                                width: maxWidth*0.75,
+                                child: emailMsg != 'no' ? WidgetsConstructor().makeResponsiveText(context, emailMsg, Colors.red, 1.5, 5.0, 0.0, 'no') : Container(),
+                              ),
 
+                              SizedBox(height:  maxHeight*0.05,),
+                              //senha txtfield
+                              Container(
+                                  height: maxHeight*0.29,
+                                  width: maxWidth*0.75,
+                                  child: TextFormField(
+                                      controller: passwordController,
+                                      focusNode: passwordFocusNode,
+                                      obscureText: true,
+                                      inputFormatters: [
+                                        LengthLimitingTextInputFormatter(_sizeOfPassword),
+                                      ],
+
+                                      validator: (value){
+                                        if(value.isEmpty){
+                                          return 'Informe a senha';
+                                        }
+                                        return null;
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: 'Sua senha deve ter ${_sizeOfPassword} dígitos',
+                                        labelText: 'Senha',
+                                        suffixIcon: passwordIsOk==true ? Icon(Icons.done, color: CustomColors.yellow,) : null,
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: CustomColors.yellow, width: 2.0)
+                                        ),
+                                      ),
+                                      textInputAction: TextInputAction.done
+                                  )
+                              ),
+
+
+                            ],
                           ),
-                          onFocusChange: (hasFocus) {
-                            if(hasFocus) {
+                        )),
+                    //btn login
+                    SizedBox(height: maxHeight*0.15,),
+                    Container(
+                      width: maxWidth*0.5,
+                      height: maxHeight*0.225,
 
-                              print('ganhou focus');
-                            } else {
+                      child: ScopedModelDescendant<HomePageModel>(
+                        builder: (BuildContext context, Widget widget, HomePageModel homePageModel){
 
-                              if(!emailController.text.contains('@')){
-                                emailMsg = 'Ops, falta o simbolo @';
-                              } else if(!emailController.text.contains('.com')){
-                                emailMsg = 'Algo errado com o e-mail';
-                              } else {
-                                emailMsg = 'no';
-                              }
-
-                            }
-                          },
-                        ),
-                        //editTextForEmail(emailController, 'E-mail', null),
-                      ),
-                      //mensagem de erro do email
-                      Container(
-                        width: maxWidth*0.75,
-                        child: emailMsg != 'no' ? WidgetsConstructor().makeResponsiveText(context, emailMsg, Colors.red, 1.5, 5.0, 0.0, 'no') : Container(),
-                      ),
-
-                      SizedBox(height:  maxHeight*0.05,),
-                      //senha txtfield
-                      Container(
-                        height: maxHeight*0.29,
-                        width: maxWidth*0.75,
-                        child: TextFormField(
-                            controller: passwordController,
-                            focusNode: passwordFocusNode,
-                            obscureText: true,
-                            validator: (value){
-                              if(value.isEmpty){
-                                return 'Informe a senha';
-                              }
-                              return null;
+                          return RaisedButton(
+                            color: CustomColors.yellow,
+                            child: WidgetsConstructor().makeResponsiveText(context, 'Entrar', Colors.white, 2.8, 0.0, 0.0, 'center'),
+                            splashColor: Colors.yellow,
+                            onPressed: (){
+                              _entrarClick(homePageModel);
                             },
-                            decoration: InputDecoration(
-                              hintText: 'Sua senha deve ter 6 dígitos',
-                              labelText: 'Senha',
-                              suffixIcon: passwordIsOk==true ? Icon(Icons.done, color: CustomColors.yellow,) : null,
-                              focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: CustomColors.yellow, width: 2.0)
-                              ),
-                            ),
-                            textInputAction: TextInputAction.done
-                        )
+                          );
+
+                        },
                       ),
 
 
-                    ],
-                  ),
-                )),
-            //btn login
-            SizedBox(height: maxHeight*0.15,),
-            Container(
-              width: maxWidth*0.5,
-                height: maxHeight*0.225,
 
-              child: RaisedButton(
-                color: CustomColors.yellow,
-                child: WidgetsConstructor().makeResponsiveText(context, 'Entrar', Colors.white, 2.8, 0.0, 0.0, 'center'),
-                splashColor: Colors.yellow,
-                onPressed: (){
-                  _entrarClick();
-                },
-              ),
-            ),
-            emailMsg == 'no' ? SizedBox(height: maxHeight*0.20,) : SizedBox(height: maxHeight*0.10,),
-            WidgetsConstructor().makeResponsiveText(context, 'ou entre com', Colors.grey[500], 1.8, 0.0, 0.0, 'center'),
-            SizedBox(height: maxHeight*0.05,),
-            Container(
-              width: maxWidth*0.5,
-              height: maxHeight*0.225,
-
-              child: RaisedButton(
-                color: CustomColors.faceblue,
-                child: WidgetsConstructor().makeResponsiveText(context, 'Facebook', Colors.white, 2.8, 0.0, 0.0, 'center'),
-                splashColor: Colors.blue,
-                onPressed: (){
-                  _facebookClick();
-                },
-              ),
-            ),
-            SizedBox(height: maxHeight*0.07,),
-
-            //linha divisório
-            Container(height: 2.0, width: widthPercent*0.85, color: Colors.grey[300],),
-            //botoes inferiores
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  alignment: Alignment.center,
-                  width: maxWidth*0.47,
-                  height: maxHeight*0.30,
-                  color: Colors.white,
-                  child: FlatButton(onPressed: (){
-                    _novoUsuarioClick();
-                  }, child: WidgetsConstructor().makeResponsiveText(context, 'Novo usuário', CustomColors.blue, 2.2, 0.0, 0.0, 'center'),)
-                ),
-                Container(
-                  width: maxWidth*0.47,
-                  height: maxHeight*0.30,
-                  color: Colors.white,
-                  child: FlatButton(onPressed: (){
-
-                    setState(() {
-                      _showPassRecoveryPage=true;
-                    });
-
-                  }, child: WidgetsConstructor().makeResponsiveText(context, 'Recuperar senha', CustomColors.blue, 2.0, 0.0, 0.0, 'center')),
-                ),
-              ],
-            )
+                    ),
+                    emailMsg == 'no' ? SizedBox(height: maxHeight*0.20,) : SizedBox(height: maxHeight*0.10,),
+                    WidgetsConstructor().makeResponsiveText(context, 'ou entre com', Colors.grey[500], 1.8, 0.0, 0.0, 'center'),
+                    SizedBox(height: maxHeight*0.05,),
+                    Container(
+                      width: maxWidth*0.5,
+                      height: maxHeight*0.225,
+                      child: RaisedButton(
+                        onPressed: (){
+                          _facebookClick(newAuthService, userModel, homePageModel);
+                        },
+                        color: CustomColors.facebookblue,
+                        child: Text('Facebook', textAlign: TextAlign.center , style: TextStyle(color: Colors.white, fontSize: ResponsiveFlutter.of(context).fontSize(3.0)),),
+                      ),
+                    ),
 
 
-          ],
+                    SizedBox(height: maxHeight*0.07,),
+
+                    //linha divisório
+                    Container(height: 2.0, width: widthPercent*0.85, color: Colors.grey[300],),
+                    //botoes inferiores
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                            alignment: Alignment.center,
+                            width: maxWidth*0.47,
+                            height: maxHeight*0.30,
+                            color: Colors.white,
+                            child: FlatButton(onPressed: (){
+                              _novoUsuarioClick();
+                            }, child: WidgetsConstructor().makeResponsiveText(context, 'Novo usuário', CustomColors.blue, 2.2, 0.0, 0.0, 'center'),)
+                        ),
+                        Container(
+                          width: maxWidth*0.47,
+                          height: maxHeight*0.30,
+                          color: Colors.white,
+                          child: FlatButton(onPressed: (){
+
+                            setState(() {
+                              _showPassRecoveryPage=true;
+                            });
+
+                          }, child: WidgetsConstructor().makeResponsiveText(context, 'Recuperar senha', CustomColors.blue, 2.0, 0.0, 0.0, 'center')),
+                        ),
+                      ],
+                    )
+
+
+                  ],
+                );
+              },
+            );
+          },
         );
 
       },
@@ -591,7 +628,92 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
     );
   }
 
-  void _facebookClick(){
+  void _facebookClick(NewAuthService newAuthService, UserModel userModel, HomePageModel homePageModel){
+
+
+    setState(() {
+      isLoading==true;
+    });
+
+    void onSucess(){
+
+      //conectou no face e firebase. Agora vamos verificar se o usuário já existe ou se é novo
+      void _userExists(){
+
+        _scaffoldKey.currentState.showSnackBar(
+            SnackBar(content: Text("Achamos você. Redirecionando."), backgroundColor: Colors.blue, duration: Duration(seconds: 2),)
+        );
+
+        void _finishUserLoginFlow(){
+
+          homePageModel.updateFirstLoad(true); //força releitura na primeira página
+          Future.delayed(Duration(seconds: 2)).then((_){
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => HomePage()));
+
+          });
+        }
+
+        newAuthService.CompleteFacebookUserSignIn(userModel, () {_finishUserLoginFlow(); });
+
+      }
+
+      void _userDontExists(){
+        //criar novo usuario
+
+        void onSucessCreateNewUser(){
+          //usuario novo criado no firebase com dados do facebook.
+
+          _displaySnackBar(context, "Tudo pronto, redirecionando para a página principal");
+          Future.delayed(Duration(seconds: 2)).then((_){
+            Navigator.of(context).pop();
+            Navigator.push(context, MaterialPageRoute(
+                builder: (context) => HomePage()));
+
+          });
+
+
+        }
+        newAuthService.CreateNewFacebookUser(userModel, () {onSucessCreateNewUser(); });
+      }
+
+      FirestoreServices().getUserInfoFromCloudFirestore(userModel, (){ _userExists();}, () { _userDontExists();});
+
+    }
+
+    void  onFailureUserCancel(){
+      //usuario cancelou no meio
+      _displaySnackBar(context, 'Você cancelou o login');
+      setState(() {
+        isLoading=false;
+      });
+    }
+
+    void onFailureUnknwon(){
+      //erro desconhecido
+      _displaySnackBar(context, 'Ocorreu um erro');
+      setState(() {
+        isLoading=false;
+      });
+    }
+
+    void newUser(){
+      //é um novo usuario
+    }
+
+    void onFailureInFireBase(){
+      //erro no firebase, talvez seja um e-mail já em uso
+      _displaySnackBar(context, 'Este e-mail já está vinculado a um cliente. Por favor utilize outro');
+      setState(() {
+        isLoading=false;
+      });
+    }
+
+
+    newAuthService.SignOut();;
+    newAuthService.SignInWithFacebook(userModel, () { onSucess();}, () { onFailureUserCancel;}, () {onFailureUnknwon; }, () {newUser();}, () { onFailureInFireBase();});
+
 
   }
 
@@ -622,6 +744,21 @@ class _LoginPageState extends State<LoginPage> with AfterLayoutMixin<LoginPage> 
       },
     );
   }
+
+  _displaySnackBar(BuildContext context, String msg) {
+
+    final snackBar = SnackBar(
+      content: Text(msg),
+      action: SnackBarAction(
+        label: "Ok",
+        onPressed: (){
+          _scaffoldKey.currentState.hideCurrentSnackBar();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
 
 
 }

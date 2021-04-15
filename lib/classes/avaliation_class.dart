@@ -15,7 +15,7 @@ class AvaliationClass {
   String motoristaId;
   String data;
   String hora;
-
+  String motoristaImage;
 
 
   AvaliationClass(this.avaliationTargetName, this.avaliationTargetId, this.avaliationTargetRate, this.avaliations);

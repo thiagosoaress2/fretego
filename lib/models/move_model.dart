@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fretego/classes/item_class.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/utils/date_utils.dart';
 import 'package:fretego/utils/shared_prefs_utils.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -27,6 +28,22 @@ class MoveModel extends Model {
 
   int _qntItens=0;
 
+  String _truckSuggested;
+
+  bool _loadInitialData=true;
+  void updateLoadInitialData(bool value){
+    _loadInitialData=value;
+   // notifyListeners();
+  }
+  get LoadInitialData=>_loadInitialData;
+
+  bool _isLoadingDatA=false;
+  void updateIsLoadingData(bool value){
+    _isLoadingDatA = value;
+    notifyListeners();
+  }
+  get IsLoadingData=>_isLoadingDatA;
+
   void updateQntItens(int value){
     _qntItens = value;
     notifyListeners();
@@ -47,6 +64,12 @@ class MoveModel extends Model {
 
   void updateCarInMoveClass(String value){
     moveClass.carro = value;
+    updateTruckSuggested(value);
+    notifyListeners();
+  }
+
+  void updateMoveClass(MoveClass _moveClass){
+    moveClass=_moveClass;
     notifyListeners();
   }
 
@@ -181,6 +204,7 @@ class MoveModel extends Model {
     notifyListeners();
   }
   get Page1isOk => _page1IsOk;
+
 
 
 
@@ -375,12 +399,14 @@ class MoveModel extends Model {
   void updateselectedDate(DateTime value){
     _selectedDate = value;
     notifyListeners();
+    checkIfDataIsOk(); //verifica se a data é aceitavel
   }
   get SelectedDate=>_selectedDate;
 
   void updateSelectedTime(TimeOfDay value){
     _selectedtime = value;
     notifyListeners();
+    checkIfDataIsOk(); //verifica se a data é aceitavel
   }
   get SelectedTime=>_selectedtime;
 
@@ -390,5 +416,54 @@ class MoveModel extends Model {
     notifyListeners();
   }
   get SpecialCondition=>_specialConditionChangingTrucker;
+
+  bool _theDataIsOk=false;
+  void checkIfDataIsOk(){
+    String time = _selectedtime.hour.toString()+':'+_selectedtime.minute.toString();
+    DateTime choosenDate = DateServices().addMinutesAndHoursFromStringToAdate(_selectedDate, time);
+    final difference = choosenDate.difference(DateTime.now()).inMinutes;
+    if(difference<=0){
+      //menor
+      //choosen date é menor e nao pode fazer mudança
+      _theDataIsOk=false;
+      notifyListeners();
+    } else {
+      _theDataIsOk=true;
+      notifyListeners();
+    }
+  }
+  get TheDataIsOk=>_theDataIsOk;
+
+  bool _showAdditionalInfoToCEP=false; //controla se vai exibir a popup para pegar número e complemento pro endereço vindo do CEP
+  void updateShowAddiotionalInfoToCEP(bool value){
+    _showAdditionalInfoToCEP = value;
+    notifyListeners();
+  }
+  get showAdditionalInfoToCEP=>_showAdditionalInfoToCEP;
+
+  bool _helpIsOnScreen=false;
+  void updateHelpIsOnScreen(bool value){
+    _helpIsOnScreen = value;
+    notifyListeners();
+  }
+  get HelpIsOnScreen=>_helpIsOnScreen;
+
+  void updateTruckSuggested(String value){
+    _truckSuggested = value;
+  }
+
+  get TruckSuggested=>_truckSuggested;
+
+
+  bool _itsCalculating=false;
+  void updateItsCalculating(bool value){
+
+    _itsCalculating = value;
+    notifyListeners();
+  }
+
+  get ItsCalculating=>_itsCalculating;
+
+
 
 }

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fretego/login/pages/sign_up_view.dart';
 import 'package:fretego/login/services/new_auth_service.dart';
+import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/userModel.dart';
 import 'package:fretego/pages/home_page.dart';
 import 'package:fretego/widgets/widgets_auth_widgets.dart';
@@ -37,7 +38,10 @@ class _SignInViewState extends State<SignInView> {
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
   final FirebaseAuth mAuth = FirebaseAuth.instance;
-  FirebaseUser firebaseUser;
+  //FirebaseUser firebaseUser;
+  User firebaseuser = FirebaseAuth.instance.currentUser;
+
+  int _sizeOfPassword=8;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +114,7 @@ class _SignInViewState extends State<SignInView> {
                             ),
 
                             SizedBox(height: 30.0,),
+
                             Container(
                               child: RaisedButton(
                                 color: Colors.lightBlue,
@@ -151,10 +156,15 @@ class _SignInViewState extends State<SignInView> {
     Future.delayed(Duration(seconds: 2)).then((_){
       Navigator.of(context).pop();
 
+      Navigator.push(context, MaterialPageRoute(
+          builder: (context) => HomePage()));
+      /*
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage())
       );
+
+       */
 
     });
 

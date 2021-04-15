@@ -119,6 +119,34 @@ class TruckClass {
     return formatedStr;
   }
 
+  String formatcodeToMachine(String truck) {
+
+    String formatedStr = "";
+
+    if(truck == "null"){
+      formatedStr = "Nenhum";
+    } else if (truck == "carroça") {
+      formatedStr = "carroca";
+    } else if (truck == "pickup pequena") {
+      formatedStr = "pickupP";
+    } else if (truck == "pickup grande") {
+      formatedStr = "pickupG";
+    } else if (truck == "kombi fechada") {
+      formatedStr = "kombiF";
+    } else if (truck == "kombi aberta") {
+      formatedStr = "kombiA";
+    } else if (truck == "caminhao pequeno aberto") {
+      formatedStr = "caminhaoPA";
+    } else if (truck == "caminhao baú pequeno") {
+      formatedStr = "caminhaoBP";
+    } else { //if(truck=="caminhaoBG"){
+      formatedStr = "caminhaoBG";
+    }
+
+    return formatedStr;
+
+  }
+
 
 /*  reference
   carSelected = "carroca";
