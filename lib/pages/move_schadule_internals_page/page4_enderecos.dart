@@ -462,8 +462,10 @@ class _Page4EnderecosState extends State<Page4Enderecos> {
         //mensagem
         //FakeLine(Colors.blue),
         moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
-            ? ResponsiveTextCustomWithMargin('Pronto! Já temos todas informações para calcular o orçamento.', context, CustomColors.blue, 2.5,
-            25.0, 25.0, 15.0, 15.0, 'center') : SizedBox(),
+            ?  Text('Pronto! Já temos todas informações para calcular o orçamento.', textAlign: TextAlign.center,
+          style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.0), color: CustomColors.brown),
+
+        ) : SizedBox(),
         moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
             ? Icon(Icons.keyboard_arrow_down_outlined, color: CustomColors.yellow, size: 50.0,) : SizedBox(),
         SizedBox(height: 15.0,),
@@ -471,24 +473,27 @@ class _Page4EnderecosState extends State<Page4Enderecos> {
 
         //botao calcular
         moveModel.SearchCep == false && moveModel.OrigemAddress != "" && moveModel.DestinyAddress != "" || moveModel.SearchCep == true && moveModel.OrigemAddress !="" && moveModel.DestinyAddress != "" && _sourceAdressNumber.text.isNotEmpty && _destinyAdressNumber.text.isNotEmpty
-            ? Container(
-          width: widthPercent*0.70,
-          height: heightPercent*0.10,
-          child: RaisedButton(
-            child: Text(moveModel.ShowResume==false ? 'Calcular' : 'Calcular novamente',
-                style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(moveModel.ShowResume==false ? 3.0 : 2.5), color: Colors.white)),
-            color: moveModel.ShowResume==false ? CustomColors.yellow : CustomColors.blue,
-            onPressed: () async {
+            ? Padding(
+            padding: EdgeInsets.fromLTRB(widthPercent*0.05, 0.0, widthPercent*0.05, 0.0),
+            child: Container(
+              width: widthPercent*0.70,
+              height: heightPercent*0.10,
+              child: RaisedButton(
+                child: Text(moveModel.ShowResume==false ? 'Calcular' : 'Calcular novamente',
+                    style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(moveModel.ShowResume==false ? 3.0 : 2.5), color: Colors.white)),
+                color: moveModel.ShowResume==false ? CustomColors.yellow : CustomColors.blue,
+                onPressed: () async {
 
-              moveModel.updateItsCalculating(true);
+                  moveModel.updateItsCalculating(true);
 
-              //o endereço é colocado logo para n precisar esperar o assyncrono
-              await _makeAddressConfig(moveModel, context);
-              waitAmoment(3, moveModel);
-              scrollToBottom();
+                  //o endereço é colocado logo para n precisar esperar o assyncrono
+                  await _makeAddressConfig(moveModel, context);
+                  waitAmoment(3, moveModel);
+                  scrollToBottom();
 
-            },
-          ),
+                },
+              ),
+            ),
         ) : Container(height: 60.0,),
 
 

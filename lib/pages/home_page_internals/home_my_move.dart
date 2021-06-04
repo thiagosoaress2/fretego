@@ -13,6 +13,7 @@ import 'package:fretego/pages/move_day_page.dart';
 import 'package:fretego/pages/move_schadule_internals_page/purePlaceHolder.dart';
 import 'package:fretego/pages/move_schedule_page.dart';
 import 'package:fretego/pages/payment_page.dart';
+import 'package:fretego/pages/trucker_profile.dart';
 import 'package:fretego/pages/user_informs_bank_data_page.dart';
 import 'package:fretego/services/firestore_services.dart';
 import 'package:fretego/utils/calculos_percentagem.dart';
@@ -36,6 +37,8 @@ class HomeMyMoves extends StatefulWidget {
   @override
   _HomeMyMovesState createState() => _HomeMyMovesState();
 }
+
+bool _loadedMovement=false;
 
 class _HomeMyMovesState extends State<HomeMyMoves> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -70,11 +73,15 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
         return ScopedModelDescendant<UserModel>(
           builder: (BuildContext context, Widget child, UserModel userModel){
 
-            if(homePageModel.moveClass.userId!=null){
+            //if(homePageModel.moveClass.userId!=null){
+            if(_loadedMovement==true){
+              //depois de ja ter sido lida
               //do nothing
             } else {
+              _loadedMovement=true;
+              //prmeira rodada
               _scrollController = ScrollController();
-              loadInfoFromFb(userModel, homePageModel);
+              //loadInfoFromFb(userModel, homePageModel);
             }
 
             return Container(
@@ -151,7 +158,12 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
 
     if(_thisSitIsHighlighted_line3==false){
 
-      if(homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando || homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico || homePageModel.moveClass.situacao == GlobalsStrings.sitDeny  || homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker){
+      if(homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando
+          || homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico
+          || homePageModel.moveClass.situacao == GlobalsStrings.sitDeny
+          || homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker
+          || homePageModel.moveClass.situacao == GlobalsStrings.sitReschedule
+      ){
         _thisSitIsHighlighted_line2=false;
       } else {
         _thisSitIsHighlighted_line2=false;
@@ -165,7 +177,7 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
     }
 
     if(_thisSitIsHighlighted_line3==false && _thisSitIsHighlighted_line2==false){
-      if(homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando || homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico || homePageModel.moveClass.situacao ==  GlobalsStrings.sitDeny || homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker){
+      if(homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando || homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico || homePageModel.moveClass.situacao ==  GlobalsStrings.sitDeny || homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker || homePageModel.moveClass.situacao == GlobalsStrings.sitReschedule){
         _thisSitIsHighlighted_line1=true;
       } else {
         _thisSitIsHighlighted_line1=false;
@@ -269,9 +281,10 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
                   color: _thisSitIsHighlighted_line1==true ? CustomColors.blue : Colors.white,
                   child: ResponsiveTextCustomWithMargin(
                       //homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando ? homePageModel.moveClass.situacao+' '+homePageModel.moveClass.nomeFreteiro??'o profissional '+' aceitar o serviço.'
-                      homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando ? 'Aguardando um profissional aceitar o serviço.'
+                      homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando || homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando ? 'Aguardando um profissional aceitar o serviço.'
                           : homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico ? 'Aguardando o profissional aceitar o serviço.'
                           : homePageModel.moveClass.situacao ==  GlobalsStrings.sitDeny || homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker ? 'O profissional não aceitou o serviço. Escolha outro.'
+                          : homePageModel.moveClass.situacao == GlobalsStrings.sitReschedule ? 'Aguardando o profissional aceitar nova data'
                           : '${homePageModel.moveClass.nomeFreteiro.toString()} aceitou o serviço'
                       , context,
                       //cor do texto
@@ -411,11 +424,15 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
 
   Widget _bottomLine(HomePageModel homePageModel, UserModel userModel, BuildContext context) {
 
-    return Positioned(
+    print(homePageModel.moveClass.situacao);
+
+    return AnimatedPositioned(
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
       bottom: 0.0,
       left: 5.0,
       right: 5.0,
-      top: homePageModel.ShowOptions == true ? widget.heightPercent*0.30 : widget.heightPercent*0.75,
+      top: homePageModel.ShowOptions == true ? widget.heightPercent*0.15 : widget.heightPercent*0.75,
       child: Container(
         color: Colors.white,
         width: widget.widthPercent,
@@ -446,21 +463,42 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
             ),
             SizedBox(height: widget.heightPercent*0.03,),
 
-            _shouldShowWhatsappBtn(homePageModel)== true ? _lineWithWhastappBtn(context, userModel, homePageModel) : Container(),
+            if(_shouldShowWhatsappBtn(homePageModel)== true) _lineWithWhastappBtn(context, userModel, homePageModel),
+
+            if(homePageModel.ShouldShowGoToMoveBtn==true) _lineWithGoToMoveBtn(context, userModel, homePageModel),
+
+            if(
+            homePageModel.moveClass.moveId != null
+            && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitTruckerQuitAfterPayment
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitDeny
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitNoTrucker
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitQuit
+            )  _lineWithTruckProfile(context, userModel, homePageModel),
             /*
-          homePageModel.moveClass.situacao == GlobalsStrings.sitPago ||
-              homePageModel.moveClass.situacao == GlobalsStrings.sitTruckerIsGoingToMove ||
-              homePageModel.moveClass.situacao == GlobalsStrings.sitTruckerFinished ||
-              homePageModel.moveClass.situacao == GlobalsStrings.sitUserFinished ||
-              homePageModel.moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntFinishedButItsGoingBack ||
-              homePageModel.moveClass.situacao == GlobalsStrings.sitUserInformTruckerDidntFinishedMove
-              ? _lineWithWhastappBtn(context, userModel, homePageModel) : Container(),
+            homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando ||
+                homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico ||
+                homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitTruckerQuitAfterPayment ||
+                homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitDeny ||
+                homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitNoTrucker ||
+                homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao != GlobalsStrings.sitQuit
+            ? _lineWithTruckProfile(context, userModel, homePageModel) : Container(),
+             */
 
-           */
+            if(
+            homePageModel.moveClass.moveId != null
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitTruckerQuitAfterPayment
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitDeny
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitNoTrucker
+                && homePageModel.moveClass.situacao != GlobalsStrings.sitQuit
+            ) _lineWithChangetruckerButton(context, userModel, homePageModel),
 
-            homePageModel.ShouldShowGoToMoveBtn==true
-                ? _lineWithGoToMoveBtn(context, userModel, homePageModel) : Container(),
-
+            /*
             homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitAguardando ||
                 homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitAguardandoEspecifico ||
                 homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitTruckerQuitAfterPayment ||
@@ -470,7 +508,7 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
                 homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitNoTrucker
                 ?
             _lineWithChangetruckerButton(context, userModel, homePageModel): Container(),
-
+             */
 
             homePageModel.moveClass.moveId != null && homePageModel.moveClass.situacao == GlobalsStrings.sitAccepted ?
             _lineWithPayButton(context, userModel, homePageModel) : Container(),
@@ -938,6 +976,47 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
     );
   }
 
+  Widget _lineWithTruckProfile(BuildContext context, UserModel userModel, HomePageModel homePageModel ){
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              width: widget.widthPercent*0.15,
+              height: widget.heightPercent*0.08,
+              child: RaisedButton(
+                onPressed: (){
+
+                  Navigator.of(context).pop();
+                  Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => TruckerProfile(heightPercent: widget.heightPercent, widthPercent: widget.widthPercent, truckerId: homePageModel.moveClass.freteiroId, truckerName: homePageModel.moveClass.nomeFreteiro,)));
+
+                  /*
+                  homePageModel.setIsLoading(true);
+
+                  MyBottomSheet().settingModalBottomSheet(context, 'Mudança', 'Você está reagendando', 'Você tem certeza que deseja trocar a data ou hora da mudança?',
+                      Icons.date_range, widget.heightPercent, widget.widthPercent, 2, false,
+                      Icons.date_range, 'Sim, reagendar', () {_sucess();Navigator.pop(context);_toogleDarkScreen(homePageModel);},
+                      Icons.arrow_downward, 'Manter atual', () {Navigator.pop(context); _toogleDarkScreen(homePageModel);}
+
+                  );
+
+                   */
+                },
+                color: CustomColors.facebookblue,
+                child: Icon(Icons.person, color: Colors.white,),
+              ),
+            ),
+            SizedBox(width: widget.widthPercent*0.05,),
+            ResponsiveTextCustom('Perfil do motorista', context, Colors.black, 2, 0.0, 0.0, 'no'),
+          ],
+        ),
+        Divider(),
+      ],
+    );
+  }
+
   void _openPaymentPage(UserModel userModel, HomePageModel homePageModel){
 
     void _callback(){
@@ -1171,12 +1250,18 @@ class _HomeMyMovesState extends State<HomeMyMoves> {
 
     //só vamos exibir o botão do whatsapp se for o dia da mudança
     if(_dateMove==_dateToday){
-      //qualquer situação diferente de accepted significa que o user já pagou
-      if(homePageModel.moveClass.situacao != 'accepted'){
+      //qualquer situação diferente de accepted, aguardando e aguardando especifico significa que o user já pagou
+      if(homePageModel.moveClass.situacao != GlobalsStrings.sitAccepted
+          && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardando
+          && homePageModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico
+      ){
+
         return true;
+
       } else{
         return false;
       }
+
     } else {
       return false;
     }

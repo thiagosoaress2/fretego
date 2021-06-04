@@ -1027,7 +1027,8 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
             splashColor: Colors.lightBlueAccent,
             icon: AnimatedIcon(
                 size: 45.0,
-                color: _menuIsVisible==true ? CustomColors.blue : Colors.white,
+                color: userModel.ThisUserHasAmove==true ? CustomColors.blue:
+                _menuIsVisible==true ? CustomColors.blue : Colors.white,
                 icon: AnimatedIcons.menu_close,
                 progress: _animationController),
             onPressed: () => _toggle(),),

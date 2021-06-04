@@ -33,7 +33,6 @@ class MoveDayPage extends StatelessWidget {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>(); //para snackbar
 
-  GoogleMapController mapController;
   Set<Marker> markers = {};
   BitmapDescriptor origemLocation; //somente para o icone customizado
   BitmapDescriptor destinoLocation;
@@ -476,14 +475,6 @@ class MoveDayPage extends StatelessWidget {
       );
 
     }
-
-
-    /*
-    setState(() {
-      markers = markers;
-    });
-
-     */
 
   }
 

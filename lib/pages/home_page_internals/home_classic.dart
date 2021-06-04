@@ -59,8 +59,8 @@ class _HomeClassicState extends State<HomeClassic> {
 
         if(_firstLoad==true){
           _firstLoad=false;
-          print('entrou no clickticking');
-          ClockTicking(homePageModel);
+          //print('entrou no clickticking');
+          //ClockTicking(homePageModel);
         }
 
         //para animação da tela

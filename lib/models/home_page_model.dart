@@ -1,4 +1,5 @@
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/classes/trucker_class.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class HomePageModel extends Model {
@@ -75,7 +76,7 @@ class HomePageModel extends Model {
   }
   get DarkBackground=>_showDarkerBackground;
 
-  bool _showLoadingInitials=false;
+  bool _showLoadingInitials=true;
   void updateShowLoadingInitial(bool value){
     _showLoadingInitials = value;
     notifyListeners();
@@ -116,5 +117,7 @@ class HomePageModel extends Model {
     notifyListeners();
   }
   get ShouldForceVeriry=>_shouldForceVerify;
+
+  TruckerClass truckerClass = TruckerClass();
 
 }

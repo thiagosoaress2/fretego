@@ -118,10 +118,94 @@ class _MoveSchedulePageState extends State<MoveSchedulePage>{
                     if(moveModel.ShowListAnywhere == true) MyListOfItensPage(heightPercent, widthPercent),
 
                     //dica inicial em formato popuo
+                    /*
                     if(_showTip == true) Popup2().popupWithOneButton(context, heightPercent, widthPercent, 'Dicas',
                         '-Você não precisa selecionar todos os itens da mudança, apenas os grandes. \n\n'
                             '-Caso o item não exista na lista, você pode adiciona-lo na página seguinte nas observações', 'Ok',
                             () { _closePopup(); }),
+
+                     */
+
+                    //popup de ajuda
+                    if(_showTip == true) GestureDetector(
+                      onTap: (){
+                        setState(() {
+                          _showTip=false;
+                        });
+                      },
+                      child: Container(
+                        height: heightPercent,
+                        width: widthPercent,
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                    ),
+
+                    AnimatedPositioned(
+                      duration: Duration(milliseconds: 350),
+                      curve: Curves.easeOut,
+                      top: _showTip==false ? heightPercent*0.01 : heightPercent*0.15,
+                      right: _showTip==false ? 5.0 : widthPercent*0.02,
+                      left: _showTip==false ? widthPercent*0.95 : widthPercent*0.02,
+                      bottom: _showTip==false ? heightPercent*0.96 : heightPercent*0.20,
+                      child: Padding(
+                        padding: const EdgeInsets.all(30.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5.0),
+                          child: Container(
+                            height: 100.0,
+                            margin: const EdgeInsets.fromLTRB(0.0, 0.0, 6.0, 6.0), //Same as `blurRadius` i guess
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5.0),
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey,
+                                  offset: Offset(0.0, 1.0), //(x,y)
+                                  blurRadius: 6.0,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(height: heightPercent*0.02,),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: CustomColors.yellow,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.help, color: Colors.white, size: widthPercent*0.15,),
+                                ),
+                                SizedBox(height: heightPercent*0.02,),
+                                if(_showTip==true)
+                                Padding(
+                                    padding: EdgeInsets.all(10.0),
+                                    child: Text('-Você não precisa selecionar todos os itens da mudança, apenas os grandes. \n\n'
+                                        '-Caso o item não exista na lista, você pode adiciona-lo na página seguinte nas observações'
+                                      , style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(2.5), color: Colors.black),),
+                                ),
+                                SizedBox(height: heightPercent*0.005,),
+                                Container(
+                                  width: widthPercent*0.50,
+                                  height: heightPercent*0.10,
+                                  child: RaisedButton(
+                                    onPressed: (){
+                                      setState(() {
+                                        _showTip=false;
+                                      });
+                                    },
+                                    color: CustomColors.yellow,
+                                    child: Text('Ok'
+                                      , style: TextStyle(fontSize: ResponsiveFlutter.of(context).fontSize(3.5), color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
 
                   ],
                 ),

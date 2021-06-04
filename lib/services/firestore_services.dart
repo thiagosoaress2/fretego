@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fretego/classes/avaliation_class.dart';
 import 'package:fretego/classes/bank_data_class.dart';
 import 'package:fretego/classes/move_class.dart';
+import 'package:fretego/classes/trucker_class.dart';
 import 'package:fretego/classes/trucker_movement_class.dart';
 import 'package:fretego/models/home_page_model.dart';
 import 'package:fretego/models/move_model.dart';
@@ -668,8 +669,10 @@ class FirestoreServices {
 
     await FirebaseFirestore.instance.collection(agendamentosPath).doc(id).get().then((querySnapshot) {
 
-      if(querySnapshot['alert'].toString().contains("user") && querySnapshot['alert_saw'] == false){
+      if(querySnapshot.exists){
+        if(querySnapshot['alert'].toString().contains("user") && querySnapshot['alert_saw'] == false){
           onSuccess();
+        }
       }
 
     });
@@ -691,20 +694,33 @@ class FirestoreServices {
 
   }
 
-  Future<void> changeSchedule(String id, String data, String hora, String oldSituation, @required VoidCallback onSucess, @required VoidCallback onFailure) async {
+  Future<void> changeSchedule(
+      {String id,
+      String data,
+      String hora,
+      String oldSituation,
+      @required VoidCallback onSucess,
+      @required VoidCallback onFailure}) async {
 
     CollectionReference move = FirebaseFirestore.instance.collection(agendamentosPath);
     return move.doc(id)
         .update({
 
-      'situacao': GlobalsStrings.sitReschedule,
+      //abaixo:
+      //se situação for aguardando ou aguardando especifico (quando escolheu um freteiro especifico)
+      //entao nao precisa mudar a situacao, pq n teve alteração
+      'situacao': oldSituation==GlobalsStrings.sitAguardando || oldSituation==GlobalsStrings.sitAguardandoEspecifico ? oldSituation : GlobalsStrings.sitReschedule,
       'selectedDate' : data,
       'selectedTime' : hora,
       'situacao_backup' : oldSituation,
 
     })
-        .then((value) => onSucess())
-        .catchError((error) => onFailure());
+        .then((_) {
+      onSucess();
+    })
+        .catchError((error) {
+      onFailure();
+    });
 
   }
 
@@ -850,6 +866,29 @@ class FirestoreServices {
   }
    */
 
+  Future<void> loadDataToTruckerClass(String truckerId, HomePageModel homePageModel, @required VoidCallback onSucess, @required VoidCallback onFail) async {
+
+    TruckerClass _trucker = TruckerClass();
+
+    await FirebaseFirestore.instance.collection(truckersPath).doc(truckerId)
+        .get()
+        .then((querySnapshot) {
+
+        _trucker.name = querySnapshot['name'];
+        _trucker.image = querySnapshot['image'];
+        _trucker.aval2 = querySnapshot['aval'];
+        _trucker.rate = querySnapshot['rate'];
+        _trucker.placa = querySnapshot['placa'];
+        _trucker.apelido = querySnapshot['apelido'];
+        _trucker.phone = querySnapshot['phone'];
+        _trucker.vehicle = querySnapshot['vehicle'];
+        _trucker.vehicle_image = querySnapshot['vehicle_image'];
+
+        homePageModel.truckerClass = _trucker;
+        onSucess();
+
+    }).catchError((e) => onFail());
+  }
 
   //punishiments functions
   Future<void> createPunishmentEntryToTrucker(String truckerId, String motivo){

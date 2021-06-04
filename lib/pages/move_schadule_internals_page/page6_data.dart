@@ -21,6 +21,10 @@ import 'package:scoped_model/scoped_model.dart';
 
 bool firstLoaded=false;
 
+bool _lockButton=false;
+
+String oldSituation;
+
 class Page6Data extends StatefulWidget {
   double heightPercent;
   double widthPercent;
@@ -46,6 +50,8 @@ class _Page6DataState extends State<Page6Data> {
     double widthPercent = widget.widthPercent;
     bool reeschedule = widget.reschedule;
     String uid = widget.uid;
+
+    _lockButton=false;
 
     return ScopedModelDescendant<MoveModel>(
       builder: (BuildContext context, Widget child, MoveModel moveModel){
@@ -116,38 +122,57 @@ class _Page6DataState extends State<Page6Data> {
                             child: FloatingActionButton(
                               onPressed: (){
 
-                                moveModel.updateShowResume(false);  //esta variavel foi reciclada. Ela foi usada no endereço e agora vai ser usada na pagina final. Entou agora volto ela pro estado inicial
+                                if(_lockButton==false){
+                                  _lockButton=true;
 
-                                moveModel.moveClass.dateSelected = DateServices().convertToStringFromDate(moveModel.SelectedDate); //salvando dentro de moveclass
-                                moveModel.moveClass.timeSelected = moveModel.SelectedTime.format(context);
+                                  moveModel.updateShowResume(false);  //esta variavel foi reciclada. Ela foi usada no endereço e agora vai ser usada na pagina final. Entou agora volto ela pro estado inicial
 
-                                //MyBottomSheet().settingModalBottomSheet(context, 'Contactando o profissional...', '', 'Pronto. Agora é só aguardar pela confirmação. Uma vez que o profissional aceite, você pode realizar o pagamento até duas horas antes do horário da mudança.', Icons.info, heightPercent, widthPercent, 0, true);
+                                  moveModel.moveClass.dateSelected = DateServices().convertToStringFromDate(moveModel.SelectedDate); //salvando dentro de moveclass
+                                  moveModel.moveClass.timeSelected = moveModel.SelectedTime.format(context);
 
-                                moveModel.moveClass.situacao = GlobalsStrings.sitAguardando;
+                                  //moveModel.moveClass.situacao = GlobalsStrings.sitAguardando;
 
-                                moveModel.moveClass.userId = uid;
-                                SharedPrefsUtils().saveMoveClassToShared(moveModel.moveClass);
-
-                                //aqui e´agendada a mudança
-                                scheduleAmove(userModel, moveModel, context);
-
-                                waitAmoment(3, moveModel);
+                                  moveModel.moveClass.userId = uid;
+                                  SharedPrefsUtils().saveMoveClassToShared(moveModel.moveClass);
 
 
-                                if(reeschedule==true){
-                                  //ajusta a tela principal para a volta
-                                  homePageModel.moveClass.dateSelected = moveModel.moveClass.dateSelected;
-                                  homePageModel.moveClass.timeSelected = moveModel.moveClass.timeSelected;
-                                  homePageModel.moveClass.situacao = GlobalsStrings.sitReschedule;
+                                if(reeschedule==true) {
 
-                                  Navigator.of(context).pop();
-                                  Navigator.push(context, MaterialPageRoute(
-                                      builder: (context) => HomePage()));
-                                } else {
-                                  homePageModel.moveClass.dateSelected = moveModel.moveClass.dateSelected;
-                                  homePageModel.moveClass.timeSelected = moveModel.moveClass.timeSelected;
-                                  homePageModel.moveClass.situacao = moveModel.moveClass.situacao;
-                                  moveModel.changePageForward('final', 'data', 'Mudança agendada');
+                                  if(moveModel.moveClass.situacao != GlobalsStrings.sitAguardando && moveModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico){
+                                    oldSituation = moveModel.moveClass.situacao; //salva a situação para registrar em situacao_backup no firebase
+                                    moveModel.moveClass.situacao = GlobalsStrings.sitReschedule; //coloca a nova situação na classe.
+                                  }
+                                }
+
+                                  //aqui e´agendada a mudança
+                                  scheduleAmove(userModel, moveModel, context);
+
+                                  waitAmoment(3, moveModel);
+
+
+                                  if(reeschedule==true){
+                                    //ajusta a tela principal para a volta
+                                    homePageModel.moveClass.dateSelected = moveModel.moveClass.dateSelected;
+                                    homePageModel.moveClass.timeSelected = moveModel.moveClass.timeSelected;
+                                    if(moveModel.moveClass.situacao != GlobalsStrings.sitAguardando && moveModel.moveClass.situacao != GlobalsStrings.sitAguardandoEspecifico){
+                                      //só vai mudar se for diferente de aguardando. Se nao, fica na mesma.
+                                      homePageModel.moveClass.situacao = GlobalsStrings.sitReschedule;
+                                    }
+
+
+                                    firstLoaded=false;
+
+                                    Navigator.of(context).pop();
+                                    Navigator.push(context, MaterialPageRoute(
+                                        builder: (context) => HomePage()));
+                                  } else {
+                                    homePageModel.moveClass.dateSelected = moveModel.moveClass.dateSelected;
+                                    homePageModel.moveClass.timeSelected = moveModel.moveClass.timeSelected;
+                                    homePageModel.moveClass.situacao = moveModel.moveClass.situacao;
+                                    firstLoaded=false;
+                                    moveModel.changePageForward('final', 'data', 'Mudança agendada');
+                                  }
+
                                 }
 
                               },
@@ -394,6 +419,8 @@ class _Page6DataState extends State<Page6Data> {
 
       moveModel.setIsLoading(false);
 
+      firstLoaded=false;
+
       Navigator.of(context).pop();
       Navigator.push(context, MaterialPageRoute(
           builder: (context) => HomePage()));
@@ -406,7 +433,10 @@ class _Page6DataState extends State<Page6Data> {
       print('erro');
     }
 
-    FirestoreServices().changeSchedule(widget.uid, moveModel.moveClass.dateSelected, moveModel.moveClass.timeSelected, moveModel.moveClass.situacao, () {_onSucess();}, () {_onFailure();});
+    FirestoreServices().changeSchedule(id: widget.uid, data: moveModel.moveClass.dateSelected,
+        hora: moveModel.moveClass.timeSelected, oldSituation: oldSituation,
+        onSucess: () {_onSucess();}, onFailure: () {_onFailure();});
+    //FirestoreServices().changeSchedule(widget.uid, moveModel.moveClass.dateSelected, moveModel.moveClass.timeSelected, moveModel.moveClass.situacao, () {_onSucess();}, () {_onFailure();});
 
   }
 
